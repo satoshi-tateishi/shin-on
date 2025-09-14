@@ -19,8 +19,29 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'furigana',
         'email',
         'password',
+        'lineworks_id',
+        'lineworks_token',
+        'lineworks_refresh_token',
+        'icon',
+        'phone',
+        'mobile_phone',
+        'department',
+        'position',
+        'is_active',
+        'hire_date',
+        'birth_date',
+        'address',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'notes',
+        'is_planner',
+        'is_manager',
+        'role',
+        'affiliation',
+        'is_retired',
     ];
 
     /**
@@ -31,6 +52,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'lineworks_token',
+        'lineworks_refresh_token',
     ];
 
     /**
@@ -43,6 +66,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 }

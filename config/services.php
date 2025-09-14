@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'lineworks' => [
+        'client_id' => env('LINEWORKS_CLIENT_ID'),
+        'client_secret' => env('LINEWORKS_CLIENT_SECRET'),
+        'redirect' => env('LINEWORKS_REDIRECT_URI'),
+        'domain' => env('LINEWORKS_DOMAIN'),
+    ],
+
 ];
