@@ -33,7 +33,9 @@ Laravel 12 + MySQL 8.0 + Tailwind CSS v4 + Laravel-Boost MCPを使用した新�
 ### ⚙️ 運用・ドキュメント
 - **[operations/documentation.md](operations/documentation.md)** - API仕様書・ドキュメント管理
 
-### 📋 API仕様書
+### 📋 システム仕様書・設計書
+- **[../docs/Equipment_Management_System_Requirements.md](../docs/Equipment_Management_System_Requirements.md)** - 機材管理システム要件定義書
+- **[../docs/Equipment_Management_Database_Design.md](../docs/Equipment_Management_Database_Design.md)** - データベース設計書
 - **[../docs/Dropbox_API_Specification.md](../docs/Dropbox_API_Specification.md)** - Dropbox OAuth 2.0 & バックアップAPI仕様
 - **[../docs/LINE_WORKS_SSO_Specification.md](../docs/LINE_WORKS_SSO_Specification.md)** - LINE WORKS SSO認証仕様
 
