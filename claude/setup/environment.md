@@ -59,56 +59,53 @@ VITE_PORT=5174
 ```json
 {
   "devDependencies": {
-    "tailwindcss": "next",
-    "@tailwindcss/postcss": "next",
-    "autoprefixer": "latest",
-    "postcss": "latest"
+    "tailwindcss": "4.0.0",
+    "@tailwindcss/vite": "4.1.13",
+    "@tailwindcss/postcss": "4.0.0"
   }
 }
 ```
 
-### 設定ファイル
+### 設定方法（v4の特徴）
+- ✅ **設定ファイル不要**: `tailwind.config.js` は削除済み
+- ✅ **CSS-first設定**: すべてCSS内で設定
+- ✅ **自動コンテンツ検出**: `@source`ディレクティブで自動化
+- ✅ **パフォーマンス向上**: 最大5倍高速化
 
-#### tailwind.config.js
+### Vite設定 (vite.config.js)
 ```javascript
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./resources/**/*.blade.php",
-    "./resources/**/*.js",
-    "./resources/**/*.vue",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+        tailwindcss(),
+    ],
+});
 ```
 
-#### postcss.config.js
-```javascript
-export default {
-  plugins: {
-    '@tailwindcss/postcss': {},
-    autoprefixer: {},
-  },
-}
-```
-
-#### resources/css/app.css
+### メインCSSファイル (resources/css/app.css)
 ```css
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@source "../**/*.vue";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 ```
+
+### 📖 詳細設定ガイド
+**[→ Tailwind CSS v4 移行ガイド](./tailwind-css-v4.md)** で詳細な設定方法とトラブルシューティングを確認
 
 ## 🤖 Laravel-Boost MCP設定
 

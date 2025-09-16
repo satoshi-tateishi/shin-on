@@ -6,9 +6,14 @@ Laravel 12 + MySQL 8.0 + Tailwind CSS v4 + Laravel-Boost MCPを使用した新�
 ## 🔧 技術スタック
 - **バックエンド**: Laravel 12
 - **データベース**: MySQL 8.0
-- **フロントエンド**: Tailwind CSS v4
+- **フロントエンド**: Tailwind CSS v4.1.13 ✨
 - **AI開発支援**: Laravel-Boost MCP
 - **開発環境**: Docker (Laravel Sail)
+
+### ✨ Tailwind CSS v4 の特徴
+- **設定ファイル不要**: CSS-first 設定方式
+- **パフォーマンス向上**: 最大5倍高速化
+- **OKLCH色空間**: より正確な色表現
 
 ## 🌐 アクセス情報
 - **アプリケーション**: http://localhost:8081
@@ -18,7 +23,8 @@ Laravel 12 + MySQL 8.0 + Tailwind CSS v4 + Laravel-Boost MCPを使用した新�
 ## 📚 ドキュメント ナビゲーション
 
 ### 🛠️ 環境設定
-- **[setup/environment.md](setup/environment.md)** - 開発環境、Tailwind CSS、Laravel-Boost設定
+- **[setup/environment.md](setup/environment.md)** - 開発環境、基本設定
+- **[setup/tailwind-css-v4.md](setup/tailwind-css-v4.md)** - Tailwind CSS v4 移行ガイド ✨
 
 ### 💻 開発ツール・標準
 - **[development/commands.md](development/commands.md)** - よく使うコマンド集

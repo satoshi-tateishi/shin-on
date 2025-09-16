@@ -1,0 +1,428 @@
+<?php
+
+namespace App\Http\Controllers\Master;
+
+use App\Http\Controllers\Concerns\HasCsvOperations;
+use App\Http\Controllers\Concerns\HasMasterOperations;
+use App\Http\Controllers\Concerns\HasSortableRecords;
+use App\Http\Controllers\Controller;
+use App\Models\Equipment;
+use App\Models\EquipmentCategory;
+use App\Models\EquipmentSubcategory;
+use App\Models\Location;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class EquipmentController extends Controller
+{
+    use HasCsvOperations, HasMasterOperations, HasSortableRecords;
+
+    public function index(Request $request): View
+    {
+        $query = Equipment::with(['category', 'subcategory', 'location']);
+        $query = $this->applyFilters($query, $request);
+
+        // カテゴリでのフィルター（サブカテゴリ経由）
+        if ($request->filled('category_id')) {
+            $query->whereHas('subcategory', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        }
+
+        // サブカテゴリでのフィルター
+        if ($request->filled('subcategory_id')) {
+            $query->where('subcategory_id', $request->subcategory_id);
+        }
+
+        // 場所でのフィルター
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->location_id);
+        }
+
+        // 状態でのフィルター
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $equipments = $query->paginate(200);
+        $categories = EquipmentCategory::ordered()->get();
+        $subcategories = EquipmentSubcategory::with('category')->ordered()->get();
+        $locations = Location::warehouses()->ordered()->get();
+
+        return view('master.equipments.index', compact('equipments', 'categories', 'subcategories', 'locations'));
+    }
+
+    public function create(): View
+    {
+        $categories = EquipmentCategory::ordered()->get();
+        $locations = Location::warehouses()->ordered()->get();
+
+        return view('master.equipments.create', compact('categories', 'locations'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'subcategory_id' => 'required|exists:equipment_subcategories,id',
+            'manufacturer' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'company_number' => 'nullable|string|max:50',
+            'management_type' => 'required|in:individual,quantity',
+            'quantity' => 'nullable|integer|min:1',
+            'unit' => 'nullable|in:台,個,本,箱,ケース,ラック,セット',
+            'model_number' => 'nullable|string|max:100',
+            'serial_number' => 'nullable|string|max:100',
+            'supplier' => 'nullable|string|max:255',
+            'purchase_date' => 'nullable|date',
+            'warranty_expiry' => 'nullable|date',
+            'price' => 'nullable|numeric|min:0',
+            'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
+            'location_id' => 'nullable|exists:locations,id',
+            'is_discard' => 'nullable|boolean',
+            'discard_at' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000',
+        ], [
+            'subcategory_id.required' => 'サブカテゴリは必須です。',
+            'subcategory_id.exists' => '選択されたサブカテゴリが存在しません。',
+            'name.required' => '機材名は必須です。',
+            'management_type.required' => '管理方式は必須です。',
+            'management_type.in' => '正しい管理方式を選択してください。',
+            'status.required' => '状態は必須です。',
+            'status.in' => '正しい状態を選択してください。',
+            'location_id.exists' => '選択された場所が存在しません。',
+        ]);
+
+        $validated['sort'] = $this->getNextSortOrder();
+        Equipment::create($validated);
+
+        return redirect()->route('master.equipments.index')
+            ->with('success', '機材を作成しました。');
+    }
+
+    public function show(Equipment $equipment): View
+    {
+        $equipment->load(['category', 'subcategory', 'location']);
+
+        return view('master.equipments.show', compact('equipment'));
+    }
+
+    public function edit(Equipment $equipment): View
+    {
+        $categories = EquipmentCategory::ordered()->get();
+        $subcategories = EquipmentSubcategory::where('category_id', $equipment->subcategory->category_id ?? null)->ordered()->get();
+        $locations = Location::warehouses()->ordered()->get();
+
+        return view('master.equipments.edit', compact('equipment', 'categories', 'subcategories', 'locations'));
+    }
+
+    public function update(Request $request, Equipment $equipment): RedirectResponse
+    {
+        $validated = $request->validate([
+            'subcategory_id' => 'required|exists:equipment_subcategories,id',
+            'manufacturer' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'company_number' => 'nullable|string|max:50',
+            'management_type' => 'required|in:individual,quantity',
+            'quantity' => 'nullable|integer|min:1',
+            'unit' => 'nullable|in:台,個,本,箱,ケース,ラック,セット',
+            'model_number' => 'nullable|string|max:100',
+            'serial_number' => 'nullable|string|max:100',
+            'supplier' => 'nullable|string|max:255',
+            'purchase_date' => 'nullable|date',
+            'warranty_expiry' => 'nullable|date',
+            'price' => 'nullable|numeric|min:0',
+            'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
+            'location_id' => 'nullable|exists:locations,id',
+            'is_discard' => 'nullable|boolean',
+            'discard_at' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000',
+        ], [
+            'subcategory_id.required' => 'サブカテゴリは必須です。',
+            'subcategory_id.exists' => '選択されたサブカテゴリが存在しません。',
+            'name.required' => '機材名は必須です。',
+            'management_type.required' => '管理方式は必須です。',
+            'management_type.in' => '正しい管理方式を選択してください。',
+            'status.required' => '状態は必須です。',
+            'status.in' => '正しい状態を選択してください。',
+            'location_id.exists' => '選択された場所が存在しません。',
+        ]);
+
+        $equipment->update($validated);
+
+        return redirect()->route('master.equipments.index')
+            ->with('success', '機材を更新しました。');
+    }
+
+    public function destroy(Equipment $equipment): RedirectResponse
+    {
+        try {
+            $equipment->delete();
+
+            return redirect()->route('equipments.index')
+                ->with('success', '機材を削除しました。');
+        } catch (\Exception $e) {
+            return redirect()->route('equipments.index')
+                ->with('error', '機材の削除に失敗しました: '.$e->getMessage());
+        }
+    }
+
+    public function getSubcategories(Request $request)
+    {
+        $subcategories = EquipmentSubcategory::where('category_id', $request->category_id)
+            ->ordered()
+            ->get(['id', 'name']);
+
+        return response()->json($subcategories);
+    }
+
+    protected function getModelClass(): string
+    {
+        return Equipment::class;
+    }
+
+    protected function getCsvHeaders(): array
+    {
+        return [
+            'subcategory_id', 'sort', 'manufacturer', 'name', 'company_number',
+            'management_type', 'quantity', 'unit', 'model_number', 'serial_number',
+            'supplier', 'purchase_date', 'warranty_expiry', 'price', 'status',
+            'location_id', 'is_discard', 'discard_at', 'notes', 'created_at', 'updated_at',
+        ];
+    }
+
+    protected function mapRecordToCsvRow($record): array
+    {
+        return [
+            $record->subcategory_id,
+            $record->sort,
+            $record->manufacturer,
+            $record->name,
+            $record->company_number,
+            $record->management_type,
+            $record->quantity,
+            $record->unit,
+            $record->model_number,
+            $record->serial_number,
+            $record->supplier,
+            $record->purchase_date?->format('Y-m-d'),
+            $record->warranty_expiry?->format('Y-m-d'),
+            $record->price,
+            $record->status,
+            $record->location_id,
+            $record->is_discard ? '1' : '0',
+            $record->discard_at?->format('Y-m-d H:i:s'),
+            $record->notes,
+            $record->created_at?->format('Y-m-d H:i:s'),
+            $record->updated_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    protected function mapCsvRowToRecord(array $headers, array $data): array
+    {
+        $recordData = [];
+
+        foreach ($headers as $index => $header) {
+            $value = $data[$index] ?? '';
+
+            switch ($header) {
+                case 'subcategory_id':
+                    $recordData['subcategory_id'] = ! empty($value) ? intval($value) : null;
+                    break;
+                case 'sort':
+                    $recordData['sort'] = intval($value ?: 0);
+                    break;
+                case 'manufacturer':
+                    $recordData['manufacturer'] = $value ?: null;
+                    break;
+                case 'name':
+                    $recordData['name'] = $value;
+                    break;
+                case 'company_number':
+                    $recordData['company_number'] = $value ?: null;
+                    break;
+                case 'management_type':
+                    $recordData['management_type'] = $value ?: null;
+                    break;
+                case 'quantity':
+                    $recordData['quantity'] = ! empty($value) ? intval($value) : null;
+                    break;
+                case 'unit':
+                    $recordData['unit'] = $value ?: null;
+                    break;
+                case 'model_number':
+                    $recordData['model_number'] = $value ?: null;
+                    break;
+                case 'serial_number':
+                    $recordData['serial_number'] = $value ?: null;
+                    break;
+                case 'supplier':
+                    $recordData['supplier'] = $value ?: null;
+                    break;
+                case 'purchase_date':
+                    $recordData['purchase_date'] = ! empty($value) ? $value : null;
+                    break;
+                case 'warranty_expiry':
+                    $recordData['warranty_expiry'] = ! empty($value) ? $value : null;
+                    break;
+                case 'price':
+                    $recordData['price'] = ! empty($value) ? floatval($value) : null;
+                    break;
+                case 'status':
+                    $recordData['status'] = $value ?: 'available';
+                    break;
+                case 'location_id':
+                    $recordData['location_id'] = ! empty($value) ? intval($value) : null;
+                    break;
+                case 'is_discard':
+                    $recordData['is_discard'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'discard_at':
+                    $recordData['discard_at'] = ! empty($value) ? $value : null;
+                    break;
+                case 'notes':
+                    $recordData['notes'] = $value ?: null;
+                    break;
+            }
+        }
+
+        return $recordData;
+    }
+
+    protected function getUniqueIdentifier(array $recordData): array
+    {
+        return ['name' => $recordData['name'], 'company_number' => $recordData['company_number']];
+    }
+
+    protected function getCsvFilename(string $type): string
+    {
+        $timestamp = now()->format('Ymd_His');
+
+        return "equipments_{$type}_{$timestamp}.csv";
+    }
+
+    protected function validateCsvRecord(array $recordData, int $lineNumber): bool
+    {
+        if (empty($recordData['name'])) {
+            throw new \Exception('機材名が入力されていません');
+        }
+        if (empty($recordData['subcategory_id']) || $recordData['subcategory_id'] <= 0) {
+            throw new \Exception('有効なサブカテゴリIDが入力されていません');
+        }
+        if (empty($recordData['location_id']) || $recordData['location_id'] <= 0) {
+            throw new \Exception('有効な場所IDが入力されていません');
+        }
+
+        // サブカテゴリの存在確認
+        if (! EquipmentSubcategory::where('id', $recordData['subcategory_id'])->exists()) {
+            throw new \Exception("サブカテゴリID {$recordData['subcategory_id']} が存在しません");
+        }
+
+        // 場所の存在確認
+        if (! Location::where('id', $recordData['location_id'])->exists()) {
+            throw new \Exception("場所ID {$recordData['location_id']} が存在しません");
+        }
+
+        // 状態の妥当性チェック
+        $validStatuses = ['available', 'in_use', 'maintenance', 'broken', 'retired'];
+        if (! in_array($recordData['status'], $validStatuses)) {
+            throw new \Exception("無効な状態です: {$recordData['status']}");
+        }
+
+        return true;
+    }
+
+    protected function getSortableColumns(): array
+    {
+        return ['name', 'model', 'serial_number', 'purchase_date', 'status', 'sort', 'created_at', 'updated_at'];
+    }
+
+    protected function applyFilters($query, Request $request)
+    {
+        // 基本フィルター（HasMasterOperationsから）
+        // 名前での検索
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $search = $request->search;
+                $q->where('name', 'LIKE', '%'.$search.'%')
+                    ->orWhere('model', 'LIKE', '%'.$search.'%')
+                    ->orWhere('serial_number', 'LIKE', '%'.$search.'%');
+            });
+        }
+
+        // ソート順
+        $sortBy = $request->get('sort_by', 'sort');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        if (in_array($sortBy, $this->getSortableColumns())) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            // デフォルトソート
+            $query->orderBy('sort')->orderBy('name');
+        }
+
+        // カテゴリでのフィルター（サブカテゴリ経由）
+        if ($request->filled('category_id')) {
+            $query->whereHas('subcategory', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        }
+
+        // サブカテゴリでのフィルター
+        if ($request->filled('subcategory_id')) {
+            $query->where('subcategory_id', $request->subcategory_id);
+        }
+
+        // 場所でのフィルター
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->location_id);
+        }
+
+        // 状態でのフィルター
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return $query;
+    }
+
+    /**
+     * CSV インポート（HasCsvOperationsトレイトをオーバーライド）
+     */
+    public function importCsv(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ], [
+            'csv_file.required' => 'CSVファイルを選択してください。',
+            'csv_file.mimes' => 'CSVファイルをアップロードしてください。',
+            'csv_file.max' => 'ファイルサイズは2MB以内にしてください。',
+        ]);
+
+        try {
+            $csvContent = file_get_contents($request->file('csv_file')->getPathname());
+            $result = $this->processCsvImport($csvContent);
+
+            if ($result['success']) {
+                return redirect()->back()->with('success',
+                    "CSVインポートが完了しました。{$result['imported']}件のデータを処理しました。");
+            } else {
+                $errorMessage = 'CSVインポートでエラーが発生しました。';
+                if (!empty($result['errors'])) {
+                    $errorMessage .= "\n\n詳細:\n" . implode("\n", $result['errors']);
+                }
+                return redirect()->back()
+                    ->with('error', $errorMessage)
+                    ->with('import_errors', $result['errors']);
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'CSVファイルの処理中にエラーが発生しました: '.$e->getMessage());
+        }
+    }
+
+}

@@ -2,6 +2,7 @@
 
 ## 📢 プロジェクト概要
 新規Laravel 12 + MySQL 8.0 プロジェクト「shin-on」のドキュメント構造です。
+日本語で応対してください。
 
 ## 🔗 ドキュメント構造
 
@@ -30,7 +31,7 @@
 
 ## ✅ 環境構築完了項目
 - ✅ Laravel 12 + MySQL 8.0（Docker）
-- ✅ Tailwind CSS v4
+- ✅ Tailwind CSS v4.1.13（CSS-first設定、パフォーマンス改善済み）
 - ✅ Laravel-Boost MCP
 - ✅ ポート設定（HTTP:8081, Vite:5174, MySQL:3307）
 

@@ -1,0 +1,586 @@
+<?php
+
+namespace App\Http\Controllers\Master;
+
+use App\Http\Controllers\Concerns\HasCsvOperations;
+use App\Http\Controllers\Concerns\HasMasterOperations;
+use App\Http\Controllers\Concerns\HasSortableRecords;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class UserController extends Controller
+{
+    use HasCsvOperations, HasMasterOperations, HasSortableRecords;
+
+    public function index(Request $request): View
+    {
+        $query = User::query();
+        $query = $this->applyFilters($query, $request);
+
+        $users = $query->paginate(50);
+
+        return view('master.users.index', compact('users'));
+    }
+
+    public function create(): View
+    {
+        // 管理者のみがユーザーを新規作成可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        return view('master.users.create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        // 管理者のみがユーザーを新規作成可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'role' => 'required|in:viewer,editor,admin',
+            'sort' => 'nullable|integer|min:0',
+            'affiliation' => 'required|in:employee,partner',
+            'furigana' => 'nullable|string|max:255',
+            'hired_at' => 'nullable|date',
+            'resigned_at' => 'nullable|date',
+            'birthday' => 'nullable|date',
+            'mobile_phone' => 'nullable|string|max:20',
+            'postal_code' => 'nullable|string|max:8',
+            'address' => 'nullable|string|max:500',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'notes' => 'nullable|string|max:1000',
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'is_staff' => 'nullable|boolean',
+            'is_designer' => 'nullable|boolean',
+            'is_driver' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+        ], [
+            'name.required' => '氏名は必須です。',
+            'email.required' => 'メールアドレスは必須です。',
+            'email.email' => 'メールアドレスの形式が正しくありません。',
+            'email.unique' => 'このメールアドレスは既に使用されています。',
+            'role.required' => '権限は必須です。',
+            'role.in' => '正しい権限を選択してください。',
+            'affiliation.required' => '所属は必須です。',
+            'affiliation.in' => '正しい所属を選択してください。',
+            'sort.integer' => 'ソート順は数値で入力してください。',
+            'sort.min' => 'ソート順は0以上で入力してください。',
+            'hired_at.date' => '入社日は正しい日付形式で入力してください。',
+            'resigned_at.date' => '退職日は正しい日付形式で入力してください。',
+            'birthday.date' => '生年月日は正しい日付形式で入力してください。',
+            'icon.image' => 'アイコンは画像ファイルである必要があります。',
+            'icon.mimes' => 'アイコンはJPEG、PNG、JPG、GIF、WebP形式のファイルをアップロードしてください。',
+            'icon.max' => 'アイコンのファイルサイズは2MB以下である必要があります。',
+        ]);
+
+        // Handle icon upload
+        if ($request->hasFile('icon')) {
+            $iconPath = $this->handleIconUpload($request->file('icon'));
+            $validated['icon'] = $iconPath;
+        }
+
+        // システム登録ユーザーはログイン不可なのでパスワードは設定しない
+        $validated['password'] = null;
+        $validated['lineworks_id'] = null;
+
+        // チェックボックスの値を適切に処理（チェックされていない場合はfalse）
+        $validated['is_staff'] = $request->has('is_staff');
+        $validated['is_designer'] = $request->has('is_designer');
+        $validated['is_driver'] = $request->has('is_driver');
+        $validated['is_active'] = $request->has('is_active');
+
+        // 新規作成時は在職状態フラグをデフォルトでfalse
+        $validated['is_on_leave'] = false;
+        $validated['is_resigned'] = false;
+
+        User::create($validated);
+
+        return redirect()->route('users.index')
+            ->with('success', 'ユーザーを作成しました。');
+    }
+
+    public function show(User $user): View
+    {
+        return view('master.users.show', compact('user'));
+    }
+
+    public function edit(User $user): View
+    {
+        // 管理者のみがユーザー情報を編集可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        return view('master.users.edit', compact('user'));
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        // 管理者のみがユーザー情報を編集可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+            'role' => 'required|in:viewer,editor,admin',
+            'sort' => 'nullable|integer|min:0',
+            'affiliation' => 'required|in:employee,partner',
+            'furigana' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
+            'hired_at' => 'nullable|date',
+            'resigned_at' => 'nullable|date',
+            'birthday' => 'nullable|date',
+            'phone' => 'nullable|string|max:20',
+            'mobile_phone' => 'nullable|string|max:20',
+            'postal_code' => 'nullable|string|max:8',
+            'address' => 'nullable|string|max:500',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'notes' => 'nullable|string|max:1000',
+            'is_staff' => 'nullable|boolean',
+            'is_designer' => 'nullable|boolean',
+            'is_driver' => 'nullable|boolean',
+            'is_on_leave' => 'nullable|boolean',
+            'is_resigned' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ], [
+            'name.required' => '氏名は必須です。',
+            'email.required' => 'メールアドレスは必須です。',
+            'email.email' => 'メールアドレスの形式が正しくありません。',
+            'email.unique' => 'このメールアドレスは既に使用されています。',
+            'role.required' => '権限は必須です。',
+            'role.in' => '正しい権限を選択してください。',
+            'affiliation.required' => '所属は必須です。',
+            'affiliation.in' => '正しい所属を選択してください。',
+            'sort.integer' => 'ソート順は数値で入力してください。',
+            'sort.min' => 'ソート順は0以上で入力してください。',
+            'hired_at.date' => '入社日は正しい日付形式で入力してください。',
+            'resigned_at.date' => '退職日は正しい日付形式で入力してください。',
+            'birthday.date' => '生年月日は正しい日付形式で入力してください。',
+            'icon.image' => 'アイコンは画像ファイルである必要があります。',
+            'icon.mimes' => 'アイコンはJPEG、PNG、JPG、GIF、WebP形式のファイルをアップロードしてください。',
+            'icon.max' => 'アイコンのファイルサイズは2MB以下である必要があります。',
+        ]);
+
+        // Handle icon upload
+        if ($request->hasFile('icon')) {
+            // Delete old icon if it exists
+            if ($user->icon && file_exists(public_path($user->icon))) {
+                unlink(public_path($user->icon));
+            }
+            $iconPath = $this->handleIconUpload($request->file('icon'));
+            $validated['icon'] = $iconPath;
+        }
+
+        // チェックボックスの値を適切に処理（チェックされていない場合はfalse）
+        $validated['is_staff'] = $request->has('is_staff');
+        $validated['is_designer'] = $request->has('is_designer');
+        $validated['is_driver'] = $request->has('is_driver');
+        $validated['is_on_leave'] = $request->has('is_on_leave');
+        $validated['is_resigned'] = $request->has('is_resigned');
+        $validated['is_active'] = $request->has('is_active');
+
+        $user->update($validated);
+
+        return redirect()->route('users.index')
+            ->with('success', 'ユーザー情報を更新しました。');
+    }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        // 管理者のみが削除可能、自分自身は削除不可
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        if ($user->id === auth()->user()->id) {
+            return redirect()->route('users.index')
+                ->with('error', '自分自身を削除することはできません。');
+        }
+
+        try {
+            $user->delete();
+
+            return redirect()->route('users.index')
+                ->with('success', 'ユーザーを削除しました。');
+        } catch (\Exception $e) {
+            return redirect()->route('users.index')
+                ->with('error', 'ユーザーの削除に失敗しました: '.$e->getMessage());
+        }
+    }
+
+    protected function getModelClass(): string
+    {
+        return User::class;
+    }
+
+    protected function getCsvHeaders(): array
+    {
+        return [
+            'sort', 'name', 'furigana', 'email', 'mobile_phone', 'birthday', 'hired_at', 'resigned_at',
+            'postal_code', 'address', 'emergency_contact_name', 'emergency_contact_phone', 'notes',
+            'affiliation', 'role', 'is_designer', 'is_staff', 'is_driver', 'is_on_leave',
+            'is_resigned', 'is_active', 'created_at', 'updated_at',
+        ];
+    }
+
+    protected function mapRecordToCsvRow($record): array
+    {
+        return [
+            $record->sort,
+            $record->name,
+            $record->furigana,
+            $record->email,
+            $record->mobile_phone,
+            $record->birthday?->format('Y-m-d'),
+            $record->hired_at?->format('Y-m-d'),
+            $record->resigned_at?->format('Y-m-d'),
+            $record->postal_code,
+            $record->address,
+            $record->emergency_contact_name,
+            $record->emergency_contact_phone,
+            $record->notes,
+            $record->affiliation,
+            $record->role,
+            $record->is_designer ? '1' : '0',
+            $record->is_staff ? '1' : '0',
+            $record->is_driver ? '1' : '0',
+            $record->is_on_leave ? '1' : '0',
+            $record->is_resigned ? '1' : '0',
+            $record->is_active ? '1' : '0',
+            $record->created_at?->format('Y-m-d H:i:s'),
+            $record->updated_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    protected function mapCsvRowToRecord(array $headers, array $data): array
+    {
+        $recordData = [];
+
+        foreach ($headers as $index => $header) {
+            $value = $data[$index] ?? '';
+
+            switch ($header) {
+                case 'sort':
+                    $recordData['sort'] = (int) $value ?: null;
+                    break;
+                case 'name':
+                    $recordData['name'] = $value;
+                    break;
+                case 'furigana':
+                    $recordData['furigana'] = $value ?: null;
+                    break;
+                case 'email':
+                    $recordData['email'] = $value;
+                    break;
+                case 'role':
+                    $recordData['role'] = $value;
+                    break;
+                case 'affiliation':
+                    $recordData['affiliation'] = $value;
+                    break;
+                case 'hired_at':
+                    $recordData['hired_at'] = $value ? date('Y-m-d', strtotime($value)) : null;
+                    break;
+                case 'birthday':
+                    $recordData['birthday'] = $value ? date('Y-m-d', strtotime($value)) : null;
+                    break;
+                case 'mobile_phone':
+                    $recordData['mobile_phone'] = $value ?: null;
+                    break;
+                case 'postal_code':
+                    $recordData['postal_code'] = $value ?: null;
+                    break;
+                case 'address':
+                    $recordData['address'] = $value ?: null;
+                    break;
+                case 'emergency_contact_name':
+                    $recordData['emergency_contact_name'] = $value ?: null;
+                    break;
+                case 'emergency_contact_phone':
+                    $recordData['emergency_contact_phone'] = $value ?: null;
+                    break;
+                case 'notes':
+                    $recordData['notes'] = $value ?: null;
+                    break;
+                case 'is_staff':
+                    $recordData['is_staff'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_designer':
+                    $recordData['is_designer'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_driver':
+                    $recordData['is_driver'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_on_leave':
+                    $recordData['is_on_leave'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_resigned':
+                    $recordData['is_resigned'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_active':
+                    $recordData['is_active'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+            }
+        }
+
+        // デフォルト値の設定
+        $recordData['lineworks_id'] = null;
+        $recordData['lineworks_token'] = null;
+        $recordData['lineworks_refresh_token'] = null;
+
+        return $recordData;
+    }
+
+    protected function getUniqueIdentifier(array $recordData): array
+    {
+        return ['email' => $recordData['email']];
+    }
+
+    protected function getCsvFilename(string $type): string
+    {
+        $timestamp = now()->format('Ymd_His');
+
+        return "users_{$type}_{$timestamp}.csv";
+    }
+
+    protected function validateCsvRecord(array $recordData, int $lineNumber): bool
+    {
+        // 必須項目のバリデーション
+        if (empty($recordData['name'])) {
+            throw new \Exception('name は必須です');
+        }
+
+        if (empty($recordData['email'])) {
+            throw new \Exception('email は必須です');
+        }
+
+        if (! filter_var($recordData['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new \Exception('email の形式が正しくありません');
+        }
+
+        if (! in_array($recordData['role'] ?? '', ['admin', 'editor', 'viewer'])) {
+            throw new \Exception('role は「admin」「editor」「viewer」のいずれかを指定してください');
+        }
+
+        if (! in_array($recordData['affiliation'] ?? '', ['employee', 'partner'])) {
+            throw new \Exception('affiliation は「employee」「partner」のいずれかを指定してください');
+        }
+
+        return true;
+    }
+
+    protected function getSortableColumns(): array
+    {
+        return ['sort', 'name', 'email', 'role', 'hired_at', 'created_at', 'updated_at'];
+    }
+
+    protected function applyFilters($query, Request $request)
+    {
+        // 基本フィルター（HasMasterOperationsから）
+        // 名前・メールでの検索
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'LIKE', '%'.$request->search.'%')
+                    ->orWhere('email', 'LIKE', '%'.$request->search.'%');
+            });
+        }
+
+        // ロールでのフィルター
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // 職種でのフィルター
+        if ($request->filled('job_type')) {
+            switch ($request->job_type) {
+                case 'staff':
+                    $query->where('is_staff', true);
+                    break;
+                case 'designer':
+                    $query->where('is_designer', true);
+                    break;
+                case 'driver':
+                    $query->where('is_driver', true);
+                    break;
+            }
+        }
+
+        // 状態でのフィルター（デフォルトは在職中）
+        $status = $request->get('status', 'active');
+        switch ($status) {
+            case 'active':
+                $query->where('is_resigned', false)->where('is_on_leave', false);
+                break;
+            case 'on_leave':
+                $query->where('is_on_leave', true);
+                break;
+            case 'resigned':
+                $query->where('is_resigned', true);
+                break;
+        }
+
+        // ソート順
+        $sortBy = $request->get('sort_by', 'sort');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        if (in_array($sortBy, $this->getSortableColumns())) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('sort')->orderBy('name');
+        }
+
+        return $query;
+    }
+
+    public function templateCsv()
+    {
+        // 管理者のみがテンプレートダウンロード可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        $headers = $this->getCsvHeaders();
+        $filename = $this->getCsvFilename('template');
+
+        $csvData = "\xEF\xBB\xBF".implode(',', $headers)."\n";
+
+        return response($csvData)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"")
+            ->header('Content-Transfer-Encoding', 'binary');
+    }
+
+    public function exportCsv()
+    {
+        // 管理者のみがCSVエクスポート可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        $modelClass = $this->getModelClass();
+        $data = $modelClass::query()
+            ->when(method_exists($modelClass, 'scopeOrdered'), function ($query) {
+                $query->ordered();
+            })
+            ->get();
+
+        $csvData = $this->prepareCsvExportData($data);
+        $filename = $this->getCsvFilename('export');
+
+        return response($csvData)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"")
+            ->header('Content-Transfer-Encoding', 'binary');
+    }
+
+    public function importCsv(Request $request): RedirectResponse
+    {
+        // 管理者のみがCSVインポート可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ], [
+            'csv_file.required' => 'CSVファイルを選択してください。',
+            'csv_file.mimes' => 'CSVファイルをアップロードしてください。',
+            'csv_file.max' => 'ファイルサイズは2MB以内にしてください。',
+        ]);
+
+        try {
+            $csvContent = file_get_contents($request->file('csv_file')->getPathname());
+            $result = $this->processCsvImport($csvContent);
+
+            if ($result['success']) {
+                return redirect()->back()->with('success',
+                    "CSVインポートが完了しました。{$result['imported']}件のデータを処理しました。");
+            } else {
+                return redirect()->back()->with('error',
+                    'CSVインポートでエラーが発生しました: '.implode(', ', $result['errors']));
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'CSVファイルの処理中にエラーが発生しました: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Handle icon upload
+     */
+    private function handleIconUpload($iconFile): string
+    {
+        // Create storage directory if it doesn't exist
+        $uploadPath = public_path('storage/icons/users');
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+
+        // Generate unique filename
+        $extension = $iconFile->getClientOriginalExtension();
+        $filename = uniqid('user_icon_') . '.' . $extension;
+
+        // Move the uploaded file
+        $iconFile->move($uploadPath, $filename);
+
+        return '/storage/icons/users/' . $filename;
+    }
+
+    /**
+     * Remove user icon
+     */
+    public function removeIcon(User $user): RedirectResponse
+    {
+        // 管理者のみがアイコン削除可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '権限がありません。');
+        }
+
+        if ($user->icon && file_exists(public_path($user->icon))) {
+            unlink(public_path($user->icon));
+        }
+
+        $user->update(['icon' => null]);
+
+        return redirect()->back()->with('success', 'アイコンを削除しました。');
+    }
+
+    /**
+     * Update sort order via drag and drop
+     */
+    public function updateSort(Request $request)
+    {
+        // 管理者のみがソート順更新可能
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => '権限がありません。'], 403);
+        }
+
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        try {
+            foreach ($request->user_ids as $index => $userId) {
+                User::where('id', $userId)->update(['sort' => $index + 1]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: ' . $e->getMessage()], 500);
+        }
+    }
+}

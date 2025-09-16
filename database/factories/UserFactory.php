@@ -3,8 +3,6 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -24,11 +22,31 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'sort' => fake()->numberBetween(0, 100),
             'name' => fake()->name(),
+            'furigana' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'lineworks_id' => null,
+            'lineworks_token' => null,
+            'lineworks_refresh_token' => null,
+            'icon' => null,
+            'mobile_phone' => fake()->phoneNumber(),
+            'is_active' => true,
+            'postal_code' => fake()->postcode(),
+            'hired_at' => fake()->date(),
+            'resigned_at' => null,
+            'birthday' => fake()->date(),
+            'address' => fake()->address(),
+            'emergency_contact_name' => fake()->name(),
+            'emergency_contact_phone' => fake()->phoneNumber(),
+            'notes' => fake()->text(100),
+            'is_designer' => fake()->boolean(),
+            'is_staff' => fake()->boolean(),
+            'is_driver' => fake()->boolean(),
+            'is_on_leave' => false,
+            'is_resigned' => false,
+            'role' => fake()->randomElement(['admin', 'editor', 'viewer']),
+            'affiliation' => fake()->randomElement(['employee', 'partner']),
         ];
     }
 
