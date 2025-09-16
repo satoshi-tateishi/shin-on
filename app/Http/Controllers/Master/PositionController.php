@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Position;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class PositionController extends Controller
@@ -184,95 +183,6 @@ class PositionController extends Controller
         return true;
     }
 
-    /**
-     * CSV Template Download
-     */
-    public function templateCsv()
-    {
-        \Log::info('PositionController::templateCsv called');
-
-        // 編集者・管理者のみがテンプレートダウンロード可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
-            \Log::error('Permission denied for user: ' . auth()->user()->role);
-            abort(403, '権限がありません。');
-        }
-
-        try {
-            $headers = $this->getCsvHeaders();
-            $filename = $this->getCsvFilename('template');
-
-            $csvData = "\xEF\xBB\xBF".implode(',', $headers)."\n";
-
-            \Log::info('CSV template generated successfully');
-            return response($csvData)
-                ->header('Content-Type', 'text/csv; charset=UTF-8')
-                ->header('Content-Disposition', "attachment; filename=\"{$filename}\"")
-                ->header('Content-Transfer-Encoding', 'binary');
-        } catch (\Exception $e) {
-            \Log::error('CSV template error: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * CSV Export
-     */
-    public function exportCsv()
-    {
-        // 編集者・管理者のみがCSVエクスポート可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
-            abort(403, '権限がありません。');
-        }
-
-        $modelClass = $this->getModelClass();
-        $data = $modelClass::query()
-            ->when(method_exists($modelClass, 'scopeOrdered'), function ($query) {
-                $query->ordered();
-            })
-            ->get();
-
-        $csvData = $this->prepareCsvExportData($data);
-        $filename = $this->getCsvFilename('export');
-
-        return response($csvData)
-            ->header('Content-Type', 'text/csv; charset=UTF-8')
-            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"")
-            ->header('Content-Transfer-Encoding', 'binary');
-    }
-
-    /**
-     * CSV Import
-     */
-    public function importCsv(Request $request): RedirectResponse
-    {
-        // 編集者・管理者のみがCSVインポート可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
-            abort(403, '権限がありません。');
-        }
-
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
-        ], [
-            'csv_file.required' => 'CSVファイルを選択してください。',
-            'csv_file.mimes' => 'CSVファイルをアップロードしてください。',
-            'csv_file.max' => 'ファイルサイズは2MB以内にしてください。',
-        ]);
-
-        try {
-            $csvContent = file_get_contents($request->file('csv_file')->getPathname());
-            $result = $this->processCsvImport($csvContent);
-
-            if ($result['success']) {
-                return redirect()->back()->with('success',
-                    "CSVインポートが完了しました。{$result['imported']}件のデータを処理しました。");
-            } else {
-                return redirect()->back()->with('error',
-                    'CSVインポートでエラーが発生しました: '.implode(', ', $result['errors']));
-            }
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'CSVファイルの処理中にエラーが発生しました: '.$e->getMessage());
-        }
-    }
 
     /**
      * Update sort order via drag and drop

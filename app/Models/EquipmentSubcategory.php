@@ -49,15 +49,24 @@ class EquipmentSubcategory extends Model
         return $query->where('category_id', $categoryId);
     }
 
-    // 表示名取得
+    // 表示名取得（N+1クエリを避けるため条件付き）
     public function getDisplayNameAttribute(): string
     {
-        return $this->category->name.' > '.$this->name;
+        // リレーションがロード済みの場合のみ使用、そうでない場合はIDを表示
+        if ($this->relationLoaded('category') && $this->category) {
+            return $this->category->name.' > '.$this->name;
+        }
+        return $this->name.' (ID: '.$this->category_id.')';
     }
 
-    // 機材数を取得
+    // 機材数を取得（withCount使用を推奨）
     public function getEquipmentsCountAttribute(): int
     {
+        // equipments_countがすでにロードされている場合はそれを使用
+        if (isset($this->attributes['equipments_count'])) {
+            return $this->attributes['equipments_count'];
+        }
+        // そうでない場合はクエリ実行（パフォーマンス注意）
         return $this->equipments()->count();
     }
 }

@@ -11,7 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // セキュリティヘッダーミドルウェアをグローバルに適用
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // API レート制限を強化
+        $middleware->throttleRequests('api')->with(60, 1);
+
+        // Webルートの一般的な保護を強化
+        $middleware->throttleRequests('web')->with(1000, 1);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

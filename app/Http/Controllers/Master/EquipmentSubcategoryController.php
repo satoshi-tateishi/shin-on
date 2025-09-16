@@ -237,39 +237,4 @@ class EquipmentSubcategoryController extends Controller
         return ['name', 'sort', 'created_at', 'updated_at', 'equipments_count'];
     }
 
-    protected function applyFilters($query, Request $request)
-    {
-        // 基本フィルター（HasMasterOperationsから）
-        // 名前での検索
-        if ($request->filled('search')) {
-            $query->where('name', 'LIKE', '%'.$request->search.'%');
-        }
-
-        // 有効/無効フィルター
-        if ($request->filled('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
-        }
-
-        // ソート順
-        $sortBy = $request->get('sort_by', 'sort');
-        $sortOrder = $request->get('sort_order', 'asc');
-
-        if (in_array($sortBy, $this->getSortableColumns())) {
-            $query->orderBy($sortBy, $sortOrder);
-        } else {
-            // デフォルトソート
-            if (method_exists($query->getModel(), 'scopeOrdered')) {
-                $query->ordered();
-            } else {
-                $query->orderBy('sort')->orderBy('name');
-            }
-        }
-
-        // カテゴリでのフィルター
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        return $query;
-    }
 }

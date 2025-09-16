@@ -106,6 +106,24 @@ class Equipment extends Model
         return $query->where('management_type', 'quantity');
     }
 
+    // スコープ: 必要なリレーションを事前ロード
+    public function scopeWithRelations($query)
+    {
+        return $query->with(['subcategory.category', 'location']);
+    }
+
+    // スコープ: 検索用に最適化されたクエリ
+    public function scopeForIndex($query)
+    {
+        return $query->withRelations()->ordered();
+    }
+
+    // スコープ: 特定の状態の機材
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
     // 表示名取得
     public function getDisplayNameAttribute(): string
     {

@@ -12,12 +12,8 @@ use App\Models\EquipmentSubcategory;
 use App\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class EquipmentController extends Controller
 {
@@ -25,35 +21,25 @@ class EquipmentController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Equipment::with(['category', 'subcategory', 'location']);
-        $query = $this->applyFilters($query, $request);
+        $query = Equipment::forIndex();
 
-        // カテゴリでのフィルター（サブカテゴリ経由）
-        if ($request->filled('category_id')) {
-            $query->whereHas('subcategory', function ($q) use ($request) {
-                $q->where('category_id', $request->category_id);
-            });
-        }
-
-        // サブカテゴリでのフィルター
-        if ($request->filled('subcategory_id')) {
-            $query->where('subcategory_id', $request->subcategory_id);
-        }
-
-        // 場所でのフィルター
-        if ($request->filled('location_id')) {
-            $query->where('location_id', $request->location_id);
-        }
-
-        // 状態でのフィルター
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        // Equipment固有のフィルターを適用（検索、ソート、カテゴリ等すべて含む）
+        $this->applyEquipmentFilters($query, $request);
 
         $equipments = $query->paginate(200);
-        $categories = EquipmentCategory::ordered()->get();
-        $subcategories = EquipmentSubcategory::with('category')->ordered()->get();
-        $locations = Location::warehouses()->ordered()->get();
+
+        // パフォーマンス向上のためマスターデータをキャッシュ（30分）
+        $categories = Cache::remember('equipment_categories', 1800, function () {
+            return EquipmentCategory::ordered()->get();
+        });
+
+        $subcategories = Cache::remember('equipment_subcategories_with_category', 1800, function () {
+            return EquipmentSubcategory::with('category')->ordered()->get();
+        });
+
+        $locations = Cache::remember('warehouse_locations', 1800, function () {
+            return Location::warehouses()->ordered()->get();
+        });
 
         return view('master.equipments.index', compact('equipments', 'categories', 'subcategories', 'locations'));
     }
@@ -337,33 +323,20 @@ class EquipmentController extends Controller
         return true;
     }
 
-    protected function getSortableColumns(): array
+    /**
+     * Equipment統合フィルターメソッド
+     */
+    protected function applyEquipmentFilters($query, Request $request): void
     {
-        return ['name', 'model', 'serial_number', 'purchase_date', 'status', 'sort', 'created_at', 'updated_at'];
-    }
-
-    protected function applyFilters($query, Request $request)
-    {
-        // 基本フィルター（HasMasterOperationsから）
-        // 名前での検索
+        // 検索機能
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $search = $request->search;
                 $q->where('name', 'LIKE', '%'.$search.'%')
-                    ->orWhere('model', 'LIKE', '%'.$search.'%')
-                    ->orWhere('serial_number', 'LIKE', '%'.$search.'%');
+                    ->orWhere('model_number', 'LIKE', '%'.$search.'%')
+                    ->orWhere('serial_number', 'LIKE', '%'.$search.'%')
+                    ->orWhere('company_number', 'LIKE', '%'.$search.'%');
             });
-        }
-
-        // ソート順
-        $sortBy = $request->get('sort_by', 'sort');
-        $sortOrder = $request->get('sort_order', 'asc');
-
-        if (in_array($sortBy, $this->getSortableColumns())) {
-            $query->orderBy($sortBy, $sortOrder);
-        } else {
-            // デフォルトソート
-            $query->orderBy('sort')->orderBy('name');
         }
 
         // カテゴリでのフィルター（サブカテゴリ経由）
@@ -388,7 +361,25 @@ class EquipmentController extends Controller
             $query->where('status', $request->status);
         }
 
-        return $query;
+        // ソート処理
+        $sortBy = $request->get('sort_by', 'sort');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        if (in_array($sortBy, $this->getSortableColumns())) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('sort')->orderBy('name');
+        }
+    }
+
+    protected function getSortableColumns(): array
+    {
+        return ['name', 'model_number', 'serial_number', 'purchase_date', 'status', 'sort', 'created_at', 'updated_at'];
+    }
+
+    protected function getModelClass(): string
+    {
+        return Equipment::class;
     }
 
     /**
