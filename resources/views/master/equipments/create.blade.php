@@ -188,10 +188,10 @@
                     @enderror
                 </div>
 
-                <!-- 仕入先 -->
+                <!-- 購入先 -->
                 <div>
                     <label for="supplier" class="block text-sm font-medium text-gray-700 mb-2">
-                        仕入先
+                        購入先
                     </label>
                     <input type="text" name="supplier" id="supplier" value="{{ old('supplier') }}"
                            class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500

@@ -54,7 +54,7 @@ trait HasSortableRecords
      */
     protected function getNextSortOrder(): int
     {
-        return $this->getMaxSortOrder() + 10;
+        return $this->getMaxSortOrder() + 1;
     }
 
     /**

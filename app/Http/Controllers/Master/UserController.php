@@ -18,9 +18,9 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $query = User::query();
-        $query = $this->applyFilters($query, $request);
+        $query = $this->applyUserFilters($query, $request);
 
-        $users = $query->paginate(50);
+        $users = $query->get();
 
         return view('master.users.index', compact('users'));
     }
@@ -388,8 +388,6 @@ class UserController extends Controller
         return ['sort', 'name', 'email', 'role', 'hired_at', 'created_at', 'updated_at'];
     }
 
-
-
     /**
      * Handle icon upload
      */
@@ -397,18 +395,18 @@ class UserController extends Controller
     {
         // Create storage directory if it doesn't exist
         $uploadPath = public_path('storage/icons/users');
-        if (!file_exists($uploadPath)) {
+        if (! file_exists($uploadPath)) {
             mkdir($uploadPath, 0755, true);
         }
 
         // Generate unique filename
         $extension = $iconFile->getClientOriginalExtension();
-        $filename = uniqid('user_icon_') . '.' . $extension;
+        $filename = uniqid('user_icon_').'.'.$extension;
 
         // Move the uploaded file
         $iconFile->move($uploadPath, $filename);
 
-        return '/storage/icons/users/' . $filename;
+        return '/storage/icons/users/'.$filename;
     }
 
     /**
@@ -428,6 +426,52 @@ class UserController extends Controller
         $user->update(['icon' => null]);
 
         return redirect()->back()->with('success', 'アイコンを削除しました。');
+    }
+
+    /**
+     * ユーザー専用のフィルター機能
+     */
+    protected function applyUserFilters($query, Request $request)
+    {
+        // ステータスフィルター
+        $status = $request->get('status', 'active');
+        switch ($status) {
+            case 'active':
+                $query->where('is_resigned', false)->where('is_on_leave', false);
+                break;
+            case 'on_leave':
+                $query->where('is_on_leave', true);
+                break;
+            case 'resigned':
+                $query->where('is_resigned', true);
+                break;
+            case 'all':
+                // フィルターなし（すべて表示）
+                break;
+        }
+
+        // 名前での検索
+        if ($request->filled('search')) {
+            $query->where('name', 'LIKE', '%'.$request->search.'%');
+        }
+
+        // ソート順
+        if ($status === 'all') {
+            // 「すべて」選択時のみソート機能を有効にする
+            $sortBy = $request->get('sort_by', 'sort');
+            $sortOrder = $request->get('sort_order', 'asc');
+
+            if (in_array($sortBy, $this->getSortableColumns())) {
+                $query->orderBy($sortBy, $sortOrder);
+            } else {
+                $query->orderBy('sort');
+            }
+        } else {
+            // その他のフィルターではsortカラム順でソート
+            $query->orderBy('sort');
+        }
+
+        return $query;
     }
 
     /**
@@ -452,7 +496,7 @@ class UserController extends Controller
 
             return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: '.$e->getMessage()], 500);
         }
     }
 }

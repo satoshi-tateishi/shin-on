@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "dev:all": "concurrently \"npm run dev\" \"echo 'Vite server started automatically'\"",
+        "start": "concurrently \"npm run dev\" \"echo 'Development environment ready'\""
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.0.0",

@@ -127,4 +127,12 @@ class User extends Authenticatable
             default => '不明',
         };
     }
+
+    /**
+     * 報告した修理記録との関連
+     */
+    public function reportedRepairs(): HasMany
+    {
+        return $this->hasMany(RepairRecord::class, 'reported_by');
+    }
 }

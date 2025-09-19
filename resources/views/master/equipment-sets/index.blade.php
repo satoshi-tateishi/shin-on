@@ -3,13 +3,12 @@
 @section('title', '機材セットマスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">マスタ管理</span> > <span class="text-gray-800">機材セット</span>
+    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材セットマスタ</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材セット管理</h1>
-        <p class="mt-1 text-sm text-gray-600">機材セットを管理します。</p>
+        <h1 class="text-3xl font-bold text-gray-900">機材セットマスタ</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
@@ -54,39 +53,22 @@
 
 @section('content')
     <div class="p-6">
-        <!-- Search and Filters -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">検索</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="セット名で検索"
-                           class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">有効状態</label>
-                    <select name="is_active" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">すべて</option>
-                        <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>有効のみ</option>
-                        <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>無効のみ</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ソート</label>
-                    <select name="sort_by" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="sort" {{ request('sort_by') == 'sort' ? 'selected' : '' }}>ソート順</option>
-                        <option value="name" {{ request('sort_by') == 'name' ? 'selected' : '' }}>名前</option>
-                        <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>作成日</option>
-                    </select>
-                </div>
-
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
-                        検索
-                    </button>
-                </div>
-            </form>
+        <!-- Status Filter Buttons -->
+        <div class="mb-6">
+            <div class="flex space-x-4">
+                <a href="{{ route('master.equipment-sets.index', ['is_active' => '1']) }}"
+                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active', '1') == '1' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
+                    有効
+                </a>
+                <a href="{{ route('master.equipment-sets.index', ['is_active' => '0']) }}"
+                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active') == '0' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
+                    無効
+                </a>
+                <a href="{{ route('master.equipment-sets.index') }}"
+                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active') === null ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
+                    すべて
+                </a>
+            </div>
         </div>
 
         <!-- Results Table -->
@@ -96,83 +78,52 @@
                     <thead class="bg-gray-50">
                         <tr>
                             @if(in_array(auth()->user()->role, ['editor', 'admin']))
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">順序</th>
+                                <th class="pl-6 pr-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">順序</th>
                             @endif
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ソート順
+                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                ソート
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 セット名
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                説明
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 状態
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                作成日
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                操作
                             </th>
                         </tr>
                     </thead>
                     <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
                         @foreach($equipmentSets as $equipmentSet)
-                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif" data-id="{{ $equipmentSet->id }}">
+                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(!$equipmentSet->is_active) bg-red-50 opacity-75 @endif"
+                                data-id="{{ $equipmentSet->id }}"
+                                @if(!in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" style="cursor: pointer;" @endif>
                                 @if(in_array(auth()->user()->role, ['editor', 'admin']))
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <td class="pl-6 pr-2 py-2 whitespace-nowrap text-center">
                                         <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $equipmentSet->id }}
+                                <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
+                                    @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                    {{ $equipmentSet->sort ?? '-' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $equipmentSet->sort }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">
+                                <td class="px-6 py-2 whitespace-nowrap @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
+                                    @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                    <div class="text-sm font-medium text-gray-900 @if(!$equipmentSet->is_active) line-through text-gray-500 @endif">
                                         {{ $equipmentSet->name }}
                                     </div>
+                                    @if($equipmentSet->description)
+                                        <div class="text-sm text-gray-500">
+                                            {{ Str::limit($equipmentSet->description, 50) }}
+                                        </div>
+                                    @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ Str::limit($equipmentSet->description, 50) ?: '---' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-2 whitespace-nowrap @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
+                                    @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                         {{ $equipmentSet->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $equipmentSet->is_active ? '有効' : '無効' }}
                                     </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $equipmentSet->created_at->format('Y-m-d') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <a href="{{ route('master.equipment-sets.show', $equipmentSet) }}"
-                                           class="text-blue-600 hover:text-blue-900">詳細</a>
-
-                                        @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                                            <a href="{{ route('master.equipment-sets.edit', $equipmentSet) }}"
-                                               class="text-indigo-600 hover:text-indigo-900">編集</a>
-                                        @endif
-
-                                        @if(auth()->user()->role === 'admin')
-                                            <form method="POST" action="{{ route('master.equipment-sets.destroy', $equipmentSet) }}"
-                                                  class="inline" onsubmit="return confirm('本当に削除しますか？')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900">削除</button>
-                                            </form>
-                                        @endif
-                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -180,17 +131,14 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $equipmentSets->appends(request()->query())->links() }}
             </div>
         @else
             <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                    <path d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.713-3.714M14 40v-4c0-1.313.253-2.566.713-3.714m0 0A10.003 10.003 0 0124 26c4.21 0 7.813 2.602 9.288 6.286M30 14a6 6 0 11-12 0 6 6 0 0112 0zm12 6a4 4 0 11-8 0 4 4 0 018 0zm-28 0a4 4 0 11-8 0 4 4 0 018 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">データがありません</h3>
-                <p class="mt-1 text-sm text-gray-500">検索条件を変更するか、新しい機材セットを作成してください。</p>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">機材セットが見つかりません</h3>
+                <p class="mt-1 text-sm text-gray-500">フィルター条件を変更するか、新しい機材セットを作成してください。</p>
                 @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
                     <div class="mt-6">
                         <a href="{{ route('master.equipment-sets.create') }}"
@@ -263,7 +211,11 @@
 
                     // ソート順をサーバーに送信
                     function updateSortOrder() {
-                        const equipmentSetIds = Array.from(tbody.querySelectorAll('.sortable-row')).map(row => row.dataset.id);
+                        const rows = Array.from(tbody.querySelectorAll('.sortable-row'));
+                        const items = rows.map((row, index) => ({
+                            id: parseInt(row.dataset.id),
+                            sort: index + 1
+                        }));
 
                         fetch('{{ route('master.equipment-sets.update-sort') }}', {
                             method: 'POST',
@@ -272,7 +224,7 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
                             body: JSON.stringify({
-                                equipment_set_ids: equipmentSetIds
+                                items: items
                             })
                         })
                         .then(response => response.json())
@@ -280,7 +232,7 @@
                             if (data.success) {
                                 // ソート番号の表示を更新
                                 tbody.querySelectorAll('.sortable-row').forEach((row, index) => {
-                                    const sortCell = row.querySelector('td:nth-child({{ in_array(auth()->user()->role, ["editor", "admin"]) ? "3" : "2" }})');
+                                    const sortCell = row.querySelector('td:nth-child({{ in_array(auth()->user()->role, ["editor", "admin"]) ? "2" : "1" }})');
                                     if (sortCell) {
                                         sortCell.textContent = index + 1;
                                     }

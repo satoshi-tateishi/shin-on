@@ -3,7 +3,7 @@
 @section('title', '機材セット編集')
 
 @section('breadcrumb')
-    > <a href="{{ route('equipment-sets.index') }}" class="text-blue-600 hover:text-blue-800">機材セット</a>
+    > <a href="{{ route('equipment-sets.index') }}" class="text-blue-600 hover:text-blue-800">機材セットマスタ</a>
     > <span class="text-gray-800">{{ $equipmentSet->name }}</span>
     > <span class="text-gray-800">編集</span>
 @endsection

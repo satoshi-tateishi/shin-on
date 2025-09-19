@@ -56,6 +56,7 @@ class EquipmentSubcategory extends Model
         if ($this->relationLoaded('category') && $this->category) {
             return $this->category->name.' > '.$this->name;
         }
+
         return $this->name.' (ID: '.$this->category_id.')';
     }
 
@@ -66,6 +67,7 @@ class EquipmentSubcategory extends Model
         if (isset($this->attributes['equipments_count'])) {
             return $this->attributes['equipments_count'];
         }
+
         // そうでない場合はクエリ実行（パフォーマンス注意）
         return $this->equipments()->count();
     }

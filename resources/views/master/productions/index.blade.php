@@ -153,9 +153,6 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $productions->appends(request()->query())->links() }}
             </div>
         @else
             <div class="text-center py-12">

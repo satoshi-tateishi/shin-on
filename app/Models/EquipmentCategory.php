@@ -13,12 +13,14 @@ class EquipmentCategory extends Model
     protected $fillable = [
         'sort',
         'name',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
             'sort' => 'integer',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -32,6 +34,12 @@ class EquipmentCategory extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort')->orderBy('name');
+    }
+
+    // スコープ: 有効なレコードのみ
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 
     // 表示名取得

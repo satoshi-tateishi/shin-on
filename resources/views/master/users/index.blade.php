@@ -56,6 +56,10 @@
         <!-- Status Filter Buttons -->
         <div class="mb-6">
             <div class="flex space-x-4">
+                <a href="{{ route('master.users.index', ['status' => 'all']) }}"
+                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('status') == 'all' ? 'bg-gray-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
+                    すべて
+                </a>
                 <a href="{{ route('master.users.index', ['status' => 'active']) }}"
                    class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('status', 'active') == 'active' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
                     在職中
@@ -77,12 +81,14 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            @if(auth()->user()->role === 'admin')
+                            @if(auth()->user()->role === 'admin' && request('status') === 'all')
                                 <th class="pl-6 pr-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">順序</th>
                             @endif
-                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                ソート
-                            </th>
+                            @if(request('status') === 'all')
+                                <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                    ソート
+                                </th>
+                            @endif
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 氏名
                             </th>
@@ -99,17 +105,19 @@
                     </thead>
                     <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
                         @foreach($users as $user)
-                            <tr class="hover:bg-gray-50 @if(auth()->user()->role === 'admin') sortable-row @endif @if($user->is_resigned) bg-red-50 opacity-75 @elseif($user->is_on_leave) bg-yellow-50 @endif" data-id="{{ $user->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.users.show', $user) }}'" style="cursor: pointer;" @endif>
-                                @if(auth()->user()->role === 'admin')
+                            <tr class="hover:bg-gray-50 @if(auth()->user()->role === 'admin' && request('status') === 'all') sortable-row @endif @if($user->is_resigned) bg-red-50 opacity-75 @elseif($user->is_on_leave) bg-yellow-50 @endif" data-id="{{ $user->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.users.show', $user) }}'" style="cursor: pointer;" @endif>
+                                @if(auth()->user()->role === 'admin' && request('status') === 'all')
                                     <td class="pl-6 pr-2 py-2 whitespace-nowrap text-center">
                                         <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.users.show', $user) }}'" @endif>
-                                    {{ $user->sort ?? '-' }}
-                                </td>
+                                @if(request('status') === 'all')
+                                    <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.users.show', $user) }}'" @endif>
+                                        {{ $user->sort ?? '-' }}
+                                    </td>
+                                @endif
                                 <td class="px-6 py-2 whitespace-nowrap @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.users.show', $user) }}'" @endif>
                                     <div class="flex items-center">
                                         @if($user->icon)
@@ -170,9 +178,6 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $users->appends(request()->query())->links() }}
             </div>
         @else
             <div class="text-center py-12">
@@ -241,7 +246,7 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->role === 'admin' && request('status') === 'all')
                     const tbody = document.getElementById('sortable-tbody');
                     if (tbody) {
                         let draggedElement = null;

@@ -23,7 +23,7 @@ class PositionController extends Controller
         $query = Position::query();
         $query = $this->applyFilters($query, $request);
 
-        $positions = $query->paginate(15);
+        $positions = $query->get();
 
         return view('master.positions.index', compact('positions'));
     }
@@ -183,14 +183,13 @@ class PositionController extends Controller
         return true;
     }
 
-
     /**
      * Update sort order via drag and drop
      */
     public function updateSort(Request $request)
     {
         // 編集者・管理者のみがソート順更新可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
+        if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
             return response()->json(['success' => false, 'message' => '権限がありません。'], 403);
         }
 
@@ -206,8 +205,7 @@ class PositionController extends Controller
 
             return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: '.$e->getMessage()], 500);
         }
     }
-
 }

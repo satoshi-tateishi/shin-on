@@ -3,14 +3,14 @@
 @section('title', '機材編集')
 
 @section('breadcrumb')
-    > <a href="{{ route('master.equipments.index') }}" class="text-blue-600 hover:text-blue-800">機材マスタ</a>
-    > <span class="text-gray-800">{{ $equipment->name }}</span>
+    > <a href="{{ route('master.equipments.index') }}" class="text-blue-600 hover:text-blue-800">機材マスタ 一覧</a>
+    > <span class="text-gray-800">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif</span>
     > <span class="text-gray-800">編集</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">「{{ $equipment->name }}」を編集</h1>
+        <h1 class="text-3xl font-bold text-gray-900">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 text-3XL font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif 編集</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -170,10 +170,10 @@
                     @enderror
                 </div>
 
-                <!-- 仕入先 -->
+                <!-- 購入先 -->
                 <div>
                     <label for="supplier" class="block text-sm font-medium text-gray-700 mb-2">
-                        仕入先
+                        購入先
                     </label>
                     <input type="text" name="supplier" id="supplier" value="{{ old('supplier', $equipment->supplier) }}"
                            class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500

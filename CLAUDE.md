@@ -35,5 +35,23 @@
 - ✅ Laravel-Boost MCP
 - ✅ ポート設定（HTTP:8081, Vite:5174, MySQL:3307）
 
+## 🚀 開発環境起動コマンド
+```bash
+# Laravel + Vite を同時起動
+./vendor/bin/sail up -d && ./vendor/bin/sail npm run start
+```
+
+## 🔍 Viteサーバー起動チェック
+```bash
+# Viteサーバーの動作確認
+curl -I http://localhost:5174
+
+# ポート使用状況確認
+lsof -i :5174
+
+# Viteプロセス確認
+./vendor/bin/sail ps | grep vite
+```
+
 ---
 **💡 詳細なドキュメントは claude/ ディレクトリをご利用ください。**

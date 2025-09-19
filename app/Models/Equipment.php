@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Equipment extends Model
@@ -88,6 +90,12 @@ class Equipment extends Model
             ->where('is_discard', false);
     }
 
+    // スコープ: 有効な機材（廃棄されていない）
+    public function scopeActive($query)
+    {
+        return $query->where('is_discard', false);
+    }
+
     // スコープ: 特定中分類の機材
     public function scopeBySubcategory($query, $subcategoryId)
     {
@@ -157,5 +165,141 @@ class Equipment extends Model
             'quantity' => '数量管理',
             default => '不明',
         };
+    }
+
+    /**
+     * この機材を含む機材セットとの関連
+     */
+    public function equipmentSets(): BelongsToMany
+    {
+        return $this->belongsToMany(EquipmentSet::class, 'equipment_set_items')
+            ->withPivot(['quantity', 'sort_order', 'is_required', 'notes'])
+            ->withTimestamps()
+            ->orderByPivot('sort_order')
+            ->orderByPivot('id');
+    }
+
+    /**
+     * この機材が必須として含まれる機材セット
+     */
+    public function requiredInSets(): BelongsToMany
+    {
+        return $this->equipmentSets()->wherePivot('is_required', true);
+    }
+
+    /**
+     * この機材が任意として含まれる機材セット
+     */
+    public function optionalInSets(): BelongsToMany
+    {
+        return $this->equipmentSets()->wherePivot('is_required', false);
+    }
+
+    /**
+     * フェーズ機材使用記録との関連
+     */
+    public function phaseEquipments(): HasMany
+    {
+        return $this->hasMany(PhaseEquipment::class);
+    }
+
+    /**
+     * 機材移動履歴との関連
+     */
+    public function equipmentMovements(): HasMany
+    {
+        return $this->hasMany(EquipmentMovement::class);
+    }
+
+    /**
+     * 修理記録との関連
+     */
+    public function repairRecords(): HasMany
+    {
+        return $this->hasMany(RepairRecord::class);
+    }
+
+    /**
+     * 現在修理中の記録
+     */
+    public function currentRepairs(): HasMany
+    {
+        return $this->repairRecords()->whereIn('status', ['reported', 'in_progress']);
+    }
+
+    /**
+     * 修理中かどうかをチェック
+     */
+    public function isUnderRepair(): bool
+    {
+        return $this->status === 'repair' || $this->currentRepairs()->exists();
+    }
+
+    /**
+     * 修理履歴を取得（期間指定可能）
+     */
+    public function getRepairHistory($startDate = null, $endDate = null)
+    {
+        $query = $this->repairRecords()->with('reportedBy');
+
+        if ($startDate && $endDate) {
+            $query->reportedBetween($startDate, $endDate);
+        }
+
+        return $query->orderBy('reported_at', 'desc')->get();
+    }
+
+    /**
+     * 修理コストの合計を取得（期間指定可能）
+     */
+    public function getTotalRepairCost($startDate = null, $endDate = null): float
+    {
+        $query = $this->repairRecords()->whereNotNull('repair_cost');
+
+        if ($startDate && $endDate) {
+            $query->reportedBetween($startDate, $endDate);
+        }
+
+        return $query->sum('repair_cost') ?? 0.0;
+    }
+
+    /**
+     * 現在使用中のフェーズ機材記録
+     */
+    public function currentUsages(): HasMany
+    {
+        return $this->phaseEquipments()->whereIn('status', ['reserved', 'checked_out']);
+    }
+
+    /**
+     * 機材使用履歴（期間指定）
+     */
+    public function getUsageHistory($startDate = null, $endDate = null)
+    {
+        return EquipmentMovement::getUsageHistory($this->id, $startDate, $endDate);
+    }
+
+    /**
+     * 指定期間での使用可能性チェック
+     */
+    public function isAvailableInPeriod($startDate, $endDate): bool
+    {
+        if ($this->status !== 'available' || $this->is_discard) {
+            return false;
+        }
+
+        return ! PhaseEquipment::hasEquipmentConflict($this->id, $startDate, $endDate);
+    }
+
+    /**
+     * 指定期間での使用可能数量（数量管理機材のみ）
+     */
+    public function getAvailableQuantityInPeriod($startDate, $endDate): int
+    {
+        if ($this->management_type !== 'quantity') {
+            return $this->isAvailableInPeriod($startDate, $endDate) ? 1 : 0;
+        }
+
+        return PhaseEquipment::getAvailableQuantity($this->id, $startDate, $endDate);
     }
 }

@@ -23,7 +23,7 @@ class EquipmentCategoryController extends Controller
         $query = EquipmentCategory::withCount('subcategories');
         $query = $this->applyFilters($query, $request);
 
-        $categories = $query->paginate(100);
+        $categories = $query->get();
 
         return view('master.equipment-categories.index', compact('categories'));
     }
@@ -122,7 +122,7 @@ class EquipmentCategoryController extends Controller
     public function updateSort(Request $request)
     {
         // 編集者・管理者のみがソート順更新可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
+        if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
             return response()->json(['success' => false, 'message' => '権限がありません。'], 403);
         }
 
@@ -138,7 +138,7 @@ class EquipmentCategoryController extends Controller
 
             return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: '.$e->getMessage()], 500);
         }
     }
 
@@ -179,7 +179,7 @@ class EquipmentCategoryController extends Controller
                 case 'name':
                     $record['name'] = $value;
                     break;
-                // created_at, updated_at は自動設定されるため除外
+                    // created_at, updated_at は自動設定されるため除外
                 default:
                     break;
             }

@@ -92,6 +92,14 @@ class EquipmentIndex {
             return;
         }
 
+        // ソートモード時のみドラッグ&ドロップを有効化
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortMode = urlParams.get('sort_mode');
+
+        if (sortMode !== 'all') {
+            return; // 通常モード時はドラッグ&ドロップ無効
+        }
+
         let draggedElement = null;
         const self = this; // スコープ保持のため
 
@@ -149,7 +157,11 @@ class EquipmentIndex {
      */
     updateSortOrder() {
         const tbody = document.getElementById('sortable-tbody');
-        const equipmentIds = Array.from(tbody.querySelectorAll('.sortable-row')).map(row => row.dataset.id);
+        const rows = Array.from(tbody.querySelectorAll('.sortable-row'));
+        const items = rows.map((row, index) => ({
+            id: parseInt(row.dataset.id),
+            sort: index + 1
+        }));
 
         fetch('/master/equipments/update-sort', {
             method: 'POST',
@@ -158,7 +170,7 @@ class EquipmentIndex {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({
-                equipment_ids: equipmentIds
+                items: items
             })
         })
         .then(response => response.json())

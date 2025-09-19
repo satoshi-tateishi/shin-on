@@ -3,14 +3,14 @@
 @section('title', '機材詳細')
 
 @section('breadcrumb')
-    > <a href="{{ route('master.equipments.index') }}" class="text-blue-600 hover:text-blue-800">機材マスタ</a>
-    > <span class="text-gray-800">{{ $equipment->name }}</span>
+    > <a href="{{ route('master.equipments.index') }}" class="text-blue-600 hover:text-blue-800">機材マスタ 一覧</a>
+    > <span class="text-gray-800">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif</span>
+    > <span class="text-gray-800">詳細</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材詳細</h1>
-        <p class="mt-1 text-sm text-gray-600">機材「{{ $equipment->name }}」の詳細情報です。</p>
+        <h1 class="text-3xl font-bold text-gray-900">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 text-3XL font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif 詳細</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -112,7 +112,7 @@
                         </div>
 
                         <div>
-                            <dt class="text-sm font-medium text-gray-500">仕入先</dt>
+                            <dt class="text-sm font-medium text-gray-500">購入先</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $equipment->supplier ?: '---' }}</dd>
                         </div>
 

@@ -3,14 +3,14 @@
 @section('title', '機材サブカテゴリ編集')
 
 @section('breadcrumb')
-    > <a href="{{ route('equipment-subcategories.index') }}" class="text-blue-600 hover:text-blue-800">機材サブカテゴリ</a>
+    > <a href="{{ route('equipment-subcategories.index') }}" class="text-blue-600 hover:text-blue-800">機材サブカテゴリ 一覧</a>
     > <span class="text-gray-800">{{ $equipmentSubcategory->name }}</span>
     > <span class="text-gray-800">編集</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">サブカテゴリ「{{ $equipmentSubcategory->name }}」の編集</h1>
+        <h1 class="text-3xl font-bold text-gray-900">サブカテゴリ「{{ $equipmentSubcategory->name }}」編集</h1>
     </div>
 
     <div class="flex space-x-3">

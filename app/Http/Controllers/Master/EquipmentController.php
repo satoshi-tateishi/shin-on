@@ -12,21 +12,53 @@ use App\Models\EquipmentSubcategory;
 use App\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 class EquipmentController extends Controller
 {
     use HasCsvOperations, HasMasterOperations, HasSortableRecords;
 
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $query = Equipment::forIndex();
 
         // Equipment固有のフィルターを適用（検索、ソート、カテゴリ等すべて含む）
         $this->applyEquipmentFilters($query, $request);
 
-        $equipments = $query->paginate(200);
+        // JSON形式のレスポンスが要求された場合（機材検索API用）
+        if ($request->input('format') === 'json') {
+            // 機材セット用検索は個体管理の機材のみ対象
+            $query->where('management_type', 'individual');
+
+            // 他の機材セットに既に登録済みの機材を除外
+            if ($request->has('exclude_assigned')) {
+                $currentSetId = $request->input('current_set_id');
+
+                $assignedEquipmentIds = \App\Models\EquipmentSetItem::query()
+                    ->when($currentSetId, function ($q) use ($currentSetId) {
+                        // 現在編集中のセットは除外（新規追加時はnull）
+                        $q->where('equipment_set_id', '!=', $currentSetId);
+                    })
+                    ->pluck('equipment_id')
+                    ->toArray();
+
+                if (! empty($assignedEquipmentIds)) {
+                    $query->whereNotIn('id', $assignedEquipmentIds);
+                }
+            }
+
+            $equipments = $query->with(['category', 'subcategory', 'location'])->limit(20)->get();
+
+            return response()->json(['equipments' => $equipments]);
+        }
+
+        // ソートモード判定
+        if ($request->get('sort_mode') === 'all') {
+            $equipments = $query->get();
+        } else {
+            $equipments = $query->paginate(200);
+        }
 
         // パフォーマンス向上のためマスターデータをキャッシュ（30分）
         $categories = Cache::remember('equipment_categories', 1800, function () {
@@ -377,11 +409,6 @@ class EquipmentController extends Controller
         return ['name', 'model_number', 'serial_number', 'purchase_date', 'status', 'sort', 'created_at', 'updated_at'];
     }
 
-    protected function getModelClass(): string
-    {
-        return Equipment::class;
-    }
-
     /**
      * CSV インポート（HasCsvOperationsトレイトをオーバーライド）
      */
@@ -404,9 +431,10 @@ class EquipmentController extends Controller
                     "CSVインポートが完了しました。{$result['imported']}件のデータを処理しました。");
             } else {
                 $errorMessage = 'CSVインポートでエラーが発生しました。';
-                if (!empty($result['errors'])) {
-                    $errorMessage .= "\n\n詳細:\n" . implode("\n", $result['errors']);
+                if (! empty($result['errors'])) {
+                    $errorMessage .= "\n\n詳細:\n".implode("\n", $result['errors']);
                 }
+
                 return redirect()->back()
                     ->with('error', $errorMessage)
                     ->with('import_errors', $result['errors']);
@@ -415,5 +443,4 @@ class EquipmentController extends Controller
             return redirect()->back()->with('error', 'CSVファイルの処理中にエラーが発生しました: '.$e->getMessage());
         }
     }
-
 }

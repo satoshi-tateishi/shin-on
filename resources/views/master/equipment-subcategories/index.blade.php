@@ -3,12 +3,12 @@
 @section('title', '機材サブカテゴリマスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材サブカテゴリマスタ</span>
+    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材サブカテゴリマスタ 一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材サブカテゴリマスタ</h1>
+        <h1 class="text-3xl font-bold text-gray-900">機材サブカテゴリマスタ 一覧</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
@@ -53,34 +53,6 @@
 
 @section('content')
     <div class="p-6">
-        <!-- Search and Filters -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">検索</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="サブカテゴリ名で検索" autocomplete="off"
-                           class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-                    <select name="category_id" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">すべて</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
-                        検索
-                    </button>
-                </div>
-            </form>
-        </div>
 
         <!-- Results Table -->
         @if($subcategories->count() > 0)
@@ -146,9 +118,6 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $subcategories->appends(request()->query())->links() }}
             </div>
         @else
             <div class="text-center py-12">

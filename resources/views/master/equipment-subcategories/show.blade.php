@@ -3,13 +3,13 @@
 @section('title', '機材中分類詳細')
 
 @section('breadcrumb')
-    > <a href="{{ route('equipment-subcategories.index') }}" class="text-blue-600 hover:text-blue-800">機材サブカテゴリ</a>
+    > <a href="{{ route('equipment-subcategories.index') }}" class="text-blue-600 hover:text-blue-800">機材サブカテゴリ 詳細</a>
     > <span class="text-gray-800">{{ $equipmentSubcategory->name }}</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">サブカテゴリ「{{ $equipmentSubcategory->name }}」の詳細</h1>
+        <h1 class="text-3xl font-bold text-gray-900">サブカテゴリ「{{ $equipmentSubcategory->name }}」 詳細</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -88,7 +88,7 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">機材名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">モデル名</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">新音番号</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状態</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">場所</th>
                                     </tr>
@@ -102,7 +102,7 @@
                                                 </a>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $equipment->model ?: '---' }}
+                                                {{ $equipment->company_number ?: '---' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full

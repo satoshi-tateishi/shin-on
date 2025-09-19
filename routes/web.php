@@ -9,6 +9,10 @@ use App\Http\Controllers\Master\LocationController;
 use App\Http\Controllers\Master\PositionController;
 use App\Http\Controllers\Master\ProductionController;
 use App\Http\Controllers\Master\UserController;
+use App\Http\Controllers\PerformanceController;
+use App\Http\Controllers\PhaseController;
+use App\Http\Controllers\PhaseEquipmentController;
+use App\Http\Controllers\RepairRecordController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -80,6 +84,14 @@ Route::middleware('auth')->group(function () {
         Route::get('equipment-sets/export-csv', [EquipmentSetController::class, 'exportCsv'])->name('equipment-sets.export-csv');
         Route::get('equipment-sets/template-csv', [EquipmentSetController::class, 'templateCsv'])->name('equipment-sets.template-csv');
         Route::post('equipment-sets/import-csv', [EquipmentSetController::class, 'importCsv'])->name('equipment-sets.import-csv');
+
+        // 機材セット内容管理API
+        Route::post('equipment-sets/{equipmentSet}/items', [EquipmentSetController::class, 'addEquipment'])->name('equipment-sets.add-equipment');
+        Route::delete('equipment-sets/{equipmentSet}/items/{equipment}', [EquipmentSetController::class, 'removeEquipment'])->name('equipment-sets.remove-equipment');
+        Route::patch('equipment-sets/{equipmentSet}/items/sort', [EquipmentSetController::class, 'updateItemSort'])->name('equipment-sets.update-item-sort');
+        Route::patch('equipment-sets/{equipmentSet}/items/{equipment}', [EquipmentSetController::class, 'updateEquipmentItem'])->name('equipment-sets.update-equipment-item');
+        Route::get('equipment-sets/{equipmentSet}/availability', [EquipmentSetController::class, 'checkAvailability'])->name('equipment-sets.check-availability');
+
         Route::resource('equipment-sets', EquipmentSetController::class);
 
         // 使用場所マスタ
@@ -108,6 +120,35 @@ Route::middleware('auth')->group(function () {
         Route::delete('users/{user}/remove-icon', [UserController::class, 'removeIcon'])->name('master.users.remove-icon');
         Route::resource('users', UserController::class);
     });
+
+    // 公演・フェーズ管理ルート
+    Route::resource('performances', PerformanceController::class);
+    Route::resource('performances.phases', PhaseController::class)->shallow();
+
+    // フェーズ機材使用管理ルート
+    Route::prefix('phases/{phase}')->name('phases.')->group(function () {
+        Route::resource('equipment', PhaseEquipmentController::class);
+
+        // 機材貸出・返却・キャンセル
+        Route::patch('equipment/{phaseEquipment}/checkout', [PhaseEquipmentController::class, 'checkout'])->name('equipment.checkout');
+        Route::patch('equipment/{phaseEquipment}/checkin', [PhaseEquipmentController::class, 'checkin'])->name('equipment.checkin');
+        Route::patch('equipment/{phaseEquipment}/cancel', [PhaseEquipmentController::class, 'cancel'])->name('equipment.cancel');
+
+        // AJAX API
+        Route::get('available-equipment', [PhaseEquipmentController::class, 'getAvailableEquipment'])->name('available-equipment');
+        Route::get('equipment-set-availability', [PhaseEquipmentController::class, 'checkSetAvailability'])->name('equipment-set-availability');
+    });
+
+    // 修理管理ルート
+    Route::resource('repair-records', RepairRecordController::class);
+
+    // 修理ワークフロー専用アクション
+    Route::patch('repair-records/{repairRecord}/start', [RepairRecordController::class, 'start'])->name('repair-records.start');
+    Route::patch('repair-records/{repairRecord}/complete', [RepairRecordController::class, 'complete'])->name('repair-records.complete');
+    Route::patch('repair-records/{repairRecord}/cancel', [RepairRecordController::class, 'cancel'])->name('repair-records.cancel');
+
+    // 修理統計API
+    Route::get('repair-stats', [RepairRecordController::class, 'stats'])->name('repair-records.stats');
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）
     Route::get('positions', [PositionController::class, 'index'])->name('positions.index');

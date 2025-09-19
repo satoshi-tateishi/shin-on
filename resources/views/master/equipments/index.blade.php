@@ -3,12 +3,12 @@
 @section('title', '機材マスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材マスタ</span>
+    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材マスタ 一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材マスタ</h1>
+        <h1 class="text-3xl font-bold text-gray-900">機材マスタ 一覧</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
@@ -40,6 +40,26 @@
                 </a>
             </div>
 
+            @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+                @if(request('sort_mode') === 'all')
+                    <a href="{{ route('master.equipments.index', array_merge(request()->query(), ['sort_mode' => null])) }}"
+                       class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-gray-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        ページ表示に戻る
+                    </a>
+                @else
+                    <a href="{{ route('master.equipments.index', array_merge(request()->query(), ['sort_mode' => 'all'])) }}"
+                       class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-orange-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        全件表示してソート
+                    </a>
+                @endif
+            @endif
+
             <a href="{{ route('master.equipments.create') }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +74,17 @@
 @section('content')
     <div class="p-6">
         <!-- Search and Filters -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+        <div class="mb-6 bg-gray-50 p-4 rounded-lg @if(request('sort_mode') === 'all') opacity-50 pointer-events-none @endif">
+            @if(request('sort_mode') === 'all')
+                <div class="mb-2 p-2 bg-orange-100 border border-orange-200 rounded-md">
+                    <p class="text-sm text-orange-800">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        ソートモード中です。検索・フィルターを使用するには「ページ表示に戻る」をクリックしてください。
+                    </p>
+                </div>
+            @endif
             <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4" autocomplete="off">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">検索</label>
@@ -133,7 +163,7 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                            @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">順序</th>
                             @endif
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -158,7 +188,7 @@
                             <tr class="hover:bg-gray-50 cursor-pointer @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif"
                                 data-id="{{ $equipment->id }}"
                                 onclick="window.location.href='{{ route('master.equipments.show', $equipment) }}'">
-                                @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                                @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
                                     <td class="px-6 py-4 whitespace-nowrap text-center" onclick="event.stopPropagation();">
                                         <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
@@ -194,10 +224,12 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $equipments->appends(request()->query())->links() }}
-            </div>
+            <!-- Pagination (通常モード時のみ) -->
+            @if(request('sort_mode') !== 'all' && method_exists($equipments, 'links'))
+                <div class="mt-6">
+                    {{ $equipments->appends(request()->query())->links() }}
+                </div>
+            @endif
         @else
             <div class="text-center py-12">
                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">

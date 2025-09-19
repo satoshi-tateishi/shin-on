@@ -24,7 +24,7 @@ class ProductionController extends Controller
             $query->where('type', $request->type);
         }
 
-        $productions = $query->paginate(50);
+        $productions = $query->get();
         $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', 'その他'];
 
         return view('master.productions.index', compact('productions', 'types'));
@@ -166,7 +166,7 @@ class ProductionController extends Controller
     public function updateSort(Request $request)
     {
         // 編集者・管理者のみがソート順更新可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
+        if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
             return response()->json(['success' => false, 'message' => '権限がありません。'], 403);
         }
 
@@ -182,7 +182,7 @@ class ProductionController extends Controller
 
             return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: '.$e->getMessage()], 500);
         }
     }
 

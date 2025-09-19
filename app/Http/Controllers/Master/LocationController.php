@@ -28,7 +28,7 @@ class LocationController extends Controller
             $query->where('type', $request->type);
         }
 
-        $locations = $query->paginate(50);
+        $locations = $query->get();
         $types = ['劇場', '稽古場', '倉庫'];
 
         return view('master.locations.index', compact('locations', 'types'));
@@ -167,7 +167,7 @@ class LocationController extends Controller
     public function updateSort(Request $request)
     {
         // 編集者・管理者のみがソート順更新可能
-        if (!in_array(auth()->user()->role, ['editor', 'admin'])) {
+        if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
             return response()->json(['success' => false, 'message' => '権限がありません。'], 403);
         }
 
@@ -183,7 +183,7 @@ class LocationController extends Controller
 
             return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: '.$e->getMessage()], 500);
         }
     }
 
@@ -322,5 +322,4 @@ class LocationController extends Controller
     {
         return ['name', 'sort', 'type', 'created_at', 'updated_at', 'equipments_count'];
     }
-
 }

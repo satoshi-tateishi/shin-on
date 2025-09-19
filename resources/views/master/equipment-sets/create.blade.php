@@ -3,14 +3,13 @@
 @section('title', '機材セット作成')
 
 @section('breadcrumb')
-    > <a href="{{ route('equipment-sets.index') }}" class="text-blue-600 hover:text-blue-800">機材セット</a>
+    > <a href="{{ route('equipment-sets.index') }}" class="text-blue-600 hover:text-blue-800">機材セットマスタ</a>
     > <span class="text-gray-800">新規作成</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材セット作成</h1>
-        <p class="mt-1 text-sm text-gray-600">新しい機材セットを作成します。</p>
+        <h1 class="text-3xl font-bold text-gray-900">機材セット新規作成</h1>
     </div>
 
     <div class="flex space-x-3">
