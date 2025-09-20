@@ -95,12 +95,14 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                            @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('type') && !request('is_active'))
                                 <th class="pl-6 pr-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">順序</th>
                             @endif
-                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                ソート
-                            </th>
+                            @if(!request('search') && !request('type') && !request('is_active'))
+                                <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                    ソート
+                                </th>
+                            @endif
                             <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                                 タイプ
                             </th>
@@ -114,17 +116,19 @@
                     </thead>
                     <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
                         @foreach($productions as $production)
-                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $production->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.productions.show', $production) }}'" @endif>
-                                @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('type') && !request('is_active')) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $production->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.productions.show', $production) }}'" @endif>
+                                @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('type') && !request('is_active'))
                                     <td class="pl-6 pr-2 py-2 whitespace-nowrap text-center">
                                         <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.productions.show', $production) }}'" @endif>
-                                    {{ $production->sort }}
-                                </td>
+                                @if(!request('search') && !request('type') && !request('is_active'))
+                                    <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.productions.show', $production) }}'" @endif>
+                                        {{ $production->sort }}
+                                    </td>
+                                @endif
                                 <td class="px-2 py-2 whitespace-nowrap @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.productions.show', $production) }}'" @endif>
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                         @switch($production->type)
@@ -176,7 +180,7 @@
         @endif
     </div>
 
-    @if(in_array(auth()->user()->role, ['editor', 'admin']))
+    @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('type') && !request('is_active'))
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const tbody = document.getElementById('sortable-tbody');
@@ -250,7 +254,7 @@
                             if (data.success) {
                                 // ソート番号の表示を更新
                                 tbody.querySelectorAll('.sortable-row').forEach((row, index) => {
-                                    const sortCell = row.querySelector('td:nth-child({{ in_array(auth()->user()->role, ["editor", "admin"]) ? "2" : "1" }})');
+                                    const sortCell = row.querySelector('td:nth-child(2)');
                                     if (sortCell) {
                                         sortCell.textContent = index + 1;
                                     }

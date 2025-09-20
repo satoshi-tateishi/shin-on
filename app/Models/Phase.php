@@ -18,9 +18,6 @@ class Phase extends Model
         'name',
         'start_date',
         'end_date',
-        'start_time',
-        'end_time',
-        'description',
         'note',
         'is_active',
     ];
@@ -30,8 +27,6 @@ class Phase extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
-            'start_time' => 'datetime:H:i',
-            'end_time' => 'datetime:H:i',
             'is_active' => 'boolean',
             'sort' => 'integer',
         ];

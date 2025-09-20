@@ -22,7 +22,7 @@ class PhaseController extends Controller
 
     public function create(Performance $performance): View
     {
-        $locations = Location::active()->orderBy('name')->get();
+        $locations = Location::active()->ordered()->get();
 
         return view('phases.create', compact('performance', 'locations'));
     }
@@ -35,46 +35,36 @@ class PhaseController extends Controller
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'description' => 'nullable|string',
             'note' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $validated['performance_id'] = $performance->id;
 
-        $overlappingPhases = Phase::where('performance_id', $performance->id)
-            ->overlappingWith($validated['start_date'], $validated['end_date'])
-            ->exists();
-
-        if ($overlappingPhases) {
-            return back()->withErrors([
-                'start_date' => '指定された期間は他のフェーズと重複しています。',
-            ])->withInput();
-        }
-
         $phase = Phase::create($validated);
 
-        return redirect()->route('performances.phases.show', [$performance, $phase])
+        return redirect()->route('phases.show', $phase)
             ->with('success', 'フェーズが正常に作成されました。');
     }
 
-    public function show(Performance $performance, Phase $phase): View
+    public function show(Phase $phase): View
     {
-        $phase->load('location');
+        $phase->load('location', 'performance');
+        $performance = $phase->performance;
 
         return view('phases.show', compact('performance', 'phase'));
     }
 
-    public function edit(Performance $performance, Phase $phase): View
+    public function edit(Phase $phase): View
     {
-        $locations = Location::active()->orderBy('name')->get();
+        $phase->load('performance');
+        $performance = $phase->performance;
+        $locations = Location::active()->ordered()->get();
 
         return view('phases.edit', compact('performance', 'phase', 'locations'));
     }
 
-    public function update(Request $request, Performance $performance, Phase $phase): RedirectResponse
+    public function update(Request $request, Phase $phase): RedirectResponse
     {
         $validated = $request->validate([
             'location_id' => 'nullable|exists:locations,id',
@@ -82,31 +72,19 @@ class PhaseController extends Controller
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'description' => 'nullable|string',
             'note' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
-        $overlappingPhases = Phase::where('performance_id', $performance->id)
-            ->overlappingWith($validated['start_date'], $validated['end_date'], $phase->id)
-            ->exists();
-
-        if ($overlappingPhases) {
-            return back()->withErrors([
-                'start_date' => '指定された期間は他のフェーズと重複しています。',
-            ])->withInput();
-        }
-
         $phase->update($validated);
 
-        return redirect()->route('performances.phases.show', [$performance, $phase])
+        return redirect()->route('phases.show', $phase)
             ->with('success', 'フェーズが正常に更新されました。');
     }
 
-    public function destroy(Performance $performance, Phase $phase): RedirectResponse
+    public function destroy(Phase $phase): RedirectResponse
     {
+        $performance = $phase->performance;
         $phase->delete();
 
         return redirect()->route('performances.phases.index', $performance)

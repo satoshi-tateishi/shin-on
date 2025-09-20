@@ -278,46 +278,63 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    const allSubcategoryOptions = Array.from(subcategorySelect.children);
+    // 全てのサブカテゴリオプションを保存
+    const allSubcategoryOptions = [];
+    subcategorySelect.querySelectorAll('option[data-category-id]').forEach(option => {
+        allSubcategoryOptions.push({
+            value: option.value,
+            text: option.textContent,
+            categoryId: option.dataset.categoryId,
+            selected: option.selected
+        });
+    });
 
     const filterSubcategories = () => {
         const selectedCategoryId = categorySelect.value;
 
-        // 既存のオプションを削除（「すべて」は残す）
-        while (subcategorySelect.children.length > 1) {
-            subcategorySelect.removeChild(subcategorySelect.lastChild);
-        }
+        // 「すべて」オプション以外を削除
+        const allOption = subcategorySelect.querySelector('option[value=""]');
+        subcategorySelect.innerHTML = '';
+        subcategorySelect.appendChild(allOption);
 
         if (!selectedCategoryId) {
             // カテゴリが「すべて」の場合、全サブカテゴリを表示
-            allSubcategoryOptions.slice(1).forEach(element => {
-                subcategorySelect.appendChild(element.cloneNode(true));
+            allSubcategoryOptions.forEach(optionData => {
+                const option = document.createElement('option');
+                option.value = optionData.value;
+                option.textContent = optionData.text;
+                option.dataset.categoryId = optionData.categoryId;
+                if (optionData.selected) {
+                    option.selected = true;
+                }
+                subcategorySelect.appendChild(option);
             });
         } else {
             // 選択されたカテゴリに属するサブカテゴリのみを表示
-            allSubcategoryOptions.slice(1).forEach(element => {
-                if (element.tagName === 'OPTGROUP') {
-                    const optgroup = element.cloneNode(false);
-                    const options = Array.from(element.children);
-                    let hasValidOptions = false;
-
-                    options.forEach(option => {
-                        if (option.dataset.categoryId === selectedCategoryId) {
-                            optgroup.appendChild(option.cloneNode(true));
-                            hasValidOptions = true;
-                        }
-                    });
-
-                    if (hasValidOptions) {
-                        subcategorySelect.appendChild(optgroup);
+            allSubcategoryOptions
+                .filter(optionData => optionData.categoryId === selectedCategoryId)
+                .forEach(optionData => {
+                    const option = document.createElement('option');
+                    option.value = optionData.value;
+                    option.textContent = optionData.text;
+                    option.dataset.categoryId = optionData.categoryId;
+                    if (optionData.selected) {
+                        option.selected = true;
                     }
-                }
-            });
+                    subcategorySelect.appendChild(option);
+                });
         }
     };
 
-    // イベントリスナー
-    categorySelect.addEventListener('change', filterSubcategories);
+    // 初期表示時に連動フィルタリングを実行
+    filterSubcategories();
+
+    // カテゴリ変更時にサブカテゴリをフィルタリング
+    categorySelect.addEventListener('change', () => {
+        // サブカテゴリの選択をリセット
+        subcategorySelect.value = '';
+        filterSubcategories();
+    });
 });
 </script>
 @endpush

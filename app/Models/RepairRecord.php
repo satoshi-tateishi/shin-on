@@ -92,7 +92,6 @@ class RepairRecord extends Model
         return $query->where('status', 'cancelled');
     }
 
-
     /**
      * 期間指定スコープ
      */
@@ -119,7 +118,6 @@ class RepairRecord extends Model
             default => $this->status,
         };
     }
-
 
     /**
      * 修理期間（日数）を計算
@@ -148,7 +146,6 @@ class RepairRecord extends Model
     {
         return $this->status === 'in_progress';
     }
-
 
     /**
      * バリデーションルールを取得

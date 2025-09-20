@@ -3,13 +3,12 @@
 @section('title', '公演管理')
 
 @section('breadcrumb')
-    > <span class="text-gray-800">公演管理</span>
+    > <span class="text-gray-800">公演一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">公演管理</h1>
-        <p class="mt-1 text-sm text-gray-600">演劇・ミュージカル・コンサートなどの公演を管理します。</p>
+        <h1 class="text-3xl font-bold text-gray-900">公演一覧</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
@@ -45,7 +44,10 @@
                         <option value="">全て</option>
                         <option value="演劇" {{ request('performance_type') === '演劇' ? 'selected' : '' }}>演劇</option>
                         <option value="ミュージカル" {{ request('performance_type') === 'ミュージカル' ? 'selected' : '' }}>ミュージカル</option>
+                        <option value="リーディング" {{ request('performance_type') === 'リーディング' ? 'selected' : '' }}>リーディング</option>
+                        <option value="ダンス" {{ request('performance_type') === 'ダンス' ? 'selected' : '' }}>ダンス</option>
                         <option value="コンサート" {{ request('performance_type') === 'コンサート' ? 'selected' : '' }}>コンサート</option>
+                        <option value="イベント" {{ request('performance_type') === 'イベント' ? 'selected' : '' }}>イベント</option>
                         <option value="その他" {{ request('performance_type') === 'その他' ? 'selected' : '' }}>その他</option>
                     </select>
                 </div>
@@ -83,18 +85,14 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会場</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">フェーズ数</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($performances as $performance)
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('performances.show', $performance) }}'">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ $performance->title }}</div>
-                                    @if($performance->subtitle)
-                                        <div class="text-sm text-gray-500">{{ $performance->subtitle }}</div>
-                                    @endif
                                     @if($performance->director)
                                         <div class="text-xs text-gray-400">演出: {{ $performance->director }}</div>
                                     @endif
@@ -104,20 +102,37 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $performance->performance_type === '演劇' ? 'bg-blue-100 text-blue-800' : '' }}
                                     {{ $performance->performance_type === 'ミュージカル' ? 'bg-purple-100 text-purple-800' : '' }}
+                                    {{ $performance->performance_type === 'リーディング' ? 'bg-amber-100 text-amber-800' : '' }}
+                                    {{ $performance->performance_type === 'ダンス' ? 'bg-pink-100 text-pink-800' : '' }}
+                                    {{ $performance->performance_type === 'イベント' ? 'bg-indigo-100 text-indigo-800' : '' }}
                                     {{ $performance->performance_type === 'コンサート' ? 'bg-green-100 text-green-800' : '' }}
                                     {{ $performance->performance_type === 'その他' ? 'bg-gray-100 text-gray-800' : '' }}">
                                     {{ $performance->performance_type }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <div>{{ $performance->start_date->format('Y/m/d') }}</div>
-                                <div>{{ $performance->end_date->format('Y/m/d') }}</div>
-                                @if($performance->duration_days)
-                                    <div class="text-xs text-gray-500">({{ $performance->duration_days }}日間)</div>
+                                @if($performance->start_date && $performance->end_date)
+                                    <div>{{ $performance->start_date }}</div>
+                                    <div class="text-xs text-gray-500">〜</div>
+                                    <div>{{ $performance->end_date }}</div>
+                                    @if($performance->duration_days)
+                                        <div class="text-xs text-gray-500 mt-1">({{ $performance->duration_days }}日間)</div>
+                                    @endif
+                                @elseif($performance->phases_count > 0)
+                                    <div class="text-gray-500 text-xs">フェーズで設定</div>
+                                @else
+                                    <div class="text-gray-400 text-xs">期間未設定</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $performance->venue ?? '未設定' }}
+                                @if($performance->main_venue)
+                                    {{ $performance->main_venue }}
+                                    @if(count($performance->venues) > 1)
+                                        <div class="text-xs text-gray-500">他{{ count($performance->venues) - 1 }}会場</div>
+                                    @endif
+                                @else
+                                    <span class="text-gray-500">会場未設定</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -134,33 +149,17 @@
                                     <span class="mr-2">{{ $performance->phases_count ?? 0 }}</span>
                                     @if($performance->phases_count > 0)
                                         <a href="{{ route('performances.phases.index', $performance) }}"
-                                           class="text-blue-600 hover:text-blue-900 text-xs">
+                                           class="text-blue-600 hover:text-blue-900 text-xs"
+                                           onclick="event.stopPropagation();">
                                             フェーズ管理
                                         </a>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('performances.show', $performance) }}"
-                                       class="text-blue-600 hover:text-blue-900">詳細</a>
-                                    @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                                        <a href="{{ route('performances.edit', $performance) }}"
-                                           class="text-indigo-600 hover:text-indigo-900">編集</a>
-                                        <form method="POST" action="{{ route('performances.destroy', $performance) }}"
-                                              class="inline"
-                                              onsubmit="return confirm('本当に削除しますか？')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">削除</button>
-                                        </form>
                                     @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
                                 公演が登録されていません。
                             </td>
                         </tr>

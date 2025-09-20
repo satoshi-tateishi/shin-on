@@ -150,6 +150,14 @@ Route::middleware('auth')->group(function () {
     // 修理統計API
     Route::get('repair-stats', [RepairRecordController::class, 'stats'])->name('repair-records.stats');
 
+    // スケジュール表ルート
+    Route::get('schedule', function () {
+        return view('schedule.index');
+    })->name('schedule.index');
+    Route::get('api/schedule/equipment', [\App\Http\Controllers\ScheduleController::class, 'getEquipmentSchedule'])->name('api.schedule.equipment');
+    Route::get('api/schedule/categories', [\App\Http\Controllers\ScheduleController::class, 'getCategories'])->name('api.schedule.categories');
+    Route::get('api/schedule/equipments', [\App\Http\Controllers\ScheduleController::class, 'getEquipments'])->name('api.schedule.equipments');
+
     // 短縮形ルート（ダッシュボードから直接アクセス用）
     Route::get('positions', [PositionController::class, 'index'])->name('positions.index');
     Route::get('equipment-categories', [EquipmentCategoryController::class, 'index'])->name('equipment-categories.index');
@@ -165,3 +173,20 @@ Route::middleware('auth')->group(function () {
 Route::get('/login', function () {
     return view('auth.login');
 })->name('login')->middleware('guest');
+
+// TODO: 本番では削除 - テスト用API（認証なし）
+Route::prefix('test-api')->group(function () {
+    Route::get('schedule/simple', function () {
+        return response()->json([
+            'status' => 'ok',
+            'equipment_count' => \App\Models\Equipment::count(),
+            'phase_count' => \App\Models\Phase::count(),
+            'phase_equipment_count' => \App\Models\PhaseEquipment::count(),
+        ]);
+    });
+    Route::get('schedule/equipment', [\App\Http\Controllers\ScheduleControllerSimple::class, 'getEquipmentSchedule']);
+    Route::get('schedule/categories', [\App\Http\Controllers\ScheduleControllerSimple::class, 'getCategories']);
+    Route::get('schedule', function () {
+        return view('schedule.simple');
+    });
+});

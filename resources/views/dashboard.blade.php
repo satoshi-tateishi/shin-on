@@ -205,7 +205,7 @@
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <h3 class="text-lg font-medium text-gray-900">修理管理</h3>
+                                    <h3 class="text-lg font-medium text-gray-900">機材修理</h3>
                                     <p class="text-sm text-gray-500">機材の修理・メンテナンス記録</p>
                                 </div>
                             </div>
@@ -222,8 +222,25 @@
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <h3 class="text-lg font-medium text-gray-900">公演管理</h3>
+                                    <h3 class="text-lg font-medium text-gray-900">公演一覧</h3>
                                     <p class="text-sm text-gray-500">公演・フェーズ・機材使用管理</p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 機材スケジュール表 -->
+                    <a href="{{ route('schedule.index') }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition-shadow cursor-pointer block">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">機材スケジュール表</h3>
+                                    <p class="text-sm text-gray-500">Excel風スケジュール表・色分け表示</p>
                                 </div>
                             </div>
                         </div>

@@ -74,6 +74,12 @@ class Location extends Model
         return "[{$this->type}] {$this->name}";
     }
 
+    // フォーマット済み表示名取得（HTMLタグ含む）
+    public function getFormattedDisplayNameAttribute(): string
+    {
+        return '<span class="text-gray-500">' . $this->type . '</span><br>　' . $this->name;
+    }
+
     // ステータスラベル
     public function getStatusLabelAttribute(): string
     {

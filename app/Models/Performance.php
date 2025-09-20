@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Performance extends Model
@@ -12,15 +13,9 @@ class Performance extends Model
 
     protected $fillable = [
         'title',
-        'subtitle',
         'performance_type',
-        'start_date',
-        'end_date',
-        'venue',
         'director',
-        'producer',
         'status',
-        'budget',
         'note',
         'is_active',
     ];
@@ -28,9 +23,6 @@ class Performance extends Model
     protected function casts(): array
     {
         return [
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'budget' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
@@ -60,6 +52,23 @@ class Performance extends Model
     }
 
     /**
+     * プロダクションとの多対多関連（中間テーブル経由）
+     */
+    public function productions(): BelongsToMany
+    {
+        return $this->belongsToMany(Production::class, 'performance_production')
+            ->withTimestamps();
+    }
+
+    /**
+     * プロダクション関連レコードとの関連
+     */
+    public function performanceProductions(): HasMany
+    {
+        return $this->hasMany(PerformanceProduction::class);
+    }
+
+    /**
      * スコープ: アクティブな公演のみ
      */
     public function scopeActive($query)
@@ -84,11 +93,11 @@ class Performance extends Model
     }
 
     /**
-     * スコープ: 期間での絞り込み
+     * スコープ: 期間での絞り込み（フェーズの期間を基準）
      */
     public function scopeInPeriod($query, $startDate, $endDate)
     {
-        return $query->where(function ($q) use ($startDate, $endDate) {
+        return $query->whereHas('phases', function ($q) use ($startDate, $endDate) {
             $q->where('start_date', '<=', $endDate)
                 ->where('end_date', '>=', $startDate);
         });
@@ -118,12 +127,65 @@ class Performance extends Model
     }
 
     /**
-     * 公演期間の日数計算
+     * 公演全体の開始日（最初のフェーズの開始日）
+     */
+    public function getStartDateAttribute(): ?string
+    {
+        $firstPhase = $this->phases()->orderBy('start_date')->first();
+
+        return $firstPhase?->start_date?->format('Y-m-d');
+    }
+
+    /**
+     * 公演全体の終了日（最後のフェーズの終了日）
+     */
+    public function getEndDateAttribute(): ?string
+    {
+        $lastPhase = $this->phases()->orderBy('end_date', 'desc')->first();
+
+        return $lastPhase?->end_date?->format('Y-m-d');
+    }
+
+    /**
+     * 公演の会場一覧（重複除去）
+     */
+    public function getVenuesAttribute(): array
+    {
+        return $this->phases()
+            ->with('location')
+            ->get()
+            ->pluck('location.name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * メイン会場（最も多く使用される会場）
+     */
+    public function getMainVenueAttribute(): ?string
+    {
+        $venues = $this->phases()
+            ->with('location')
+            ->get()
+            ->pluck('location.name')
+            ->filter()
+            ->countBy();
+
+        return $venues->sortDesc()->keys()->first();
+    }
+
+    /**
+     * 公演期間の日数計算（フェーズ基準）
      */
     public function getDurationDaysAttribute(): ?int
     {
-        if ($this->start_date && $this->end_date) {
-            return $this->start_date->diffInDays($this->end_date) + 1;
+        $startDate = $this->phases()->min('start_date');
+        $endDate = $this->phases()->max('end_date');
+
+        if ($startDate && $endDate) {
+            return \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1;
         }
 
         return null;

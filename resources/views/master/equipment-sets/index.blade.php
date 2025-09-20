@@ -77,12 +77,14 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                            @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null)
                                 <th class="pl-6 pr-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">順序</th>
                             @endif
-                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                ソート
-                            </th>
+                            @if(request('is_active') === null)
+                                <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                    ソート
+                                </th>
+                            @endif
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 セット名
                             </th>
@@ -93,20 +95,22 @@
                     </thead>
                     <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
                         @foreach($equipmentSets as $equipmentSet)
-                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(!$equipmentSet->is_active) bg-red-50 opacity-75 @endif"
+                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null) sortable-row @endif @if(!$equipmentSet->is_active) bg-red-50 opacity-75 @endif"
                                 data-id="{{ $equipmentSet->id }}"
                                 @if(!in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" style="cursor: pointer;" @endif>
-                                @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                                @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null)
                                     <td class="pl-6 pr-2 py-2 whitespace-nowrap text-center">
                                         <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
-                                    @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
-                                    {{ $equipmentSet->sort ?? '-' }}
-                                </td>
+                                @if(request('is_active') === null)
+                                    <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
+                                        @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                        {{ $equipmentSet->sort ?? '-' }}
+                                    </td>
+                                @endif
                                 <td class="px-6 py-2 whitespace-nowrap @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
                                     @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
                                     <div class="text-sm font-medium text-gray-900 @if(!$equipmentSet->is_active) line-through text-gray-500 @endif">
@@ -154,7 +158,7 @@
         @endif
     </div>
 
-    @if(in_array(auth()->user()->role, ['editor', 'admin']))
+    @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null)
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const tbody = document.getElementById('sortable-tbody');
@@ -232,7 +236,7 @@
                             if (data.success) {
                                 // ソート番号の表示を更新
                                 tbody.querySelectorAll('.sortable-row').forEach((row, index) => {
-                                    const sortCell = row.querySelector('td:nth-child({{ in_array(auth()->user()->role, ["editor", "admin"]) ? "2" : "1" }})');
+                                    const sortCell = row.querySelector('td:nth-child(2)');
                                     if (sortCell) {
                                         sortCell.textContent = index + 1;
                                     }

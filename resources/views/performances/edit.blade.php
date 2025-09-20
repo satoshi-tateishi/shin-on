@@ -11,7 +11,7 @@
 @section('header')
     <div>
         <h1 class="text-3xl font-bold text-gray-900">公演編集</h1>
-        <p class="mt-1 text-sm text-gray-600">{{ $performance->title }} の情報を編集します。</p>
+        <p class="mt-1 text-sm text-gray-600">{{ $performance->title }} の基本情報を編集してください。</p>
     </div>
 
     <div class="flex space-x-3">
@@ -36,47 +36,7 @@
             <div class="border-b border-gray-200 pb-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">基本情報</h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- 公演名 -->
-                    <div>
-                        <label for="title" class="block text-sm font-medium text-gray-700">
-                            公演名 <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="title" id="title" value="{{ old('title', $performance->title) }}" required
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('title') border-red-300 @enderror">
-                        @error('title')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- サブタイトル -->
-                    <div>
-                        <label for="subtitle" class="block text-sm font-medium text-gray-700">サブタイトル</label>
-                        <input type="text" name="subtitle" id="subtitle" value="{{ old('subtitle', $performance->subtitle) }}"
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('subtitle') border-red-300 @enderror">
-                        @error('subtitle')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- 公演種別 -->
-                    <div>
-                        <label for="performance_type" class="block text-sm font-medium text-gray-700">
-                            公演種別 <span class="text-red-500">*</span>
-                        </label>
-                        <select name="performance_type" id="performance_type" required
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('performance_type') border-red-300 @enderror">
-                            <option value="">選択してください</option>
-                            <option value="演劇" {{ old('performance_type', $performance->performance_type) === '演劇' ? 'selected' : '' }}>演劇</option>
-                            <option value="ミュージカル" {{ old('performance_type', $performance->performance_type) === 'ミュージカル' ? 'selected' : '' }}>ミュージカル</option>
-                            <option value="コンサート" {{ old('performance_type', $performance->performance_type) === 'コンサート' ? 'selected' : '' }}>コンサート</option>
-                            <option value="その他" {{ old('performance_type', $performance->performance_type) === 'その他' ? 'selected' : '' }}>その他</option>
-                        </select>
-                        @error('performance_type')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
+                <div class="space-y-6">
                     <!-- ステータス -->
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700">
@@ -95,55 +55,40 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-                </div>
-            </div>
 
-            <!-- 期間・会場情報 -->
-            <div class="border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">期間・会場情報</h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- 開始日 -->
+                    <!-- 公演名 -->
                     <div>
-                        <label for="start_date" class="block text-sm font-medium text-gray-700">
-                            開始日 <span class="text-red-500">*</span>
+                        <label for="title" class="block text-sm font-medium text-gray-700">
+                            公演名 <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date', $performance->start_date->format('Y-m-d')) }}" required
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('start_date') border-red-300 @enderror">
-                        @error('start_date')
+                        <input type="text" name="title" id="title" value="{{ old('title', $performance->title) }}" required
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('title') border-red-300 @enderror">
+                        @error('title')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- 終了日 -->
+                    <!-- 公演種別 -->
                     <div>
-                        <label for="end_date" class="block text-sm font-medium text-gray-700">
-                            終了日 <span class="text-red-500">*</span>
+                        <label for="performance_type" class="block text-sm font-medium text-gray-700">
+                            公演種別 <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date', $performance->end_date->format('Y-m-d')) }}" required
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('end_date') border-red-300 @enderror">
-                        @error('end_date')
+                        <select name="performance_type" id="performance_type" required
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('performance_type') border-red-300 @enderror">
+                            <option value="">選択してください</option>
+                            <option value="演劇" {{ old('performance_type', $performance->performance_type) === '演劇' ? 'selected' : '' }}>演劇</option>
+                            <option value="ミュージカル" {{ old('performance_type', $performance->performance_type) === 'ミュージカル' ? 'selected' : '' }}>ミュージカル</option>
+                            <option value="リーディング" {{ old('performance_type', $performance->performance_type) === 'リーディング' ? 'selected' : '' }}>リーディング</option>
+                            <option value="ダンス" {{ old('performance_type', $performance->performance_type) === 'ダンス' ? 'selected' : '' }}>ダンス</option>
+                            <option value="イベント" {{ old('performance_type', $performance->performance_type) === 'イベント' ? 'selected' : '' }}>イベント</option>
+                            <option value="コンサート" {{ old('performance_type', $performance->performance_type) === 'コンサート' ? 'selected' : '' }}>コンサート</option>
+                            <option value="その他" {{ old('performance_type', $performance->performance_type) === 'その他' ? 'selected' : '' }}>その他</option>
+                        </select>
+                        @error('performance_type')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- 会場 -->
-                    <div class="md:col-span-2">
-                        <label for="venue" class="block text-sm font-medium text-gray-700">会場</label>
-                        <input type="text" name="venue" id="venue" value="{{ old('venue', $performance->venue) }}"
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('venue') border-red-300 @enderror">
-                        @error('venue')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- スタッフ情報 -->
-            <div class="border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">主要スタッフ</h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- 演出 -->
                     <div>
                         <label for="director" class="block text-sm font-medium text-gray-700">演出</label>
@@ -153,101 +98,399 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-
-                    <!-- プロデューサー -->
-                    <div>
-                        <label for="producer" class="block text-sm font-medium text-gray-700">プロデューサー</label>
-                        <input type="text" name="producer" id="producer" value="{{ old('producer', $performance->producer) }}"
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('producer') border-red-300 @enderror">
-                        @error('producer')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
                 </div>
             </div>
 
-            <!-- その他情報 -->
-            <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-4">その他情報</h3>
+            <!-- プロダクション選択 -->
+            @if($productions->count() > 0)
+            <div class="border-b border-gray-200 pb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">プロダクション</h3>
+                    <button type="button" id="add-production" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        追加
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">この公演に関連するプロダクション（制作会社）を選択してください。</p>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- 予算 -->
-                    <div>
-                        <label for="budget" class="block text-sm font-medium text-gray-700">予算</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <input type="number" name="budget" id="budget" value="{{ old('budget', $performance->budget) }}" min="0" step="0.01"
-                                   class="block w-full pr-12 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('budget') border-red-300 @enderror">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">円</span>
+                <div id="productions-container" class="space-y-3">
+                    @php
+                        $selectedProductions = old('production_ids', $performance->productions->pluck('id')->toArray());
+                    @endphp
+
+                    @if(count($selectedProductions) > 0)
+                        @foreach($selectedProductions as $index => $productionId)
+                            <div class="production-row flex items-center space-x-3">
+                                <select name="production_ids[]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">プロダクションを選択</option>
+                                    @foreach($productions as $production)
+                                        <option value="{{ $production->id }}" {{ $production->id == $productionId ? 'selected' : '' }}>
+                                            {{ $production->display_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="remove-production inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
                             </div>
+                        @endforeach
+                    @else
+                        <div class="production-row flex items-center space-x-3">
+                            <select name="production_ids[]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">プロダクションを選択</option>
+                                @foreach($productions as $production)
+                                    <option value="{{ $production->id }}">{{ $production->display_name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="remove-production inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
                         </div>
-                        @error('budget')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- 有効フラグ -->
-                    <div class="flex items-center">
-                        <input type="hidden" name="is_active" value="0">
-                        <input type="checkbox" name="is_active" id="is_active" value="1"
-                               {{ old('is_active', $performance->is_active) ? 'checked' : '' }}
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                        <label for="is_active" class="ml-2 block text-sm text-gray-900">
-                            有効
-                        </label>
-                    </div>
+                    @endif
                 </div>
 
-                <!-- 備考 -->
-                <div class="mt-6">
+                @error('production_ids')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            @endif
+
+            <!-- サウンドデザイナー選択 -->
+            @if($designers->count() > 0)
+            <div class="border-b border-gray-200 pb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">サウンドデザイナー</h3>
+                    <button type="button" id="add-sound-designer" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        追加
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">この公演のサウンドデザイナーを選択してください。</p>
+
+                @php
+                    $currentSoundDesigners = $performance->staff->where('position_id', 1);
+                @endphp
+
+                <div id="sound-designers-container" class="space-y-3">
+                    @if($currentSoundDesigners->count() > 0)
+                        @foreach($currentSoundDesigners as $soundDesigner)
+                            <div class="sound-designer-row flex items-center space-x-3">
+                                <select name="sound_designers[]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">サウンドデザイナーを選択</option>
+                                    @foreach($designers as $designer)
+                                        <option value="{{ $designer->id }}" {{ $designer->id == $soundDesigner->user_id ? 'selected' : '' }}>
+                                            {{ $designer->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="remove-sound-designer inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="sound-designer-row flex items-center space-x-3">
+                            <select name="sound_designers[]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">サウンドデザイナーを選択</option>
+                                @foreach($designers as $designer)
+                                    <option value="{{ $designer->id }}">{{ $designer->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="remove-sound-designer inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                @error('sound_designers')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            @endif
+
+            <!-- 担当者・ポジション選択 -->
+            @if($users->count() > 0 && $positions->count() > 0)
+            <div class="border-b border-gray-200 pb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">担当者</h3>
+                    <button type="button" id="add-staff" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        追加
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">この公演の担当者とポジションを選択してください。</p>
+
+                <div id="staff-container" class="space-y-3">
+                    @php
+                        $existingStaff = $performance->staff->where('position_id', '!=', 1);
+                    @endphp
+
+                    @if($existingStaff->count() > 0)
+                        @foreach($existingStaff as $index => $staff)
+                            <div class="staff-row flex items-center space-x-3">
+                                <select name="staff[{{ $index }}][user_id]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">担当者を選択</option>
+                                    @foreach($users->sortBy('sort')->where('is_staff', true) as $user)
+                                        <option value="{{ $user->id }}" {{ $user->id == $staff->user_id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <select name="staff[{{ $index }}][position_id]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">ポジションを選択</option>
+                                    @foreach($positions->sortBy('sort')->where('id', '!=', 1) as $position)
+                                        <option value="{{ $position->id }}" {{ $position->id == $staff->position_id ? 'selected' : '' }}>
+                                            {{ $position->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="remove-staff inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="staff-row flex items-center space-x-3">
+                            <select name="staff[0][user_id]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">担当者を選択</option>
+                                @foreach($users->sortBy('sort')->where('is_staff', true) as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                            <select name="staff[0][position_id]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">ポジションを選択</option>
+                                @foreach($positions->sortBy('sort')->where('id', '!=', 1) as $position)
+                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="remove-staff inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                @error('staff')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            @endif
+
+            <!-- 備考 -->
+            <div class="border-b border-gray-200 pb-6">
+                <div>
                     <label for="note" class="block text-sm font-medium text-gray-700">備考</label>
-                    <textarea name="note" id="note" rows="4"
+                    <textarea name="note" id="note" rows="3"
                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('note') border-red-300 @enderror">{{ old('note', $performance->note) }}</textarea>
                     @error('note')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
+
+            <!-- アクティブフラグ -->
+            <div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_active" id="is_active" value="1"
+                           {{ old('is_active', $performance->is_active) ? 'checked' : '' }}
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                        有効にする
+                    </label>
+                </div>
+                @error('is_active')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
-        <!-- 送信ボタン -->
+        <!-- アクションボタン -->
         <div class="mt-8 flex justify-end space-x-3">
             <a href="{{ route('performances.show', $performance) }}"
-               class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                 キャンセル
             </a>
             <button type="submit"
-                    class="px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
                 更新
             </button>
         </div>
     </form>
 </div>
 
+@push('scripts')
 <script>
-// 開始日が変更されたら終了日の最小値を更新
-document.getElementById('start_date').addEventListener('change', function() {
-    const startDate = this.value;
-    const endDateInput = document.getElementById('end_date');
-
-    if (startDate) {
-        endDateInput.setAttribute('min', startDate);
-
-        // 終了日が開始日より前の場合は、終了日を開始日に設定
-        if (endDateInput.value && endDateInput.value < startDate) {
-            endDateInput.value = startDate;
-        }
-    }
-});
-
-// ページ読み込み時に最小値を設定
 document.addEventListener('DOMContentLoaded', function() {
-    const startDateInput = document.getElementById('start_date');
-    const endDateInput = document.getElementById('end_date');
+    // サウンドデザイナー管理
+    const addSoundDesignerBtn = document.getElementById('add-sound-designer');
+    const soundDesignersContainer = document.getElementById('sound-designers-container');
 
-    if (startDateInput.value) {
-        endDateInput.setAttribute('min', startDateInput.value);
+    if (addSoundDesignerBtn) {
+        addSoundDesignerBtn.addEventListener('click', function() {
+            const designerOptions = @json($designers->map(function($d) { return ['id' => $d->id, 'name' => $d->name]; }));
+
+            const newRow = document.createElement('div');
+            newRow.className = 'sound-designer-row flex items-center space-x-3';
+            newRow.innerHTML = `
+                <select name="sound_designers[]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">サウンドデザイナーを選択</option>
+                    ${designerOptions.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
+                </select>
+                <button type="button" class="remove-sound-designer inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            `;
+
+            soundDesignersContainer.appendChild(newRow);
+
+            // 削除ボタンのイベントリスナーを追加
+            newRow.querySelector('.remove-sound-designer').addEventListener('click', function() {
+                if (soundDesignersContainer.children.length > 1) {
+                    newRow.remove();
+                }
+            });
+        });
+    }
+
+    // 既存のサウンドデザイナー削除ボタン
+    soundDesignersContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-sound-designer')) {
+            if (soundDesignersContainer.children.length > 1) {
+                e.target.closest('.sound-designer-row').remove();
+            }
+        }
+    });
+
+    // プロダクション管理
+    const addProductionBtn = document.getElementById('add-production');
+    const productionsContainer = document.getElementById('productions-container');
+
+    if (addProductionBtn) {
+        addProductionBtn.addEventListener('click', function() {
+            const productionOptions = @json($productions->sortBy('sort')->map(function($p) { return ['id' => $p->id, 'name' => $p->display_name]; }));
+
+            const newRow = document.createElement('div');
+            newRow.className = 'production-row flex items-center space-x-3';
+            newRow.innerHTML = `
+                <select name="production_ids[]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">プロダクションを選択</option>
+                    ${productionOptions.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                </select>
+                <button type="button" class="remove-production inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            `;
+
+            productionsContainer.appendChild(newRow);
+
+            // 削除ボタンのイベントリスナーを追加
+            newRow.querySelector('.remove-production').addEventListener('click', function() {
+                if (productionsContainer.children.length > 1) {
+                    newRow.remove();
+                }
+            });
+        });
+    }
+
+    // 既存のプロダクション削除ボタン
+    productionsContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-production')) {
+            if (productionsContainer.children.length > 1) {
+                e.target.closest('.production-row').remove();
+            }
+        }
+    });
+
+    // 担当者管理
+    const addStaffBtn = document.getElementById('add-staff');
+    const staffContainer = document.getElementById('staff-container');
+
+    if (addStaffBtn) {
+        addStaffBtn.addEventListener('click', function() {
+            const userOptions = @json($users->sortBy('sort')->where('is_staff', true)->map(function($u) { return ['id' => $u->id, 'name' => $u->name]; })->values());
+            const positionOptions = @json($positions->sortBy('sort')->reject(function($p) { return $p->id == 1; })->map(function($p) { return ['id' => $p->id, 'name' => $p->name]; })->values());
+
+            const currentIndex = staffContainer.children.length;
+
+            const newRow = document.createElement('div');
+            newRow.className = 'staff-row flex items-center space-x-3';
+            newRow.innerHTML = `
+                <select name="staff[${currentIndex}][user_id]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">担当者を選択</option>
+                    ${userOptions.map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+                </select>
+                <select name="staff[${currentIndex}][position_id]" class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">ポジションを選択</option>
+                    ${positionOptions.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                </select>
+                <button type="button" class="remove-staff inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            `;
+
+            staffContainer.appendChild(newRow);
+
+            // 削除ボタンのイベントリスナーを追加
+            newRow.querySelector('.remove-staff').addEventListener('click', function() {
+                if (staffContainer.children.length > 1) {
+                    newRow.remove();
+                    updateStaffIndexes();
+                }
+            });
+        });
+    }
+
+    // 既存の担当者削除ボタン
+    staffContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-staff')) {
+            if (staffContainer.children.length > 1) {
+                e.target.closest('.staff-row').remove();
+                updateStaffIndexes();
+            }
+        }
+    });
+
+    // 担当者のインデックス更新
+    function updateStaffIndexes() {
+        const staffRows = staffContainer.querySelectorAll('.staff-row');
+        staffRows.forEach((row, index) => {
+            const userSelect = row.querySelector('select[name*="[user_id]"]');
+            const positionSelect = row.querySelector('select[name*="[position_id]"]');
+
+            if (userSelect) userSelect.name = `staff[${index}][user_id]`;
+            if (positionSelect) positionSelect.name = `staff[${index}][position_id]`;
+        });
     }
 });
 </script>
+@endpush
+
 @endsection

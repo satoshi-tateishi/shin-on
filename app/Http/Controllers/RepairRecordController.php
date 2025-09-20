@@ -13,8 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class RepairRecordController extends Controller
 {
@@ -32,7 +32,6 @@ class RepairRecordController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-
 
         if ($request->filled('equipment_category')) {
             $query->whereHas('equipment.subcategory', function ($q) use ($request) {
@@ -59,15 +58,21 @@ class RepairRecordController extends Controller
             });
         }
 
-
         $repairRecords = $query->orderBy('reported_at', 'desc')->paginate(20);
 
-        // 統計データ
+        // 統計データ（N+1クエリ回避のため1回のクエリで取得）
+        $statsRaw = RepairRecord::selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN status = "reported" THEN 1 ELSE 0 END) as reported,
+            SUM(CASE WHEN status = "in_progress" THEN 1 ELSE 0 END) as in_progress,
+            SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed
+        ')->first();
+
         $stats = [
-            'total' => RepairRecord::count(),
-            'reported' => RepairRecord::reported()->count(),
-            'in_progress' => RepairRecord::inProgress()->count(),
-            'completed' => RepairRecord::completed()->count(),
+            'total' => $statsRaw->total,
+            'reported' => $statsRaw->reported,
+            'in_progress' => $statsRaw->in_progress,
+            'completed' => $statsRaw->completed,
         ];
 
         // フィルタ用データ
@@ -139,11 +144,11 @@ class RepairRecordController extends Controller
                 foreach ($photos as $photo) {
                     try {
                         // ファイル名を生成
-                        $filename = uniqid() . '_' . time() . '.jpg';
-                        $path = 'repair-photos/' . $filename;
+                        $filename = uniqid().'_'.time().'.jpg';
+                        $path = 'repair-photos/'.$filename;
 
                         // 画像をリサイズ（幅800px、アスペクト比維持、品質75%）
-                        $manager = new ImageManager(new Driver());
+                        $manager = new ImageManager(new Driver);
                         $image = $manager->read($photo);
                         $resizedImage = $image->scale(width: 800)->toJpeg(75);
 
@@ -154,7 +159,7 @@ class RepairRecordController extends Controller
                         return redirect()
                             ->back()
                             ->withInput()
-                            ->withErrors(['photos' => '画像処理でエラーが発生しました: ' . $e->getMessage()]);
+                            ->withErrors(['photos' => '画像処理でエラーが発生しました: '.$e->getMessage()]);
                     }
                 }
             }
@@ -177,7 +182,7 @@ class RepairRecordController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->withErrors(['error' => 'エラーが発生しました: ' . $e->getMessage()]);
+                ->withErrors(['error' => 'エラーが発生しました: '.$e->getMessage()]);
         }
     }
 
@@ -270,8 +275,8 @@ class RepairRecordController extends Controller
                 }
 
                 // 配列から削除対象を除外
-                $photoPaths = array_filter($photoPaths, function($path, $index) use ($removedIndexes) {
-                    return !in_array($index, $removedIndexes);
+                $photoPaths = array_filter($photoPaths, function ($path, $index) use ($removedIndexes) {
+                    return ! in_array($index, $removedIndexes);
                 }, ARRAY_FILTER_USE_BOTH);
 
                 // インデックスを再整理
@@ -293,11 +298,11 @@ class RepairRecordController extends Controller
                 foreach ($photos as $photo) {
                     try {
                         // ファイル名を生成
-                        $filename = uniqid() . '_' . time() . '.jpg';
-                        $path = 'repair-photos/' . $filename;
+                        $filename = uniqid().'_'.time().'.jpg';
+                        $path = 'repair-photos/'.$filename;
 
                         // 画像をリサイズ（幅800px、アスペクト比維持、品質75%）
-                        $manager = new ImageManager(new Driver());
+                        $manager = new ImageManager(new Driver);
                         $image = $manager->read($photo);
                         $resizedImage = $image->scale(width: 800)->toJpeg(75);
 
@@ -308,7 +313,7 @@ class RepairRecordController extends Controller
                         return redirect()
                             ->back()
                             ->withInput()
-                            ->withErrors(['photos' => '画像処理でエラーが発生しました: ' . $e->getMessage()]);
+                            ->withErrors(['photos' => '画像処理でエラーが発生しました: '.$e->getMessage()]);
                     }
                 }
             }
@@ -335,7 +340,7 @@ class RepairRecordController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->withErrors(['error' => 'エラーが発生しました: ' . $e->getMessage()]);
+                ->withErrors(['error' => 'エラーが発生しました: '.$e->getMessage()]);
         }
     }
 
@@ -454,7 +459,7 @@ class RepairRecordController extends Controller
     {
         $stats = [
             'total_repairs' => RepairRecord::count(),
-            'urgent_repairs' => RepairRecord::urgent()->count(),
+            'reported_repairs' => RepairRecord::reported()->count(),
             'in_progress' => RepairRecord::inProgress()->count(),
             'this_month_cost' => RepairRecord::completedBetween(
                 now()->startOfMonth(),
@@ -474,7 +479,7 @@ class RepairRecordController extends Controller
      */
     private function extractValidPhotoPaths($data, array &$result): void
     {
-        if (is_string($data) && !empty($data)) {
+        if (is_string($data) && ! empty($data)) {
             $result[] = $data;
         } elseif (is_array($data)) {
             foreach ($data as $item) {

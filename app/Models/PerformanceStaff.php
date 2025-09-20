@@ -16,7 +16,6 @@ class PerformanceStaff extends Model
         'performance_id',
         'user_id',
         'position_id',
-        'production_id',
         'note',
     ];
 
@@ -45,14 +44,6 @@ class PerformanceStaff extends Model
     }
 
     /**
-     * プロダクションとの関連
-     */
-    public function production(): BelongsTo
-    {
-        return $this->belongsTo(Production::class);
-    }
-
-    /**
      * スコープ: 特定の公演の担当者
      */
     public function scopeForPerformance($query, $performanceId)
@@ -74,14 +65,6 @@ class PerformanceStaff extends Model
     public function scopeByPosition($query, $positionId)
     {
         return $query->where('position_id', $positionId);
-    }
-
-    /**
-     * スコープ: 特定のプロダクション関連
-     */
-    public function scopeByProduction($query, $productionId)
-    {
-        return $query->where('production_id', $productionId);
     }
 
     /**

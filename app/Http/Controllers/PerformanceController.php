@@ -3,45 +3,100 @@
 namespace App\Http\Controllers;
 
 use App\Models\Performance;
+use App\Models\PerformanceStaff;
+use App\Models\Position;
+use App\Models\Production;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PerformanceController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $performances = Performance::with(['phases', 'staff'])
-            ->active()
-            ->orderBy('start_date', 'desc')
-            ->paginate(15);
+        $query = Performance::with(['phases.location', 'staff'])
+            ->withCount('phases')
+            ->active();
+
+        // 検索フィルター
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%'.$request->search.'%');
+        }
+
+        if ($request->filled('performance_type')) {
+            $query->byType($request->performance_type);
+        }
+
+        if ($request->filled('status')) {
+            $query->byStatus($request->status);
+        }
+
+        $performances = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return view('performances.index', compact('performances'));
     }
 
     public function create(): View
     {
-        return view('performances.create');
+        $productions = Production::active()->ordered()->get();
+        $users = User::active()->staff()->ordered()->get();
+        $positions = Position::active()->ordered()->get();
+        $designers = User::active()->designers()->ordered()->get();
+
+        return view('performances.create', compact('productions', 'users', 'positions', 'designers'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
-            'performance_type' => 'required|in:演劇,ミュージカル,コンサート,その他',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'venue' => 'nullable|string|max:255',
+            'performance_type' => 'required|in:演劇,ミュージカル,リーディング,ダンス,イベント,コンサート,その他',
             'director' => 'nullable|string|max:255',
-            'producer' => 'nullable|string|max:255',
             'status' => 'required|in:planning,preparation,in_progress,completed,cancelled',
-            'budget' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
             'is_active' => 'boolean',
+            'production_ids' => 'nullable|array',
+            'production_ids.*' => 'exists:productions,id',
+            'staff' => 'nullable|array',
+            'staff.*.user_id' => 'nullable|exists:users,id',
+            'staff.*.position_id' => 'nullable|exists:positions,id',
+            'sound_designers' => 'nullable|array',
+            'sound_designers.*' => 'nullable|exists:users,id',
         ]);
 
         $performance = Performance::create($validated);
+
+        // プロダクションの関連付け
+        if (! empty($validated['production_ids'])) {
+            $performance->productions()->attach($validated['production_ids']);
+        }
+
+        // 担当者の関連付け
+        if (! empty($validated['staff'])) {
+            foreach ($validated['staff'] as $staffData) {
+                if (! empty($staffData['user_id']) && ! empty($staffData['position_id'])) {
+                    PerformanceStaff::create([
+                        'performance_id' => $performance->id,
+                        'user_id' => $staffData['user_id'],
+                        'position_id' => $staffData['position_id'],
+                    ]);
+                }
+            }
+        }
+
+        // サウンドデザイナーの関連付け
+        if (! empty($validated['sound_designers'])) {
+            foreach ($validated['sound_designers'] as $designerId) {
+                if (! empty($designerId)) {
+                    PerformanceStaff::create([
+                        'performance_id' => $performance->id,
+                        'user_id' => $designerId,
+                        'position_id' => 1, // サウンドデザインのポジションID
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('performances.show', $performance)
             ->with('success', '公演が正常に作成されました。');
@@ -49,34 +104,72 @@ class PerformanceController extends Controller
 
     public function show(Performance $performance): View
     {
-        $performance->load(['phases.location', 'staff.user', 'staff.position']);
+        $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions']);
 
         return view('performances.show', compact('performance'));
     }
 
     public function edit(Performance $performance): View
     {
-        return view('performances.edit', compact('performance'));
+        $performance->load(['productions', 'staff']);
+        $productions = Production::active()->ordered()->get();
+        $users = User::active()->staff()->ordered()->get();
+        $positions = Position::active()->ordered()->get();
+        $designers = User::active()->designers()->ordered()->get();
+
+        return view('performances.edit', compact('performance', 'productions', 'users', 'positions', 'designers'));
     }
 
     public function update(Request $request, Performance $performance): RedirectResponse
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
-            'performance_type' => 'required|in:演劇,ミュージカル,コンサート,その他',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'venue' => 'nullable|string|max:255',
+            'performance_type' => 'required|in:演劇,ミュージカル,リーディング,ダンス,イベント,コンサート,その他',
             'director' => 'nullable|string|max:255',
-            'producer' => 'nullable|string|max:255',
             'status' => 'required|in:planning,preparation,in_progress,completed,cancelled',
-            'budget' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
             'is_active' => 'boolean',
+            'production_ids' => 'nullable|array',
+            'production_ids.*' => 'exists:productions,id',
+            'staff' => 'nullable|array',
+            'staff.*.user_id' => 'nullable|exists:users,id',
+            'staff.*.position_id' => 'nullable|exists:positions,id',
+            'sound_designers' => 'nullable|array',
+            'sound_designers.*' => 'nullable|exists:users,id',
         ]);
 
         $performance->update($validated);
+
+        // プロダクションの同期（既存の関連を削除して新しい関連を追加）
+        $performance->productions()->sync($validated['production_ids'] ?? []);
+
+        // 担当者の同期
+        $performance->staff()->delete(); // 既存の担当者を削除
+
+        if (! empty($validated['staff'])) {
+            foreach ($validated['staff'] as $staffData) {
+                if (! empty($staffData['user_id']) && ! empty($staffData['position_id'])) {
+                    PerformanceStaff::create([
+                        'performance_id' => $performance->id,
+                        'user_id' => $staffData['user_id'],
+                        'position_id' => $staffData['position_id'],
+                    ]);
+                }
+            }
+        }
+
+        // サウンドデザイナーの更新
+        if (! empty($validated['sound_designers'])) {
+            foreach ($validated['sound_designers'] as $designerId) {
+                if (! empty($designerId)) {
+                    PerformanceStaff::create([
+                        'performance_id' => $performance->id,
+                        'user_id' => $designerId,
+                        'position_id' => 1, // サウンドデザインのポジションID
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('performances.show', $performance)
             ->with('success', '公演が正常に更新されました。');

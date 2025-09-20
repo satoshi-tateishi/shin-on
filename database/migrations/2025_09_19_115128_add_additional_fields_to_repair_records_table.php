@@ -43,7 +43,7 @@ return new class extends Migration
                 'staff_user_id',
                 'performance_name',
                 'usage_location',
-                'photos'
+                'photos',
             ]);
         });
     }

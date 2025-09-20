@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Production extends Model
 {
@@ -55,5 +57,22 @@ class Production extends Model
     public function getStatusLabelAttribute(): string
     {
         return $this->is_active ? '有効' : '無効';
+    }
+
+    /**
+     * 公演との多対多関連（中間テーブル経由）
+     */
+    public function performances(): BelongsToMany
+    {
+        return $this->belongsToMany(Performance::class, 'performance_production')
+            ->withTimestamps();
+    }
+
+    /**
+     * 公演プロダクション関連レコードとの関連
+     */
+    public function performanceProductions(): HasMany
+    {
+        return $this->hasMany(PerformanceProduction::class);
     }
 }
