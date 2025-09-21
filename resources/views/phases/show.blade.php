@@ -3,15 +3,14 @@
 @section('title', 'フェーズ詳細')
 
 @section('breadcrumb')
-    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演管理</a>
+    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
     > <a href="{{ route('performances.show', $performance) }}" class="text-blue-600 hover:text-blue-800">{{ $performance->title }}</a>
-    > <span class="text-gray-800">{{ $phase->name }}</span>
+    > <span class="text-gray-800">フェーズ詳細 【{{ $phase->name }}】</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">{{ $phase->name }}</h1>
-        <p class="mt-1 text-sm text-gray-600">{{ $performance->title }} のフェーズ詳細</p>
+        <h1 class="text-3xl font-bold text-gray-900">{{ $performance->title }} フェーズ詳細【{{ $phase->name }}】</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -30,6 +29,19 @@
                 </svg>
                 編集
             </a>
+        @endif
+        @if(auth()->user()->role === 'admin')
+            <form method="POST" action="{{ route('phases.destroy', $phase) }}" id="deletePhaseForm" class="inline">
+                @csrf
+                @method('DELETE')
+                <button type="button" onclick="showDeleteConfirmation()"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    このフェーズを削除
+                </button>
+            </form>
         @endif
     </div>
 @endsection
@@ -120,52 +132,116 @@
     </div>
 </div>
 
-<!-- 機材使用情報 -->
+<!-- 使用機材 -->
 <div class="bg-white shadow rounded-lg">
     <div class="px-4 py-5 sm:p-6">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">機材使用</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">使用機材</h3>
             @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
                 <a href="{{ route('phases.equipment.index', $phase) }}"
                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                     </svg>
-                    機材管理
+                    使用機材 管理
                 </a>
             @endif
         </div>
 
         @php
+            $phaseEquipments = $phase->phaseEquipments()
+                ->with(['equipment.subcategory.category'])
+                ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
+                ->orderBy('equipments.sort')
+                ->select('phase_equipment.*')
+                ->get();
+
+            // 同じ機材名でグループ化
+            $groupedEquipments = $phaseEquipments->groupBy(function($item) {
+                return $item->equipment->name;
+            })->map(function($group) {
+                $first = $group->first();
+                return (object)[
+                    'equipment' => $first->equipment,
+                    'total_quantity' => $group->sum('quantity'),
+                    'company_numbers' => $group->map(function($item) {
+                        return $item->equipment->company_number;
+                    })->filter()->unique()->implode(', ')
+                ];
+            })->take(10);
+
             $equipmentCount = $phase->phaseEquipments ? $phase->phaseEquipments->count() : 0;
         @endphp
 
         @if($equipmentCount > 0)
-            <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-                <div class="flex">
-                    <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-blue-800">
-                            機材使用登録
-                        </h3>
-                        <div class="mt-2 text-sm text-blue-700">
-                            <p>このフェーズで{{ $equipmentCount }}件の機材使用が登録されています。</p>
-                        </div>
-                        <div class="mt-4">
-                            <div class="-mx-2 -my-1.5 flex">
-                                <a href="{{ route('phases.equipment.index', $phase) }}"
-                                   class="bg-blue-50 px-2 py-1.5 rounded-md text-sm font-medium text-blue-800 hover:bg-blue-100">
-                                    詳細を見る
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                カテゴリ
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                機材名
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-r border-gray-200">
+                                数量
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-r border-gray-200">
+                                新音番号
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach($groupedEquipments as $groupedEquipment)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ $groupedEquipment->equipment->subcategory->category->name }}</div>
+                                <div class="text-sm text-gray-500">{{ $groupedEquipment->equipment->subcategory->name }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div>
+                                        @if($groupedEquipment->equipment->manufacturer)
+                                            <div class="text-xs text-gray-500 mb-1">
+                                                {{ $groupedEquipment->equipment->manufacturer }}
+                                            </div>
+                                        @endif
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ $groupedEquipment->equipment->name }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center border-l border-r border-gray-200">
+                                <div class="text-sm text-gray-900">{{ $groupedEquipment->total_quantity }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-left border-l border-r border-gray-200">
+                                @if($groupedEquipment->company_numbers)
+                                    <div class="text-sm text-gray-900">{{ $groupedEquipment->company_numbers }}</div>
+                                @else
+                                    <div class="text-sm text-gray-400">-</div>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
+
+            @if($equipmentCount > 10)
+                <div class="mt-4 text-center">
+                    <a href="{{ route('phases.equipment.index', $phase) }}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        すべての機材を見る（{{ $equipmentCount }}件）
+                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+            @endif
         @else
-            <div class="text-center">
+            <div class="text-center py-8">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                 </svg>
@@ -174,11 +250,11 @@
                 @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
                     <div class="mt-6">
                         <a href="{{ route('phases.equipment.index', $phase) }}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                             </svg>
-                            機材使用を登録
+                            使用機材 管理
                         </a>
                     </div>
                 @endif
@@ -187,39 +263,92 @@
     </div>
 </div>
 
-@if(auth()->user()->role === 'admin')
-<!-- 削除セクション -->
-<div class="bg-white shadow rounded-lg border border-red-200">
-    <div class="px-4 py-5 sm:p-6">
-        <h3 class="text-lg leading-6 font-medium text-red-900 mb-4">危険ゾーン</h3>
-
-        <div class="bg-red-50 border border-red-200 rounded-md p-4">
-            <div class="flex">
-                <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">
-                        フェーズの削除
-                    </h3>
-                    <div class="mt-2 text-sm text-red-700">
-                        <p>このフェーズを削除すると、関連する機材使用記録もすべて削除されます。この操作は取り消すことができません。</p>
-                    </div>
-                    <div class="mt-4">
-                        <form method="POST" action="{{ route('phases.destroy', $phase) }}" onsubmit="return confirm('本当にこのフェーズを削除しますか？関連する機材使用記録もすべて削除されます。')" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                    class="bg-red-50 px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100">
-                                フェーズを削除
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+<!-- 削除確認モーダル -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 text-center mb-2">フェーズの削除</h3>
+        <div class="bg-gray-50 rounded-md p-3 mb-4">
+            <p class="text-sm text-gray-700 text-center">
+                <span class="font-medium">公演:</span> {{ $performance->title }}<br>
+                <span class="font-medium">フェーズ:</span> {{ $phase->name }}
+            </p>
+        </div>
+        <p class="text-sm text-gray-500 text-center mb-4">
+            このフェーズを削除すると、関連する機材使用記録もすべて削除されます。<br>
+            この操作は取り消すことができません。
+        </p>
+        <p class="text-sm text-gray-700 text-center mb-4">
+            続行するには、下のフィールドに <strong>delete</strong> と入力してください。
+        </p>
+        <input type="text" id="deleteConfirmInput" placeholder="delete と入力"
+               class="w-full px-3 py-2 border border-gray-300 rounded-md text-center mb-4 focus:ring-red-500 focus:border-red-500">
+        <div class="flex space-x-3">
+            <button type="button" onclick="hideDeleteConfirmation()"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                キャンセル
+            </button>
+            <button type="button" id="confirmDeleteBtn" onclick="executeDelete()" disabled
+                    class="flex-1 px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                削除
+            </button>
         </div>
     </div>
 </div>
-@endif
+
+@push('scripts')
+<script>
+function showDeleteConfirmation() {
+    if (confirm('本当にこのフェーズを削除しますか？関連する機材使用記録もすべて削除されます。')) {
+        document.getElementById('deleteModal').classList.remove('hidden');
+        document.getElementById('deleteModal').classList.add('flex');
+        document.getElementById('deleteConfirmInput').focus();
+    }
+}
+
+function hideDeleteConfirmation() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('flex');
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('confirmDeleteBtn').disabled = true;
+}
+
+function executeDelete() {
+    document.getElementById('deletePhaseForm').submit();
+}
+
+// 入力フィールドの監視
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('deleteConfirmInput');
+    const button = document.getElementById('confirmDeleteBtn');
+
+    input.addEventListener('input', function() {
+        if (this.value === 'delete') {
+            button.disabled = false;
+        } else {
+            button.disabled = true;
+        }
+    });
+
+    // Enterキーで削除実行
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && this.value === 'delete') {
+            executeDelete();
+        }
+    });
+
+    // Escapeキーでモーダルを閉じる
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideDeleteConfirmation();
+        }
+    });
+});
+</script>
+@endpush
 
 @endsection

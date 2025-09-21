@@ -3,16 +3,15 @@
 @section('title', 'フェーズ編集')
 
 @section('breadcrumb')
-    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演管理</a>
+    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
     > <a href="{{ route('performances.show', $performance) }}" class="text-blue-600 hover:text-blue-800">{{ $performance->title }}</a>
-    > <a href="{{ route('phases.show', $phase) }}" class="text-blue-600 hover:text-blue-800">{{ $phase->name }}</a>
+    > <a href="{{ route('phases.show', $phase) }}" class="text-blue-600 hover:text-blue-800">フェーズ詳細 {{ $phase->name }}</a>
     > <span class="text-gray-800">編集</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">フェーズ編集</h1>
-        <p class="mt-1 text-sm text-gray-600">{{ $phase->name }} の情報を編集してください。</p>
+        <h1 class="text-3xl font-bold text-gray-900">{{ $performance->title }}【{{ $phase->name }}】フェーズ編集</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -116,7 +115,7 @@
                     <label for="note" class="block text-sm font-medium text-gray-700">備考</label>
                     <textarea name="note" id="note" rows="3"
                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('note') border-red-300 @enderror"
-                              placeholder="このフェーズについての詳細や注意事項">{{ old('note', $phase->note) }}</textarea>
+                              placeholder="スタジオ番号や補足情報など">{{ old('note', $phase->note) }}</textarea>
                     @error('note')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror

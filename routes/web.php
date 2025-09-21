@@ -127,12 +127,17 @@ Route::middleware('auth')->group(function () {
 
     // フェーズ機材使用管理ルート
     Route::prefix('phases/{phase}')->name('phases.')->group(function () {
-        Route::resource('equipment', PhaseEquipmentController::class);
+        // 一括ステータス変更（resourceルートより前に配置）
+        Route::patch('equipment/bulk-checkout', [PhaseEquipmentController::class, 'bulkCheckout'])->name('equipment.bulk-checkout');
+        Route::patch('equipment/bulk-checkout-reserved', [PhaseEquipmentController::class, 'bulkCheckoutReserved'])->name('equipment.bulk-checkout-reserved');
+        Route::patch('equipment/bulk-checkout-checked-in', [PhaseEquipmentController::class, 'bulkCheckoutCheckedIn'])->name('equipment.bulk-checkout-checked-in');
+        Route::patch('equipment/bulk-checkin', [PhaseEquipmentController::class, 'bulkCheckin'])->name('equipment.bulk-checkin');
 
-        // 機材貸出・返却・キャンセル
+        Route::resource('equipment', PhaseEquipmentController::class)->parameter('equipment', 'phaseEquipment');
+
+        // 機材出庫・返却
         Route::patch('equipment/{phaseEquipment}/checkout', [PhaseEquipmentController::class, 'checkout'])->name('equipment.checkout');
         Route::patch('equipment/{phaseEquipment}/checkin', [PhaseEquipmentController::class, 'checkin'])->name('equipment.checkin');
-        Route::patch('equipment/{phaseEquipment}/cancel', [PhaseEquipmentController::class, 'cancel'])->name('equipment.cancel');
 
         // AJAX API
         Route::get('available-equipment', [PhaseEquipmentController::class, 'getAvailableEquipment'])->name('available-equipment');
@@ -189,4 +194,6 @@ Route::prefix('test-api')->group(function () {
     Route::get('schedule', function () {
         return view('schedule.simple');
     });
+
+
 });

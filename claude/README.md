@@ -42,6 +42,7 @@
 ### 📋 システム仕様書・設計書
 - **[../docs/Equipment_Management_System_Requirements_v2.md](../docs/Equipment_Management_System_Requirements_v2.md)** - 機材管理システム要件定義書 v2.0 ✨
 - **[../docs/Equipment_Management_Database_Design_v2.md](../docs/Equipment_Management_Database_Design_v2.md)** - データベース設計書 v2.0 ✨
+- **[../docs/Phase_Equipment_Inheritance_Specification.md](../docs/Phase_Equipment_Inheritance_Specification.md)** - フェーズ間機材継承機能 詳細仕様書 🆕
 - **[../docs/Dropbox_API_Specification.md](../docs/Dropbox_API_Specification.md)** - Dropbox OAuth 2.0 & バックアップAPI仕様
 - **[../docs/LINE_WORKS_SSO_Specification.md](../docs/LINE_WORKS_SSO_Specification.md)** - LINE WORKS SSO認証仕様
 

@@ -11,13 +11,9 @@ use Illuminate\View\View;
 
 class PhaseController extends Controller
 {
-    public function index(Performance $performance): View
+    public function index(Performance $performance): RedirectResponse
     {
-        $phases = $performance->phasesOrdered()
-            ->with('location')
-            ->get();
-
-        return view('phases.index', compact('performance', 'phases'));
+        return redirect()->route('performances.show', $performance);
     }
 
     public function create(Performance $performance): View
@@ -87,7 +83,7 @@ class PhaseController extends Controller
         $performance = $phase->performance;
         $phase->delete();
 
-        return redirect()->route('performances.phases.index', $performance)
+        return redirect()->route('performances.show', $performance)
             ->with('success', 'フェーズが正常に削除されました。');
     }
 }

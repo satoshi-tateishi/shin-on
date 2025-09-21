@@ -48,7 +48,10 @@ class Performance extends Model
      */
     public function staff(): HasMany
     {
-        return $this->hasMany(PerformanceStaff::class);
+        return $this->hasMany(PerformanceStaff::class)
+            ->join('positions', 'performance_staff.position_id', '=', 'positions.id')
+            ->orderBy('positions.sort')
+            ->select('performance_staff.*');
     }
 
     /**

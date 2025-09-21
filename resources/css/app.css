@@ -9,3 +9,22 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* 動的コンテンツ用CSS - Tailwind CSS v4対応 */
+select optgroup {
+    display: block !important;
+    font-weight: bold;
+    color: #374151;
+    background-color: #f9fafb;
+}
+
+select option {
+    display: block !important;
+    padding: 0.5rem;
+    color: #111827;
+    background-color: white;
+}
+
+select option:hover {
+    background-color: #f3f4f6;
+}

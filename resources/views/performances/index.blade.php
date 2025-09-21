@@ -84,7 +84,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">期間</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会場</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">フェーズ数</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">フェーズ数</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -124,14 +124,18 @@
                                     <div class="text-gray-400 text-xs">期間未設定</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                @if($performance->main_venue)
-                                    {{ $performance->main_venue }}
-                                    @if(count($performance->venues) > 1)
-                                        <div class="text-xs text-gray-500">他{{ count($performance->venues) - 1 }}会場</div>
-                                    @endif
+                            <td class="px-6 py-4 text-sm text-gray-900">
+                                @if($performance->phases->count() > 0)
+                                    <div class="space-y-1">
+                                        @foreach($performance->phases->sortBy(['sort', 'start_date']) as $phase)
+                                            <div class="text-xs">
+                                                <span class="font-medium text-gray-700">{{ $phase->name }}:</span>
+                                                <span>{{ $phase->location ? $phase->location->name : '未設定' }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 @else
-                                    <span class="text-gray-500">会場未設定</span>
+                                    <span class="text-gray-500">フェーズ未設定</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -144,17 +148,8 @@
                                     {{ $performance->status_label }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <div class="flex items-center">
-                                    <span class="mr-2">{{ $performance->phases_count ?? 0 }}</span>
-                                    @if($performance->phases_count > 0)
-                                        <a href="{{ route('performances.phases.index', $performance) }}"
-                                           class="text-blue-600 hover:text-blue-900 text-xs"
-                                           onclick="event.stopPropagation();">
-                                            フェーズ管理
-                                        </a>
-                                    @endif
-                                </div>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                                <span>{{ $performance->phases_count ?? 0 }}</span>
                             </td>
                         </tr>
                     @empty

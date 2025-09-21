@@ -1,26 +1,26 @@
 @extends('layouts.app')
 
-@section('title', '機材使用編集')
+@section('title', '機材使用数量の編集')
 
 @section('breadcrumb')
     > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演管理</a>
-    > <a href="{{ route('performances.show', $phaseEquipment->phase->performance) }}" class="text-blue-600 hover:text-blue-800">{{ $phaseEquipment->phase->performance->title }}</a>
-    > <a href="{{ route('phases.equipment.index', $phaseEquipment->phase) }}" class="text-blue-600 hover:text-blue-800">{{ $phaseEquipment->phase->name }} - 機材管理</a>
-    > <a href="{{ route('phases.equipment.show', [$phaseEquipment->phase, $phaseEquipment]) }}" class="text-blue-600 hover:text-blue-800">機材使用詳細</a>
+    > <a href="{{ route('performances.show', $phase->performance) }}" class="text-blue-600 hover:text-blue-800">{{ $phase->performance->title }}</a>
+    > <a href="{{ route('phases.equipment.index', $phase) }}" class="text-blue-600 hover:text-blue-800">{{ $phase->name }} - 機材管理</a>
+    > <a href="{{ route('phases.equipment.show', [$phase, $phaseEquipment]) }}" class="text-blue-600 hover:text-blue-800">機材使用詳細</a>
     > <span class="text-gray-800">編集</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材使用編集</h1>
+        <h1 class="text-3xl font-bold text-gray-900">機材使用数量の編集</h1>
         <p class="mt-1 text-sm text-gray-600">
-            {{ $phaseEquipment->phase->performance->title }} - {{ $phaseEquipment->phase->name }} |
+            {{ $phase->performance->title }} - {{ $phase->name }} |
             {{ $phaseEquipment->equipment->name }}
         </p>
     </div>
 
     <div class="flex space-x-3">
-        <a href="{{ route('phases.equipment.show', [$phaseEquipment->phase, $phaseEquipment]) }}"
+        <a href="{{ route('phases.equipment.show', [$phase, $phaseEquipment]) }}"
            class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent text-sm font-medium rounded-md text-gray-700 hover:bg-gray-400">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -34,7 +34,7 @@
 <div class="max-w-4xl mx-auto">
     <div class="bg-white shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-6">機材使用情報の編集</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-6">機材使用数量の編集</h3>
 
             @if($errors->any())
                 <div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
@@ -56,21 +56,16 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('phases.equipment.update', [$phaseEquipment->phase, $phaseEquipment]) }}">
+            <form method="POST" action="{{ route('phases.equipment.update', [$phase, $phaseEquipment]) }}">
                 @csrf
                 @method('PUT')
 
                 <!-- 現在の機材情報（編集不可） -->
-                <div class="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h4 class="text-md font-medium text-gray-900 mb-3">機材情報</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4 max-w-md">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">機材名</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->equipment->name }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">カテゴリ</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->equipment->category->name ?? '-' }} > {{ $phaseEquipment->equipment->subcategory->name ?? '-' }}</dd>
                         </div>
                         @if($phaseEquipment->equipment->company_number)
                             <div>
@@ -78,19 +73,13 @@
                                 <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->equipment->company_number }}</dd>
                             </div>
                         @endif
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">管理方式</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ $phaseEquipment->equipment->management_type === 'individual' ? '個体管理' : '数量管理' }}
-                            </dd>
-                        </div>
                     </div>
                 </div>
 
                 <!-- 編集可能項目 -->
                 <div class="space-y-6">
                     <!-- 数量 -->
-                    <div>
+                    <div class="max-w-sm">
                         <label for="quantity" class="block text-sm font-medium text-gray-700">使用数量</label>
                         <div class="mt-1">
                             @if($phaseEquipment->equipment->management_type === 'individual')
@@ -102,9 +91,10 @@
                                 <input type="number" name="quantity" id="quantity"
                                        value="{{ old('quantity', $phaseEquipment->quantity) }}"
                                        min="1" max="{{ $maxQuantity }}" required
-                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="mt-1 block w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <div class="mt-1 text-sm text-gray-500">
-                                    利用可能数量: {{ $maxQuantity }}個（現在の使用数を含む）
+                                    現在未使用: {{ $availableQuantity }}個<br>
+                                    現在の使用数を含めて最大 {{ $maxQuantity }}個まで変更可能
                                 </div>
                             @endif
                         </div>
@@ -113,49 +103,7 @@
                         @enderror
                     </div>
 
-                    <!-- 備考 -->
-                    <div>
-                        <label for="note" class="block text-sm font-medium text-gray-700">備考</label>
-                        <textarea name="note" id="note" rows="4"
-                                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                  placeholder="使用に関する特記事項や要望などを記入してください">{{ old('note', $phaseEquipment->note) }}</textarea>
-                        @error('note')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
 
-                    <!-- ステータス情報表示 -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 class="text-md font-medium text-blue-900 mb-3">現在のステータス</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <dt class="text-sm font-medium text-blue-700">状態</dt>
-                                <dd class="mt-1">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ $phaseEquipment->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                        {{ $phaseEquipment->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}
-                                        {{ $phaseEquipment->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}
-                                        {{ $phaseEquipment->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                                        {{ $phaseEquipment->status_label }}
-                                    </span>
-                                </dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-blue-700">予約者</dt>
-                                <dd class="mt-1 text-sm text-blue-900">{{ $phaseEquipment->reservedBy->name }}</dd>
-                            </div>
-                            @if($phaseEquipment->checked_out_at)
-                                <div>
-                                    <dt class="text-sm font-medium text-blue-700">貸出日時</dt>
-                                    <dd class="mt-1 text-sm text-blue-900">{{ $phaseEquipment->checked_out_at->format('Y/m/d H:i') }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-blue-700">貸出担当者</dt>
-                                    <dd class="mt-1 text-sm text-blue-900">{{ $phaseEquipment->checkedOutBy->name ?? '-' }}</dd>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
 
                     <!-- 重複チェック警告 -->
                     @if($hasConflicts)
@@ -177,9 +125,9 @@
 
                 <!-- 送信ボタン -->
                 <div class="mt-8 flex justify-end space-x-3">
-                    <a href="{{ route('phases.equipment.show', [$phaseEquipment->phase, $phaseEquipment]) }}"
+                    <a href="{{ route('phases.equipment.show', [$phase, $phaseEquipment]) }}"
                        class="px-4 py-2 bg-gray-300 border border-transparent text-sm font-medium rounded-md text-gray-700 hover:bg-gray-400">
-                        キャンセル
+                        戻る
                     </a>
                     <button type="submit"
                             class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
@@ -206,7 +154,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">期間</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予約者</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -227,13 +175,12 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                             {{ $usage->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                             {{ $usage->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}
-                                            {{ $usage->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}
-                                            {{ $usage->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                                            {{ $usage->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}">
                                             {{ $usage->status_label }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ $usage->reservedBy->name }}
+                                        {{ $usage->checkoutUser->name ?? '-' }}
                                     </td>
                                 </tr>
                             @endforeach

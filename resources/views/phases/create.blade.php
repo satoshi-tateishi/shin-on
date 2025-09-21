@@ -3,15 +3,14 @@
 @section('title', 'フェーズ作成')
 
 @section('breadcrumb')
-    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演管理</a>
+    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
     > <a href="{{ route('performances.show', $performance) }}" class="text-blue-600 hover:text-blue-800">{{ $performance->title }}</a>
     > <span class="text-gray-800">フェーズ作成</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">フェーズ作成</h1>
-        <p class="mt-1 text-sm text-gray-600">{{ $performance->title }} の新しいフェーズを作成してください。</p>
+        <h1 class="text-3xl font-bold text-gray-900">{{ $performance->title }} フェーズ新規作成</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -110,7 +109,7 @@
                     <label for="note" class="block text-sm font-medium text-gray-700">備考</label>
                     <textarea name="note" id="note" rows="3"
                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('note') border-red-300 @enderror"
-                              placeholder="このフェーズについての詳細や注意事項">{{ old('note') }}</textarea>
+                              placeholder="スタジオ番号や補足情報など">{{ old('note') }}</textarea>
                     @error('note')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror

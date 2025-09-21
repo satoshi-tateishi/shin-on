@@ -21,42 +21,43 @@ class PhaseEquipmentController extends Controller
      */
     public function index(Phase $phase): View
     {
-        $phaseEquipments = PhaseEquipment::with([
-            'equipment.subcategory.category',
-            'checkoutUser',
-            'checkinUser',
-        ])
-            ->forPhase($phase->id)
-            ->orderBy('created_at', 'desc')
+        // フェーズの機材使用記録を取得
+        $phaseEquipments = $phase->phaseEquipments()
+            ->with(['equipment.subcategory.category', 'checkoutUser', 'checkinUser'])
+            ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
+            ->orderBy('equipments.sort')
+            ->orderByDesc('phase_equipment.created_at')
+            ->select('phase_equipment.*')
             ->paginate(20);
 
         $equipmentStats = [
-            'total' => $phaseEquipments->total(),
+            'total' => PhaseEquipment::forPhase($phase->id)->count(),
             'reserved' => PhaseEquipment::forPhase($phase->id)->reserved()->count(),
             'checked_out' => PhaseEquipment::forPhase($phase->id)->checkedOut()->count(),
             'checked_in' => PhaseEquipment::forPhase($phase->id)->checkedIn()->count(),
-            'cancelled' => PhaseEquipment::forPhase($phase->id)->cancelled()->count(),
         ];
 
         return view('phase-equipment.index', compact('phase', 'phaseEquipments', 'equipmentStats'));
     }
+
 
     /**
      * Show the form for adding equipment to phase.
      */
     public function create(Phase $phase): View
     {
-        $categories = EquipmentCategory::with('subcategories.equipments')
+        $categories = EquipmentCategory::active()->ordered()->get();
+
+        $subcategories = \App\Models\EquipmentSubcategory::with('category')
+            ->ordered()
+            ->get();
+
+        $equipmentSets = EquipmentSet::with('equipmentItems.equipment')
             ->active()
             ->orderBy('sort')
             ->get();
 
-        $equipmentSets = EquipmentSet::with('items.equipment')
-            ->active()
-            ->orderBy('sort')
-            ->get();
-
-        return view('phase-equipment.create', compact('phase', 'categories', 'equipmentSets'));
+        return view('phase-equipment.create', compact('phase', 'categories', 'subcategories', 'equipmentSets'));
     }
 
     /**
@@ -64,6 +65,12 @@ class PhaseEquipmentController extends Controller
      */
     public function store(Request $request, Phase $phase): RedirectResponse
     {
+        // 複数機材の一括追加に対応
+        if ($request->has('equipment_data')) {
+            return $this->storeBulkEquipment($request, $phase);
+        }
+
+        // 従来の単一機材追加処理
         $validated = $request->validate([
             'equipment_id' => 'required|exists:equipments,id',
             'quantity' => 'required|integer|min:1',
@@ -72,21 +79,33 @@ class PhaseEquipmentController extends Controller
 
         $equipment = Equipment::findOrFail($validated['equipment_id']);
 
-        // 期間重複チェック
-        $hasConflict = PhaseEquipment::hasEquipmentConflict(
-            $equipment->id,
-            $phase->start_date,
-            $phase->end_date
-        );
+        // 個体管理機材の場合のみ期間重複チェック
+        if ($equipment->management_type === 'individual') {
+            $hasConflict = PhaseEquipment::hasEquipmentConflict(
+                $equipment->id,
+                $phase->start_date,
+                $phase->end_date
+            );
 
-        if ($hasConflict) {
-            return back()->withErrors([
-                'equipment_id' => '指定された機材は、この期間中に他のフェーズで使用予定です。',
-            ])->withInput();
+            if ($hasConflict) {
+                return back()->withErrors([
+                    'equipment_id' => '指定された機材は、この期間中に他のフェーズで使用予定です。',
+                ])->withInput();
+            }
         }
 
-        // 数量管理機材の場合、使用可能数量チェック
+        // 数量管理機材の場合、既存レコードの重複チェック
         if ($equipment->management_type === 'quantity') {
+            $existingRecord = PhaseEquipment::where('phase_id', $phase->id)
+                ->where('equipment_id', $equipment->id)
+                ->first();
+
+            if ($existingRecord) {
+                return back()->withErrors([
+                    'equipment_id' => 'この機材は既にこのフェーズに登録されています。数量を変更する場合は編集画面をご利用ください。',
+                ])->withInput();
+            }
+
             $availableQuantity = PhaseEquipment::getAvailableQuantity(
                 $equipment->id,
                 $phase->start_date,
@@ -138,13 +157,25 @@ class PhaseEquipmentController extends Controller
             'checkinUser',
         ]);
 
+        // phaseにperformanceリレーションを読み込む
+        $phase->load('performance');
+
         $movements = EquipmentMovement::forPhase($phase->id)
             ->forEquipment($phaseEquipment->equipment_id)
             ->with(['fromLocation', 'toLocation', 'movedBy'])
             ->ordered()
             ->get();
 
-        return view('phase-equipment.show', compact('phase', 'phaseEquipment', 'movements'));
+        // 他の使用予定を取得（予約済み・出庫中のみ、返却済みは除外）
+        $otherUsages = PhaseEquipment::where('equipment_id', $phaseEquipment->equipment_id)
+            ->where('id', '!=', $phaseEquipment->id)
+            ->whereIn('status', ['reserved', 'checked_out'])
+            ->whereNotIn('status', ['checked_in'])
+            ->with(['phase.performance'])
+            ->get();
+
+
+        return view('phase-equipment.show', compact('phase', 'phaseEquipment', 'movements', 'otherUsages'));
     }
 
     /**
@@ -152,9 +183,58 @@ class PhaseEquipmentController extends Controller
      */
     public function edit(Phase $phase, PhaseEquipment $phaseEquipment): View
     {
-        $phaseEquipment->load('equipment.subcategory.category');
+        // 必要なリレーションを確実に読み込む
+        $phaseEquipment->load([
+            'equipment.subcategory.category',
+            'checkoutUser',
+            'checkinUser'
+        ]);
 
-        return view('phase-equipment.edit', compact('phase', 'phaseEquipment'));
+        // phaseにperformanceリレーションを読み込む
+        $phase->load('performance');
+
+        // 数量管理機材の場合、最大利用可能数量を計算
+        $maxQuantity = 1; // デフォルト（個体管理機材）
+        $availableQuantity = 0; // 利用可能数量（表示用）
+
+        if ($phaseEquipment->equipment && $phaseEquipment->equipment->management_type === 'quantity') {
+            // 同じ機材で他の使用中数量を計算（現在のレコードは除外）
+            $otherUsedQuantity = PhaseEquipment::where('equipment_id', $phaseEquipment->equipment->id)
+                ->where('id', '!=', $phaseEquipment->id)
+                ->sum('quantity');
+
+            // 現在未使用数量 = 機材総数 - 現在の使用数量 - 他で使用中の数量
+            $availableQuantity = max(0, $phaseEquipment->equipment->quantity - $phaseEquipment->quantity - $otherUsedQuantity);
+
+            // 編集時の最大入力可能数 = 利用可能数量 + 現在の使用数量
+            $maxQuantity = $availableQuantity + $phaseEquipment->quantity;
+        }
+
+        // 他の使用予定を取得（参考情報として）
+        $otherUsages = PhaseEquipment::where('equipment_id', $phaseEquipment->equipment_id)
+            ->where('id', '!=', $phaseEquipment->id)
+            ->whereNotIn('status', ['cancelled'])
+            ->with(['phase.performance'])
+            ->get();
+
+        // 期間重複があるかチェック
+        $hasConflicts = $phaseEquipment->equipment &&
+            $phaseEquipment->equipment->management_type === 'individual' &&
+            PhaseEquipment::hasEquipmentConflict(
+                $phaseEquipment->equipment_id,
+                $phase->start_date,
+                $phase->end_date,
+                $phaseEquipment->id
+            );
+
+        return view('phase-equipment.edit', compact(
+            'phase',
+            'phaseEquipment',
+            'maxQuantity',
+            'availableQuantity',
+            'otherUsages',
+            'hasConflicts'
+        ));
     }
 
     /**
@@ -197,17 +277,11 @@ class PhaseEquipmentController extends Controller
      */
     public function destroy(Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
     {
-        if ($phaseEquipment->status === 'checked_out') {
-            return back()->withErrors([
-                'error' => '貸出中の機材は削除できません。先に返却処理を行ってください。',
-            ]);
-        }
-
         $phaseEquipment->delete();
 
         return redirect()
             ->route('phases.equipment.index', $phase)
-            ->with('success', '機材使用予約を削除しました。');
+            ->with('success', '機材使用記録を削除しました。');
     }
 
     /**
@@ -217,7 +291,7 @@ class PhaseEquipmentController extends Controller
     {
         if (! $phaseEquipment->canCheckout()) {
             return back()->withErrors([
-                'error' => 'この機材は貸出できません。',
+                'error' => 'この機材は出庫できません。',
             ]);
         }
 
@@ -250,13 +324,13 @@ class PhaseEquipmentController extends Controller
 
             DB::commit();
 
-            return back()->with('success', '機材を貸出しました。');
+            return back()->with('success', '機材を出庫しました。');
 
         } catch (\Exception $e) {
             DB::rollback();
 
             return back()->withErrors([
-                'error' => '貸出処理に失敗しました。',
+                'error' => '出庫処理に失敗しました。',
             ]);
         }
     }
@@ -312,21 +386,6 @@ class PhaseEquipmentController extends Controller
         }
     }
 
-    /**
-     * Cancel equipment reservation
-     */
-    public function cancel(Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
-    {
-        if (! $phaseEquipment->canCancel()) {
-            return back()->withErrors([
-                'error' => 'この機材はキャンセルできません。',
-            ]);
-        }
-
-        $phaseEquipment->update(['status' => 'cancelled']);
-
-        return back()->with('success', '機材使用予約をキャンセルしました。');
-    }
 
     /**
      * Get available equipment for phase (AJAX)
@@ -358,7 +417,7 @@ class PhaseEquipmentController extends Controller
             });
         }
 
-        $equipments = $query->orderBy('name')->get()->map(function ($equipment) use ($phase) {
+        $equipments = $query->orderBy('sort')->get()->map(function ($equipment) use ($phase) {
             $hasConflict = PhaseEquipment::hasEquipmentConflict(
                 $equipment->id,
                 $phase->start_date,
@@ -366,7 +425,7 @@ class PhaseEquipmentController extends Controller
             );
 
             $availableQuantity = 0;
-            if ($equipment->management_type === 'quantity' && ! $hasConflict) {
+            if ($equipment->management_type === 'quantity') {
                 $availableQuantity = PhaseEquipment::getAvailableQuantity(
                     $equipment->id,
                     $phase->start_date,
@@ -397,12 +456,12 @@ class PhaseEquipmentController extends Controller
     public function checkSetAvailability(Request $request, Phase $phase): JsonResponse
     {
         $setId = $request->get('set_id');
-        $equipmentSet = EquipmentSet::with('items.equipment')->findOrFail($setId);
+        $equipmentSet = EquipmentSet::with('equipmentItems.equipment')->findOrFail($setId);
 
         $availability = [];
         $allAvailable = true;
 
-        foreach ($equipmentSet->items as $item) {
+        foreach ($equipmentSet->equipmentItems as $item) {
             $equipment = $item->equipment;
             $hasConflict = PhaseEquipment::hasEquipmentConflict(
                 $equipment->id,
@@ -441,5 +500,307 @@ class PhaseEquipmentController extends Controller
             'all_available' => $allAvailable,
             'items' => $availability,
         ]);
+    }
+
+    /**
+     * Store multiple equipment at once (bulk operation)
+     */
+    private function storeBulkEquipment(Request $request, Phase $phase): RedirectResponse
+    {
+        $validated = $request->validate([
+            'equipment_data' => 'required|json',
+        ]);
+
+        $equipmentData = json_decode($validated['equipment_data'], true);
+
+        if (empty($equipmentData)) {
+            return back()->withErrors(['equipment_data' => '機材が選択されていません。']);
+        }
+
+        $errors = [];
+        $successCount = 0;
+        $equipmentNames = [];
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($equipmentData as $index => $item) {
+                $equipment = Equipment::find($item['equipment_id']);
+                if (!$equipment) {
+                    $errors[] = "機材ID {$item['equipment_id']} が見つかりません。";
+                    continue;
+                }
+
+                // 個体管理機材の場合のみ期間重複チェック
+                if ($equipment->management_type === 'individual') {
+                    $hasConflict = PhaseEquipment::hasEquipmentConflict(
+                        $equipment->id,
+                        $phase->start_date,
+                        $phase->end_date
+                    );
+
+                    if ($hasConflict) {
+                        $errors[] = "{$equipment->name} は、この期間中に他のフェーズで使用予定です。";
+                        continue;
+                    }
+                }
+
+                // 数量管理機材の場合、重複チェックと使用可能数量チェック
+                if ($equipment->management_type === 'quantity') {
+                    $existingRecord = PhaseEquipment::where('phase_id', $phase->id)
+                        ->where('equipment_id', $equipment->id)
+                                ->first();
+
+                    if ($existingRecord) {
+                        $errors[] = "{$equipment->name} は既にこのフェーズに登録されています。数量を変更する場合は編集画面をご利用ください。";
+                        continue;
+                    }
+
+                    $availableQuantity = PhaseEquipment::getAvailableQuantity(
+                        $equipment->id,
+                        $phase->start_date,
+                        $phase->end_date
+                    );
+
+                    if ($item['quantity'] > $availableQuantity) {
+                        $errors[] = "{$equipment->name} の使用可能数量は最大 {$availableQuantity} 個です。";
+                        continue;
+                    }
+                }
+
+                // フェーズ機材使用記録を作成
+                $phaseEquipment = PhaseEquipment::create([
+                    'phase_id' => $phase->id,
+                    'equipment_id' => $equipment->id,
+                    'quantity' => $item['quantity'],
+                    'status' => 'reserved',
+                    'note' => null,
+                ]);
+
+                // 機材移動ログを記録
+                EquipmentMovement::create([
+                    'equipment_id' => $equipment->id,
+                    'phase_equipment_id' => $phaseEquipment->id,
+                    'action' => 'reserved',
+                    'quantity' => $item['quantity'],
+                    'performed_by' => auth()->id(),
+                    'performed_at' => now(),
+                ]);
+
+                $successCount++;
+                $equipmentNames[] = $equipment->name;
+            }
+
+            DB::commit();
+
+            if ($successCount > 0) {
+                $message = "{$successCount}件の機材を追加しました";
+                if (!empty($errors)) {
+                    $message .= "（" . count($errors) . "件のエラーがありました）";
+                }
+
+                return redirect()
+                    ->route('phases.equipment.index', $phase)
+                    ->with('success', $message);
+            } else {
+                return back()->withErrors($errors);
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => '機材追加中にエラーが発生しました: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Bulk checkout reserved equipment in the phase
+     */
+    public function bulkCheckout(Phase $phase): RedirectResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $targetEquipments = $phase->phaseEquipments()
+                ->whereIn('status', ['reserved', 'checked_in'])
+                ->get();
+
+            if ($targetEquipments->isEmpty()) {
+                return back()->withErrors(['error' => '予約済みまたは返却済みの機材がありません。']);
+            }
+
+            $updatedCount = 0;
+            $today = now()->format('Y-m-d');
+
+            foreach ($targetEquipments as $phaseEquipment) {
+                $phaseEquipment->update([
+                    'status' => 'checked_out',
+                    'checkout_date' => $today,
+                    'checkout_user_id' => auth()->id(),
+                ]);
+
+                EquipmentMovement::createCheckout(
+                    $phaseEquipment->equipment_id,
+                    $phase->id,
+                    $phaseEquipment->quantity,
+                    auth()->id(),
+                    null,
+                    '一括出庫'
+                );
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+
+            return back()->with('success', "予約済み・返却済み機材 {$updatedCount}件を一括で出庫中に変更しました。");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
+        }
+    }
+
+    /**
+     * Bulk checkout reserved equipment only
+     */
+    public function bulkCheckoutReserved(Phase $phase): RedirectResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $targetEquipments = $phase->phaseEquipments()
+                ->where('status', 'reserved')
+                ->get();
+
+            if ($targetEquipments->isEmpty()) {
+                return back()->withErrors(['error' => '予約済みの機材がありません。']);
+            }
+
+            $updatedCount = 0;
+            $today = now()->format('Y-m-d');
+
+            foreach ($targetEquipments as $phaseEquipment) {
+                $phaseEquipment->update([
+                    'status' => 'checked_out',
+                    'checkout_date' => $today,
+                    'checkout_user_id' => auth()->id(),
+                ]);
+
+                EquipmentMovement::createCheckout(
+                    $phaseEquipment->equipment_id,
+                    $phase->id,
+                    $phaseEquipment->quantity,
+                    auth()->id(),
+                    null,
+                    '一括出庫（予約済み）'
+                );
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+
+            return back()->with('success', "予約済み機材 {$updatedCount}件を一括で出庫中に変更しました。");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
+        }
+    }
+
+    /**
+     * Bulk checkout checked-in equipment only
+     */
+    public function bulkCheckoutCheckedIn(Phase $phase): RedirectResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $targetEquipments = $phase->phaseEquipments()
+                ->where('status', 'checked_in')
+                ->get();
+
+            if ($targetEquipments->isEmpty()) {
+                return back()->withErrors(['error' => '返却済みの機材がありません。']);
+            }
+
+            $updatedCount = 0;
+            $today = now()->format('Y-m-d');
+
+            foreach ($targetEquipments as $phaseEquipment) {
+                $phaseEquipment->update([
+                    'status' => 'checked_out',
+                    'checkout_date' => $today,
+                    'checkout_user_id' => auth()->id(),
+                ]);
+
+                EquipmentMovement::createCheckout(
+                    $phaseEquipment->equipment_id,
+                    $phase->id,
+                    $phaseEquipment->quantity,
+                    auth()->id(),
+                    null,
+                    '一括出庫（返却済み）'
+                );
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+
+            return back()->with('success', "返却済み機材 {$updatedCount}件を一括で出庫中に変更しました。");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
+        }
+    }
+
+    /**
+     * Bulk checkin checked out equipment in the phase
+     */
+    public function bulkCheckin(Phase $phase): RedirectResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $checkedOutEquipments = $phase->phaseEquipments()
+                ->where('status', 'checked_out')
+                ->get();
+
+            if ($checkedOutEquipments->isEmpty()) {
+                return back()->withErrors(['error' => '出庫中の機材がありません。']);
+            }
+
+            $updatedCount = 0;
+            $today = now()->format('Y-m-d');
+
+            foreach ($checkedOutEquipments as $phaseEquipment) {
+                $phaseEquipment->update([
+                    'status' => 'checked_in',
+                    'checkin_date' => $today,
+                    'checkin_user_id' => auth()->id(),
+                ]);
+
+                EquipmentMovement::createCheckin(
+                    $phaseEquipment->equipment_id,
+                    $phase->id,
+                    $phaseEquipment->quantity,
+                    auth()->id(),
+                    null,
+                    '一括返却'
+                );
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+
+            return back()->with('success', "出庫中機材 {$updatedCount}件を一括で返却済みに変更しました。");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => '一括返却処理に失敗しました。']);
+        }
     }
 }

@@ -38,15 +38,15 @@
             @endif
 
             @if($phaseEquipment->status === 'reserved')
-                <button onclick="checkoutEquipment({{ $phaseEquipment->id }})"
+                <button onclick="window.checkoutEquipment({{ $phaseEquipment->id }}, {{ $phaseEquipment->phase->id }})"
                         class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-green-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    貸出実行
+                    出庫実行
                 </button>
             @elseif($phaseEquipment->status === 'checked_out')
-                <button onclick="checkinEquipment({{ $phaseEquipment->id }})"
+                <button onclick="window.checkinEquipment({{ $phaseEquipment->id }}, {{ $phaseEquipment->phase->id }})"
                         class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-purple-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -56,12 +56,12 @@
             @endif
 
             @if(in_array($phaseEquipment->status, ['reserved', 'checked_out']))
-                <button onclick="cancelEquipment({{ $phaseEquipment->id }})"
+                <button onclick="window.deleteEquipment({{ $phaseEquipment->id }}, {{ $phaseEquipment->phase->id }})"
                         class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    キャンセル
+                    削除
                 </button>
             @endif
         @endif
@@ -75,21 +75,18 @@
         <!-- ステータス -->
         <div class="bg-white shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">使用状況</h3>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                        {{ $phaseEquipment->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                        {{ $phaseEquipment->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}
-                        {{ $phaseEquipment->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}
-                        {{ $phaseEquipment->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                        {{ $phaseEquipment->status_label }}
-                    </span>
-                </div>
+                <h3 class="text-lg font-medium text-gray-900">使用状況</h3>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2
+                    {{ $phaseEquipment->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                    {{ $phaseEquipment->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}
+                    {{ $phaseEquipment->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}">
+                    {{ $phaseEquipment->status_label }}
+                </span>
 
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">予約者</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->reservedBy->name }}</dd>
+                        <dt class="text-sm font-medium text-gray-500">登録者</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ auth()->user()->name }}</dd>
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">予約日時</dt>
@@ -97,11 +94,11 @@
                     </div>
                     @if($phaseEquipment->checked_out_at)
                         <div>
-                            <dt class="text-sm font-medium text-gray-500">貸出担当者</dt>
+                            <dt class="text-sm font-medium text-gray-500">出庫担当者</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->checkedOutBy->name ?? '-' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-gray-500">貸出日時</dt>
+                            <dt class="text-sm font-medium text-gray-500">出庫日時</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->checked_out_at->format('Y/m/d H:i') }}</dd>
                         </div>
                     @endif
@@ -124,35 +121,21 @@
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">機材情報</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">機材名</dt>
-                        <dd class="mt-1 text-sm text-gray-900 font-medium">{{ $phaseEquipment->equipment->name }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">カテゴリ</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->equipment->category->name ?? '-' }} > {{ $phaseEquipment->equipment->subcategory->name ?? '-' }}</dd>
-                    </div>
-                    @if($phaseEquipment->equipment->company_number)
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">新音番号</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->equipment->company_number }}</dd>
+                    <div class="sm:col-span-2">
+                        <div class="text-sm text-gray-500">
+                            <div>{{ $phaseEquipment->equipment->subcategory->category->name ?? '-' }}</div>
+                            <div>{{ $phaseEquipment->equipment->subcategory->name ?? '-' }}</div>
                         </div>
-                    @endif
-                    @if($phaseEquipment->equipment->model_number)
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">型番</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->equipment->model_number }}</dd>
+
+                        <div class="mt-3 flex items-center gap-2">
+                            <span class="text-sm text-gray-900 font-medium">{{ $phaseEquipment->equipment->name }}</span>
+                            @if($phaseEquipment->equipment->company_number)
+                                <span class="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600">
+                                    {{ $phaseEquipment->equipment->company_number }}
+                                </span>
+                            @endif
+                            <span class="text-sm text-gray-600">使用数量 : {{ $phaseEquipment->quantity }}個</span>
                         </div>
-                    @endif
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">管理方式</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            {{ $phaseEquipment->equipment->management_type === 'individual' ? '個体管理' : '数量管理' }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">使用数量</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->quantity }}個</dd>
                     </div>
                 </div>
 
@@ -175,16 +158,16 @@
                         <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->phase->name }}</dd>
                     </div>
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">実施場所</dt>
+                        <dt class="text-sm font-medium text-gray-500">使用場所</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->phase->location->name ?? '未設定' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">開始日時</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->phase->start_date->format('Y/m/d H:i') }}</dd>
+                        <dt class="text-sm font-medium text-gray-500">開始日</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->phase->start_date->format('Y/m/d') }}</dd>
                     </div>
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">終了日時</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->phase->end_date->format('Y/m/d H:i') }}</dd>
+                        <dt class="text-sm font-medium text-gray-500">終了日</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $phaseEquipment->phase->end_date->format('Y/m/d') }}</dd>
                     </div>
                 </div>
             </div>
@@ -275,6 +258,7 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">他の使用予定</h3>
                     <div class="space-y-3">
                         @foreach($otherUsages as $usage)
+                            @if($usage->status !== 'checked_in')
                             <div class="border border-gray-200 rounded-lg p-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex-1">
@@ -290,13 +274,12 @@
                                     </div>
                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                                         {{ $usage->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                        {{ $usage->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}
-                                        {{ $usage->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}
-                                        {{ $usage->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                                        {{ $usage->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}">
                                         {{ $usage->status_label }}
                                     </span>
                                 </div>
                             </div>
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -312,16 +295,11 @@
             <h3 class="text-lg font-medium text-gray-900 mb-4" id="modalTitle"></h3>
             <form id="actionForm" method="POST">
                 @csrf
-                <div class="mb-4" id="checkinNoteField" style="display: none;">
-                    <label for="checkin_note" class="block text-sm font-medium text-gray-700">返却時備考</label>
-                    <textarea name="checkin_note" id="checkin_note" rows="3"
-                              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="返却時の状態や特記事項があれば記入してください"></textarea>
-                </div>
+                <input type="hidden" name="_method" value="DELETE" id="methodField">
                 <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal()"
+                    <button type="button" onclick="window.closeModal()"
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                        キャンセル
+                        戻る
                     </button>
                     <button type="submit" id="confirmButton"
                             class="px-4 py-2 rounded-md text-white">
@@ -334,61 +312,15 @@
 </div>
 
 <script>
-function checkoutEquipment(id) {
-    showActionModal(
-        '貸出実行の確認',
-        '{{ route("phases.equipment.checkout", [$phaseEquipment->phase, $phaseEquipment]) }}',
-        'bg-green-600 hover:bg-green-700',
-        '貸出実行',
-        false
-    );
-}
-
-function checkinEquipment(id) {
-    showActionModal(
-        '返却実行の確認',
-        '{{ route("phases.equipment.checkin", [$phaseEquipment->phase, $phaseEquipment]) }}',
-        'bg-purple-600 hover:bg-purple-700',
-        '返却実行',
-        true
-    );
-}
-
-function cancelEquipment(id) {
-    showActionModal(
-        'キャンセルの確認',
-        '{{ route("phases.equipment.cancel", [$phaseEquipment->phase, $phaseEquipment]) }}',
-        'bg-red-600 hover:bg-red-700',
-        'キャンセル',
-        false
-    );
-}
-
-function showActionModal(title, action, buttonClass, buttonText, showNote) {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('actionForm').action = action;
-    document.getElementById('confirmButton').textContent = buttonText;
-    document.getElementById('confirmButton').className = `px-4 py-2 rounded-md text-white ${buttonClass}`;
-
-    const noteField = document.getElementById('checkinNoteField');
-    if (showNote) {
-        noteField.style.display = 'block';
-    } else {
-        noteField.style.display = 'none';
-    }
-
-    document.getElementById('actionModal').classList.remove('hidden');
-}
-
-function closeModal() {
-    document.getElementById('actionModal').classList.add('hidden');
-    document.getElementById('checkin_note').value = '';
-}
-
-// モーダル外クリックで閉じる
-document.getElementById('actionModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
+// モーダル外クリックで閉じる機能のみ残す（JavaScriptクラスで処理済みの機能と重複しないため）
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('actionModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.closeModal();
+            }
+        });
     }
 });
 </script>

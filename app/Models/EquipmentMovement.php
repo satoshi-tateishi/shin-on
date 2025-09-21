@@ -85,7 +85,7 @@ class EquipmentMovement extends Model
     }
 
     /**
-     * スコープ: 貸出記録
+     * スコープ: 出庫記録
      */
     public function scopeCheckout($query)
     {
@@ -178,7 +178,7 @@ class EquipmentMovement extends Model
     public function getMovementTypeLabelAttribute(): string
     {
         return match ($this->movement_type) {
-            'checkout' => '貸出',
+            'checkout' => '出庫',
             'checkin' => '返却',
             'transfer' => '倉庫間移動',
             'maintenance' => 'メンテナンス',
@@ -233,7 +233,7 @@ class EquipmentMovement extends Model
     }
 
     /**
-     * 静的メソッド: 機材貸出記録の作成
+     * 静的メソッド: 機材出庫記録の作成
      */
     public static function createCheckout($equipmentId, $phaseId, $quantity, $userId, $fromLocationId = null, $note = null): self
     {

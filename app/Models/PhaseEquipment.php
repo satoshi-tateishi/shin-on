@@ -51,7 +51,7 @@ class PhaseEquipment extends Model
     }
 
     /**
-     * 貸出者との関連
+     * 出庫者との関連
      */
     public function checkoutUser(): BelongsTo
     {
@@ -92,7 +92,7 @@ class PhaseEquipment extends Model
     }
 
     /**
-     * スコープ: 貸出済み
+     * スコープ: 出庫済み
      */
     public function scopeCheckedOut($query)
     {
@@ -107,13 +107,6 @@ class PhaseEquipment extends Model
         return $query->where('status', 'checked_in');
     }
 
-    /**
-     * スコープ: キャンセル
-     */
-    public function scopeCancelled($query)
-    {
-        return $query->where('status', 'cancelled');
-    }
 
     /**
      * スコープ: 特定の機材
@@ -141,7 +134,7 @@ class PhaseEquipment extends Model
                 $phaseQuery->where('start_date', '<', $phaseEndDate)
                     ->where('end_date', '>', $phaseStartDate);
             })
-            ->whereNotIn('status', ['cancelled', 'checked_in']);
+            ->whereNotIn('status', ['checked_in']);
 
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
@@ -157,9 +150,8 @@ class PhaseEquipment extends Model
     {
         return match ($this->status) {
             'reserved' => '予約済み',
-            'checked_out' => '貸出中',
+            'checked_out' => '出庫中',
             'checked_in' => '返却済み',
-            'cancelled' => 'キャンセル',
             default => '不明',
         };
     }
@@ -173,13 +165,12 @@ class PhaseEquipment extends Model
             'reserved' => 'text-blue-600 bg-blue-100',
             'checked_out' => 'text-orange-600 bg-orange-100',
             'checked_in' => 'text-green-600 bg-green-100',
-            'cancelled' => 'text-gray-600 bg-gray-100',
             default => 'text-gray-600 bg-gray-100',
         };
     }
 
     /**
-     * 貸出可能かチェック
+     * 出庫可能かチェック
      */
     public function canCheckout(): bool
     {
@@ -194,13 +185,6 @@ class PhaseEquipment extends Model
         return $this->status === 'checked_out';
     }
 
-    /**
-     * キャンセル可能かチェック
-     */
-    public function canCancel(): bool
-    {
-        return in_array($this->status, ['reserved', 'checked_out']);
-    }
 
     /**
      * 機材使用期間の取得
@@ -236,5 +220,37 @@ class PhaseEquipment extends Model
             ->sum('quantity');
 
         return max(0, $equipment->quantity - $usedQuantity);
+    }
+
+    /**
+     * 指定期間と重複する機材使用記録を取得
+     */
+    private static function overlappingEquipment($equipmentId, $phaseStartDate, $phaseEndDate, $excludeId = null)
+    {
+        $query = self::where('equipment_id', $equipmentId)
+            ->whereHas('phase', function ($phaseQuery) use ($phaseStartDate, $phaseEndDate) {
+                $phaseQuery->where(function ($q) use ($phaseStartDate, $phaseEndDate) {
+                    // 期間が重複する条件
+                    $q->where(function ($subQuery) use ($phaseStartDate, $phaseEndDate) {
+                        // 新しい期間の開始日が既存期間内にある
+                        $subQuery->where('start_date', '<=', $phaseStartDate)
+                                 ->where('end_date', '>=', $phaseStartDate);
+                    })->orWhere(function ($subQuery) use ($phaseStartDate, $phaseEndDate) {
+                        // 新しい期間の終了日が既存期間内にある
+                        $subQuery->where('start_date', '<=', $phaseEndDate)
+                                 ->where('end_date', '>=', $phaseEndDate);
+                    })->orWhere(function ($subQuery) use ($phaseStartDate, $phaseEndDate) {
+                        // 新しい期間が既存期間を完全に包含する
+                        $subQuery->where('start_date', '>=', $phaseStartDate)
+                                 ->where('end_date', '<=', $phaseEndDate);
+                    });
+                });
+            });
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query;
     }
 }

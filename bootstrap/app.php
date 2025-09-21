@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // セキュリティヘッダーミドルウェアをグローバルに適用
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
+    ->withSchedule(function ($schedule) {
+        // 毎日午前6時に機材ステータスを自動更新
+        $schedule->command('phase:update-equipment-status')->dailyAt('06:00');
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
