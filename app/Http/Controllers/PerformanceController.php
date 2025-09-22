@@ -16,23 +16,26 @@ class PerformanceController extends Controller
     public function index(Request $request): View
     {
         $query = Performance::with(['phases.location', 'staff'])
-            ->withCount('phases')
-            ->active();
+            ->where('performances.is_active', 1);
 
         // 検索フィルター
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%'.$request->search.'%');
+            $query->where('performances.title', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('performance_type')) {
-            $query->byType($request->performance_type);
+            $query->where('performances.performance_type', $request->performance_type);
         }
 
         if ($request->filled('status')) {
-            $query->byStatus($request->status);
+            $query->where('performances.status', $request->status);
         }
 
-        $performances = $query->orderBy('created_at', 'desc')->paginate(15);
+        $performances = $query->leftJoin('phases', 'performances.id', '=', 'phases.performance_id')
+            ->select('performances.*', \DB::raw('COUNT(phases.id) as phases_count'))
+            ->orderByRaw('COALESCE(MAX(phases.start_date), performances.created_at) DESC')
+            ->groupBy('performances.id')
+            ->paginate(15);
 
         return view('performances.index', compact('performances'));
     }
@@ -51,6 +54,7 @@ class PerformanceController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'short_name' => 'nullable|string|max:50',
             'performance_type' => 'required|in:演劇,ミュージカル,リーディング,ダンス,イベント,コンサート,その他',
             'director' => 'nullable|string|max:255',
             'status' => 'required|in:planning,preparation,in_progress,completed,cancelled',
@@ -124,6 +128,7 @@ class PerformanceController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'short_name' => 'nullable|string|max:50',
             'performance_type' => 'required|in:演劇,ミュージカル,リーディング,ダンス,イベント,コンサート,その他',
             'director' => 'nullable|string|max:255',
             'status' => 'required|in:planning,preparation,in_progress,completed,cancelled',

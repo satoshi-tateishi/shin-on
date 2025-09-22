@@ -72,6 +72,30 @@
                     @enderror
                 </div>
 
+                <!-- 将来予約警告エリア -->
+                <div id="future-reservations-warning" class="hidden">
+                    <div class="bg-amber-50 border border-amber-200 rounded-md p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-amber-800">
+                                    この機材には将来の使用予約があります
+                                </h3>
+                                <div class="mt-2 text-sm text-amber-700">
+                                    <p>修理報告後、管理者が代替機への変更や予約の調整を行う必要があります。</p>
+                                    <div id="reservations-list" class="mt-2">
+                                        <!-- 予約一覧がここに動的に表示される -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 担当者選択 -->
                 <div>
                     <label for="staff_user_id" class="block text-sm font-medium text-gray-700">担当者 <span class="text-red-500">*</span></label>
@@ -313,6 +337,48 @@ document.addEventListener('DOMContentLoaded', function() {
             updatePreviews();
             updateFileInput();
         }
+    });
+
+    // 機材選択時の将来予約チェック
+    const equipmentSelect = document.getElementById('equipment_id');
+    const warningDiv = document.getElementById('future-reservations-warning');
+    const reservationsList = document.getElementById('reservations-list');
+
+    equipmentSelect.addEventListener('change', function() {
+        const equipmentId = this.value;
+
+        if (!equipmentId) {
+            warningDiv.classList.add('hidden');
+            return;
+        }
+
+        // 将来予約をチェック
+        fetch(`/api/equipment/${equipmentId}/future-reservations`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.reservations && data.reservations.length > 0) {
+                    // 予約一覧を表示
+                    let reservationsHtml = '<ul class="text-xs space-y-1">';
+                    data.reservations.forEach(reservation => {
+                        reservationsHtml += `
+                            <li class="flex justify-between">
+                                <span>${reservation.phase_name} (${reservation.performance_title || '公演名不明'})</span>
+                                <span class="font-mono">${reservation.start_date} ～ ${reservation.end_date}</span>
+                            </li>
+                        `;
+                    });
+                    reservationsHtml += '</ul>';
+
+                    reservationsList.innerHTML = reservationsHtml;
+                    warningDiv.classList.remove('hidden');
+                } else {
+                    warningDiv.classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('将来予約チェックエラー:', error);
+                warningDiv.classList.add('hidden');
+            });
     });
 });
 </script>

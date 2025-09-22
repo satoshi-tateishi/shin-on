@@ -34,7 +34,7 @@
                     <label for="search" class="block text-sm font-medium text-gray-700">公演名で検索</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}"
                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="公演名またはサブタイトル">
+                           placeholder="公演名">
                 </div>
 
                 <div>
@@ -127,7 +127,7 @@
                             <td class="px-6 py-4 text-sm text-gray-900">
                                 @if($performance->phases->count() > 0)
                                     <div class="space-y-1">
-                                        @foreach($performance->phases->sortBy(['sort', 'start_date']) as $phase)
+                                        @foreach($performance->phases->sortBy('start_date') as $phase)
                                             <div class="text-xs">
                                                 <span class="font-medium text-gray-700">{{ $phase->name }}:</span>
                                                 <span>{{ $phase->location ? $phase->location->name : '未設定' }}</span>

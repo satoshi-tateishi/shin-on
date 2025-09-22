@@ -33,6 +33,7 @@ class Equipment extends Model
         'status',
         'location_id',
         'is_discard',
+        'is_schedule_visible',
         'discard_at',
         'notes',
     ];
@@ -49,6 +50,7 @@ class Equipment extends Model
             'discard_at' => 'date',
             'price' => 'decimal:2',
             'is_discard' => 'boolean',
+            'is_schedule_visible' => 'boolean',
         ];
     }
 
@@ -301,5 +303,66 @@ class Equipment extends Model
         }
 
         return PhaseEquipment::getAvailableQuantity($this->id, $startDate, $endDate);
+    }
+
+    /**
+     * この機材の代替機候補を検索
+     */
+    public function findAlternatives(array $excludeIds = []): \Illuminate\Database\Eloquent\Collection
+    {
+        $excludeIds[] = $this->id; // 自分自身を除外
+
+        // 1. 同一機材名の代替機を検索（最優先）
+        $sameNameAlternatives = static::where('name', $this->name)
+            ->whereNotIn('id', $excludeIds)
+            ->available()
+            ->ordered()
+            ->get();
+
+        if ($sameNameAlternatives->isNotEmpty()) {
+            return $sameNameAlternatives;
+        }
+
+        // 2. 同一サブカテゴリの代替機を検索
+        $sameSubcategoryAlternatives = static::where('subcategory_id', $this->subcategory_id)
+            ->whereNotIn('id', $excludeIds)
+            ->available()
+            ->ordered()
+            ->get();
+
+        if ($sameSubcategoryAlternatives->isNotEmpty()) {
+            return $sameSubcategoryAlternatives;
+        }
+
+        // 3. 同一カテゴリの代替機を検索
+        return static::whereHas('subcategory', function ($query) {
+            $query->where('category_id', $this->subcategory->category_id);
+        })
+            ->whereNotIn('id', $excludeIds)
+            ->available()
+            ->ordered()
+            ->get();
+    }
+
+    /**
+     * 将来の使用予約を取得
+     */
+    public function getFutureReservations(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->phaseEquipments()
+            ->whereHas('phase', function ($query) {
+                $query->where('start_date', '>=', now()->format('Y-m-d'));
+            })
+            ->with(['phase.performance'])
+            ->get()
+            ->sortBy('phase.start_date');
+    }
+
+    /**
+     * 将来予約があるかチェック
+     */
+    public function hasFutureReservations(): bool
+    {
+        return $this->getFutureReservations()->isNotEmpty();
     }
 }

@@ -13,6 +13,7 @@ class Performance extends Model
 
     protected $fillable = [
         'title',
+        'short_name',
         'performance_type',
         'director',
         'status',
@@ -127,6 +128,14 @@ class Performance extends Model
     public function getPerformanceTypeLabelAttribute(): string
     {
         return $this->performance_type;
+    }
+
+    /**
+     * 表示名取得（略称があれば略称、なければタイトル）
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->short_name ?: $this->title;
     }
 
     /**

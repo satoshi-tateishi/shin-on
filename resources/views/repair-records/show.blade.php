@@ -282,6 +282,92 @@
         </div>
     @endif
 
+    <!-- 将来予約と代替機管理 -->
+    @if($futureReservations->count() > 0 && ($repairRecord->status === 'reported' || $repairRecord->status === 'in_progress'))
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <svg class="w-5 h-5 inline mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    将来の使用予約があります
+                </h3>
+
+                <!-- 将来予約一覧 -->
+                <div class="mb-6">
+                    <div class="space-y-3">
+                        @foreach($futureReservations as $reservation)
+                            <div class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $reservation->phase->performance->display_name ?? '公演名不明' }}</div>
+                                    <div class="text-sm text-gray-600">{{ $reservation->phase->name }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ $reservation->phase->start_date->format('Y/m/d') }} ～ {{ $reservation->phase->end_date->format('Y/m/d') }}
+                                        ({{ ucfirst($reservation->status) }})
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+                    <!-- 代替機選択フォーム -->
+                    @if($alternatives->count() > 0)
+                        <div class="border-t pt-6">
+                            <h4 class="text-md font-medium text-gray-900 mb-4">代替機への置換</h4>
+
+                            <form action="{{ route('repair-records.substitute-equipment', $repairRecord) }}" method="POST" class="space-y-4">
+                                @csrf
+                                @method('PATCH')
+
+                                <div>
+                                    <label for="substitute_equipment_id" class="block text-sm font-medium text-gray-700">代替機材を選択</label>
+                                    <select name="substitute_equipment_id" id="substitute_equipment_id"
+                                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" required>
+                                        <option value="">代替機材を選択してください</option>
+                                        @foreach($alternatives as $alternative)
+                                            <option value="{{ $alternative->id }}">
+                                                {{ $alternative->display_name }} ({{ $alternative->subcategory->name ?? '' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="flex space-x-3">
+                                    <button type="submit"
+                                            class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                        </svg>
+                                        全予約を代替機に置換
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    @endif
+
+                    <!-- 予約解除フォーム -->
+                    <div class="border-t pt-6 mt-6">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">予約解除</h4>
+                        <form action="{{ route('repair-records.cancel-future-reservations', $repairRecord) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    onclick="return confirm('将来の予約をすべて解除します。この操作は取り消せません。よろしいですか？')"
+                                    class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                全予約を解除
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+
     <!-- 関連修理履歴 -->
     @if($relatedRepairs->count() > 0)
         <div class="bg-white shadow rounded-lg">

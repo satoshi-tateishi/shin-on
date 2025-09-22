@@ -97,18 +97,6 @@
                     @enderror
                 </div>
 
-                <!-- ソート順 -->
-                <div>
-                    <label for="sort" class="block text-sm font-medium text-gray-700">
-                        表示順 <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="sort" id="sort" value="{{ old('sort', $phase->sort) }}" required min="1"
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('sort') border-red-300 @enderror">
-                    @error('sort')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                    <p class="mt-1 text-xs text-gray-500">数字が小さいほど上に表示されます</p>
-                </div>
 
                 <!-- 備考 -->
                 <div class="md:col-span-2">

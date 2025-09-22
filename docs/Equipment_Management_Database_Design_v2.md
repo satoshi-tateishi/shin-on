@@ -538,17 +538,22 @@ CREATE TABLE equipment_movements (
 
 ### 16. inventory_snapshots - 在庫スナップショット
 
-**概要**: 基準日時点での在庫状況記録
+**概要**: 基準日時点での在庫状況記録（Phase 6在庫管理システム用）
 
 ```sql
 CREATE TABLE inventory_snapshots (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     snapshot_date DATE NOT NULL COMMENT 'スナップショット日付',
     equipment_id BIGINT UNSIGNED NOT NULL COMMENT '機材ID',
-    location_id BIGINT UNSIGNED NULL COMMENT '場所ID',
+    location_id BIGINT UNSIGNED NULL COMMENT '場所ID（NULLは総合計）',
     quantity INT NOT NULL COMMENT '在庫数量',
-    status ENUM('available', 'in_use', 'maintenance', 'repair') NOT NULL COMMENT 'ステータス',
+    total_quantity INT NOT NULL COMMENT '総数量（個体管理機材用）',
+    available_quantity INT NOT NULL DEFAULT 0 COMMENT '利用可能数量',
+    in_use_quantity INT NOT NULL DEFAULT 0 COMMENT '使用中数量',
+    repair_quantity INT NOT NULL DEFAULT 0 COMMENT '修理中数量',
+    maintenance_quantity INT NOT NULL DEFAULT 0 COMMENT 'メンテナンス中数量',
     created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
 
     FOREIGN KEY (equipment_id) REFERENCES equipments(id) ON DELETE CASCADE,
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL,
@@ -556,15 +561,35 @@ CREATE TABLE inventory_snapshots (
     -- 日付・機材・場所の組み合わせは一意
     UNIQUE KEY unique_snapshot (snapshot_date, equipment_id, location_id),
 
-    -- 基準日検索用の重要なインデックス
+    -- パフォーマンス最適化インデックス
     INDEX idx_snapshot_date (snapshot_date),
-    INDEX idx_equipment_id (equipment_id),
-    INDEX idx_location_id (location_id),
-    INDEX idx_status (status),
+    INDEX idx_equipment_snapshot (equipment_id, snapshot_date),
+    INDEX idx_location_snapshot (location_id, snapshot_date),
+    INDEX idx_snapshot_composite (snapshot_date, equipment_id, location_id),
 
-    CHECK (quantity >= 0)
+    -- 数量整合性チェック
+    CHECK (quantity >= 0),
+    CHECK (total_quantity >= 0),
+    CHECK (available_quantity >= 0),
+    CHECK (in_use_quantity >= 0),
+    CHECK (repair_quantity >= 0),
+    CHECK (maintenance_quantity >= 0),
+    CHECK (quantity = available_quantity + in_use_quantity + repair_quantity + maintenance_quantity)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
+
+#### データ項目詳細
+| フィールド名 | 型 | 説明 | 備考 |
+|-------------|----|----|------|
+| snapshot_date | DATE | スナップショット日付 | 基準日。日次で作成 |
+| equipment_id | BIGINT | 機材ID | 外部キー |
+| location_id | BIGINT | 場所ID | NULL=総合計、値有り=場所別 |
+| quantity | INT | 在庫数量 | その時点での総在庫数 |
+| total_quantity | INT | 総数量 | 機材の総保有数（個体管理用） |
+| available_quantity | INT | 利用可能数量 | 即座に使用可能な数量 |
+| in_use_quantity | INT | 使用中数量 | フェーズで使用中の数量 |
+| repair_quantity | INT | 修理中数量 | 修理中で使用不可の数量 |
+| maintenance_quantity | INT | メンテナンス中数量 | メンテナンス中の数量 |
 
 ### 17. repair_records - 修理記録
 

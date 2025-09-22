@@ -152,8 +152,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('repair-records/{repairRecord}/complete', [RepairRecordController::class, 'complete'])->name('repair-records.complete');
     Route::patch('repair-records/{repairRecord}/cancel', [RepairRecordController::class, 'cancel'])->name('repair-records.cancel');
 
+    // 代替機機能
+    Route::patch('repair-records/{repairRecord}/substitute-equipment', [RepairRecordController::class, 'substituteEquipment'])->name('repair-records.substitute-equipment');
+    Route::patch('repair-records/{repairRecord}/cancel-future-reservations', [RepairRecordController::class, 'cancelFutureReservations'])->name('repair-records.cancel-future-reservations');
+
     // 修理統計API
     Route::get('repair-stats', [RepairRecordController::class, 'stats'])->name('repair-records.stats');
+
+    // 機材将来予約チェックAPI
+    Route::get('api/equipment/{equipment}/future-reservations', [\App\Http\Controllers\Master\EquipmentController::class, 'getFutureReservations'])->name('api.equipment.future-reservations');
 
     // スケジュール表ルート
     Route::get('schedule', function () {
@@ -161,6 +168,7 @@ Route::middleware('auth')->group(function () {
     })->name('schedule.index');
     Route::get('api/schedule/equipment', [\App\Http\Controllers\ScheduleController::class, 'getEquipmentSchedule'])->name('api.schedule.equipment');
     Route::get('api/schedule/categories', [\App\Http\Controllers\ScheduleController::class, 'getCategories'])->name('api.schedule.categories');
+    Route::get('api/schedule/subcategories', [\App\Http\Controllers\ScheduleController::class, 'getSubcategories'])->name('api.schedule.subcategories');
     Route::get('api/schedule/equipments', [\App\Http\Controllers\ScheduleController::class, 'getEquipments'])->name('api.schedule.equipments');
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）

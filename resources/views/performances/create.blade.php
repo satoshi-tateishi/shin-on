@@ -46,6 +46,20 @@
                         @enderror
                     </div>
 
+                    <!-- 略称 -->
+                    <div>
+                        <label for="short_name" class="block text-sm font-medium text-gray-700">
+                            略称
+                        </label>
+                        <input type="text" name="short_name" id="short_name" value="{{ old('short_name') }}" maxlength="50"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('short_name') border-red-300 @enderror"
+                               placeholder="スケジュール表での表示名（省略可）">
+                        @error('short_name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-xs text-gray-500">スケジュール表に表示される短い名前です。空欄の場合は公演名が使用されます。</p>
+                    </div>
+
                     <!-- 公演種別 -->
                     <div>
                         <label for="performance_type" class="block text-sm font-medium text-gray-700">

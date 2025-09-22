@@ -294,6 +294,24 @@
                     @enderror
                 </div>
 
+                <!-- スケジュール表示フラグ -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        スケジュール表示
+                    </label>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_schedule_visible" id="is_schedule_visible" value="1"
+                               {{ old('is_schedule_visible', $equipment->is_schedule_visible) ? 'checked' : '' }}
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="is_schedule_visible" class="ml-2 block text-sm text-gray-900">
+                            スケジュール表に表示する
+                        </label>
+                    </div>
+                    @error('is_schedule_visible')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- 備考 -->
                 <div>
                     <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">

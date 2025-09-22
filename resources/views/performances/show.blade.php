@@ -81,6 +81,18 @@
                     </dd>
                 </div>
 
+                <!-- 略称 -->
+                @if($performance->short_name)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">略称</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {{ $performance->short_name }}
+                        </span>
+                    </dd>
+                </div>
+                @endif
+
                 <!-- 期間 -->
                 <div>
                     <dt class="text-sm font-medium text-gray-500">期間</dt>
@@ -130,7 +142,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    @foreach($performance->staff as $staff)
+                                    @foreach($performance->staff->sortBy([['position.sort', 'asc'], ['user.sort', 'asc']]) as $staff)
                                         <tr>
                                             <td class="pl-3 pr-2 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-r border-gray-300">{{ $staff->position->name }}</td>
                                             <td class="pl-2 pr-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $staff->user->name }}</td>
@@ -183,7 +195,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($performance->phases->sortBy('sort') as $phase)
+                        @foreach($performance->phases->sortBy('start_date') as $phase)
                             <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('phases.show', $phase) }}'">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ $phase->name }}</div>
@@ -201,9 +213,15 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     @if($phase->location)
-                                        {{ $phase->location->name }}
+                                        <div>{{ $phase->location->name }}</div>
+                                        @if($phase->note)
+                                            <div class="text-xs text-gray-500 mt-1">{{ Str::limit($phase->note, 50) }}</div>
+                                        @endif
                                     @else
-                                        <span class="text-gray-400">場所未設定</span>
+                                        <div><span class="text-gray-400">場所未設定</span></div>
+                                        @if($phase->note)
+                                            <div class="text-xs text-gray-500 mt-1">{{ Str::limit($phase->note, 50) }}</div>
+                                        @endif
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

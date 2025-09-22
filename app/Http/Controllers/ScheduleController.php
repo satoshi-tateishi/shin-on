@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipment;
+use App\Models\EquipmentCategory;
+use App\Models\EquipmentSubcategory;
 use App\Models\PhaseEquipment;
 use App\Models\RepairRecord;
 use Carbon\Carbon;
@@ -24,85 +26,105 @@ class ScheduleController extends Controller
      */
     public function getEquipmentSchedule(Request $request)
     {
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'category_id' => 'nullable|exists:equipment_categories,id',
-            'equipment_ids' => 'nullable|string',
-            'page' => 'nullable|integer|min:1',
-            'per_page' => 'nullable|integer|min:1|max:500',
-        ]);
-
-        $startDate = Carbon::parse($request->start_date);
-        $endDate = Carbon::parse($request->end_date);
-        $categoryId = $request->category_id;
-        $equipmentIds = $request->equipment_ids ?
-            array_map('intval', explode(',', $request->equipment_ids)) : null;
-
-        $page = $request->get('page', 1);
-        $perPage = $request->get('per_page', 100);
-
-        // 機材の基本データを取得（ページネーション対応）
-        $equipmentQuery = Equipment::with(['category', 'subcategory'])
-            ->where('is_active', true)
-            ->where('is_discard', false);
-
-        if ($categoryId) {
-            $equipmentQuery->where('category_id', $categoryId);
+        try {
+            $request->validate([
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'category_id' => 'nullable|exists:equipment_categories,id',
+                'subcategory_id' => 'nullable|exists:equipment_subcategories,id',
+                'equipment_ids' => 'nullable|string',
+                'page' => 'nullable|integer|min:1',
+                'per_page' => 'nullable|integer|min:1|max:500',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'バリデーションエラー: ' . $e->getMessage()
+            ], 422);
         }
 
-        if ($equipmentIds) {
-            $equipmentQuery->whereIn('id', $equipmentIds);
-        }
+        try {
+            $startDate = Carbon::parse($request->start_date);
+            $endDate = Carbon::parse($request->end_date);
+            $categoryId = $request->category_id;
+            $subcategoryId = $request->subcategory_id;
+            $equipmentIds = $request->equipment_ids ?
+                array_map('intval', explode(',', $request->equipment_ids)) : null;
 
-        $equipmentQuery->orderBy('category_id')
-            ->orderBy('subcategory_id')
-            ->orderBy('name');
+            $page = $request->get('page', 1);
+            $perPage = min($request->get('per_page', 100), 100); // 最大100件に制限
 
-        $equipments = $equipmentQuery->paginate($perPage, ['*'], 'page', $page);
+            // 機材の基本データを取得（ページネーション対応）
+            $equipmentQuery = Equipment::with(['category', 'subcategory'])
+                ->where('is_discard', false)
+                ->where('is_schedule_visible', true);
 
-        $equipmentIds = $equipments->pluck('id')->toArray();
+            if ($subcategoryId) {
+                $equipmentQuery->where('subcategory_id', $subcategoryId);
+            } elseif ($categoryId) {
+                $equipmentQuery->whereHas('subcategory', function ($query) use ($categoryId) {
+                    $query->where('category_id', $categoryId);
+                });
+            }
 
-        // 指定期間内のフェーズ機材使用データを取得
-        $phaseEquipments = $this->getPhaseEquipmentsInDateRange(
-            $equipmentIds,
-            $startDate,
-            $endDate
-        );
+            if ($equipmentIds) {
+                $equipmentQuery->whereIn('id', $equipmentIds);
+            }
 
-        // 修理・メンテナンス情報を取得
-        $repairRecords = $this->getRepairRecordsInDateRange(
-            $equipmentIds,
-            $startDate,
-            $endDate
-        );
+            $equipmentQuery->orderBy('sort')
+                ->orderBy('name');
 
-        // 日付範囲を生成
-        $dateRange = $this->generateDateRange($startDate, $endDate);
+            $equipments = $equipmentQuery->paginate($perPage, ['*'], 'page', $page);
 
-        // スケジュールデータを構築
-        $scheduleData = $this->buildScheduleData(
-            $equipments->items(),
-            $dateRange,
-            $phaseEquipments,
-            $repairRecords
-        );
+            $equipmentIds = $equipments->pluck('id')->toArray();
 
+            // 指定期間内のフェーズ機材使用データを取得（クエリ最適化）
+            $phaseEquipments = $this->getPhaseEquipmentsInDateRange(
+                $equipmentIds,
+                $startDate,
+                $endDate
+            );
+
+            // 修理・メンテナンス情報を取得（クエリ最適化）
+            $repairRecords = $this->getRepairRecordsInDateRange(
+                $equipmentIds,
+                $startDate,
+                $endDate
+            );
+
+            // 日付範囲を生成
+            $dateRange = $this->generateDateRange($startDate, $endDate);
+
+            // スケジュールデータを構築
+            $scheduleData = $this->buildScheduleData(
+                $equipments->items(),
+                $dateRange,
+                $phaseEquipments,
+                $repairRecords
+            );
+
+            return response()->json([
+                'success' => true,
+                'equipment_schedules' => $scheduleData,
+                'pagination' => [
+                    'current_page' => $equipments->currentPage(),
+                    'last_page' => $equipments->lastPage(),
+                    'per_page' => $equipments->perPage(),
+                    'total' => $equipments->total(),
+                    'from' => $equipments->firstItem(),
+                    'to' => $equipments->lastItem(),
+                ],
+                'date_range' => $dateRange,
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]);
+    } catch (\Exception $e) {
         return response()->json([
-            'equipment_schedules' => $scheduleData,
-            'pagination' => [
-                'current_page' => $equipments->currentPage(),
-                'last_page' => $equipments->lastPage(),
-                'per_page' => $equipments->perPage(),
-                'total' => $equipments->total(),
-                'from' => $equipments->firstItem(),
-                'to' => $equipments->lastItem(),
-            ],
-            'date_range' => $dateRange,
-            'start_date' => $startDate->format('Y-m-d'),
-            'end_date' => $endDate->format('Y-m-d'),
-        ]);
+            'success' => false,
+            'error' => 'サーバーエラーが発生しました: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * 指定期間内のフェーズ機材使用データを取得
@@ -135,8 +157,9 @@ class ScheduleController extends Controller
         return RepairRecord::with('equipment')
             ->whereIn('equipment_id', $equipmentIds)
             ->where(function ($query) use ($startDate, $endDate) {
-                // 修理期間と指定期間が重複する場合
-                $query->where('failure_occurred_at', '<=', $endDate->format('Y-m-d'))
+                // 修理期間と指定期間が重複する場合（修理開始日基準）
+                $query->whereNotNull('started_at')
+                    ->where('started_at', '<=', $endDate->format('Y-m-d'))
                     ->where(function ($q) use ($startDate) {
                         // 修理完了日がnullまたは指定開始日以降
                         $q->whereNull('completed_at')
@@ -190,7 +213,7 @@ class ScheduleController extends Controller
             $scheduleData[] = [
                 'equipment_id' => $equipment->id,
                 'equipment_name' => $equipment->name,
-                'equipment_code' => $equipment->code,
+                'equipment_code' => $equipment->company_number,
                 'category' => $equipment->category->name ?? null,
                 'subcategory' => $equipment->subcategory->name ?? null,
                 'management_type' => $equipment->management_type,
@@ -211,16 +234,22 @@ class ScheduleController extends Controller
 
         // 1. 修理・メンテナンス状態をチェック（最優先）
         foreach ($repairs as $repair) {
-            $failureDate = Carbon::parse($repair->failure_occurred_at);
+            // キャンセルされた修理は無視
+            if ($repair->status === 'cancelled') {
+                continue;
+            }
+
+            $startedDate = $repair->started_at ? Carbon::parse($repair->started_at) : null;
             $completedDate = $repair->completed_at ? Carbon::parse($repair->completed_at) : null;
 
-            if ($failureDate->lte($dateCarbon) && (! $completedDate || $completedDate->gte($dateCarbon))) {
+            // 修理開始日以降、完了日前まで修理中として扱う（修理開始前は使用可能）
+            if ($startedDate && $startedDate->lte($dateCarbon) && (! $completedDate || $dateCarbon->lt($completedDate))) {
                 return [
-                    'status' => $repair->status === 'completed' ? 'available' : 'repair',
+                    'status' => 'repair',
                     'detail' => $repair->repair_type ?? 'repair',
                     'phase_name' => null,
                     'performance_title' => null,
-                    'note' => $repair->symptoms,
+                    'note' => $repair->problem_description ?? $repair->symptoms,
                 ];
             }
         }
@@ -239,16 +268,20 @@ class ScheduleController extends Controller
                     'status' => $status,
                     'detail' => $phaseEquipment->status,
                     'phase_name' => $phase->name,
-                    'performance_title' => $phase->performance->title ?? null,
+                    'performance_title' => $phase->performance->display_name ?? null,
                     'note' => $phaseEquipment->note,
                 ];
             }
         }
 
         // 3. 機材自体のステータス（デフォルト）
+        // ただし、修理記録がある場合は修理期間外は'available'とする
+        $hasRepairRecords = $repairs->isNotEmpty();
+        $defaultStatus = $hasRepairRecords ? 'available' : $equipment->status;
+
         return [
-            'status' => $equipment->status,
-            'detail' => $equipment->status,
+            'status' => $defaultStatus,
+            'detail' => $defaultStatus,
             'phase_name' => null,
             'performance_title' => null,
             'note' => null,
@@ -284,7 +317,35 @@ class ScheduleController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return response()->json(['categories' => $categories]);
+        return response()->json([
+            'success' => true,
+            'categories' => $categories
+        ]);
+    }
+
+    /**
+     * サブカテゴリ一覧を取得（カテゴリIDで絞り込み）
+     */
+    public function getSubcategories(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'nullable|exists:equipment_categories,id',
+        ]);
+
+        $query = EquipmentSubcategory::where('is_active', true);
+
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $subcategories = $query->orderBy('sort')
+            ->orderBy('name')
+            ->get(['id', 'name', 'category_id']);
+
+        return response()->json([
+            'success' => true,
+            'subcategories' => $subcategories
+        ]);
     }
 
     /**
@@ -294,27 +355,32 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'category_id' => 'nullable|exists:equipment_categories,id',
+            'subcategory_id' => 'nullable|exists:equipment_subcategories,id',
             'search' => 'nullable|string|max:255',
         ]);
 
-        $query = Equipment::where('is_active', true)
-            ->where('is_discard', false);
+        $query = Equipment::where('is_discard', false)
+            ->where('is_schedule_visible', true);
 
-        if ($request->category_id) {
-            $query->where('category_id', $request->category_id);
+        if ($request->subcategory_id) {
+            $query->where('subcategory_id', $request->subcategory_id);
+        } elseif ($request->category_id) {
+            $query->whereHas('subcategory', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
         }
 
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
+                    ->orWhere('company_number', 'like', "%{$search}%");
             });
         }
 
         $equipments = $query->orderBy('name')
             ->limit(100)
-            ->get(['id', 'name', 'code']);
+            ->get(['id', 'name', 'company_number']);
 
         return response()->json(['equipments' => $equipments]);
     }

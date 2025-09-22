@@ -103,6 +103,7 @@ class EquipmentController extends Controller
             'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
             'location_id' => 'nullable|exists:locations,id',
             'is_discard' => 'nullable|boolean',
+            'is_schedule_visible' => 'nullable|boolean',
             'discard_at' => 'nullable|date',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -158,6 +159,7 @@ class EquipmentController extends Controller
             'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
             'location_id' => 'nullable|exists:locations,id',
             'is_discard' => 'nullable|boolean',
+            'is_schedule_visible' => 'nullable|boolean',
             'discard_at' => 'nullable|date',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -441,6 +443,38 @@ class EquipmentController extends Controller
             }
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'CSVファイルの処理中にエラーが発生しました: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * 機材の将来予約を取得（API用）
+     */
+    public function getFutureReservations(Equipment $equipment)
+    {
+        try {
+            $futureReservations = $equipment->getFutureReservations();
+
+            $reservations = $futureReservations->map(function ($reservation) {
+                return [
+                    'id' => $reservation->id,
+                    'phase_name' => $reservation->phase->name,
+                    'performance_title' => $reservation->phase->performance->display_name ?? null,
+                    'start_date' => $reservation->phase->start_date->format('Y/m/d'),
+                    'end_date' => $reservation->phase->end_date->format('Y/m/d'),
+                    'status' => $reservation->status,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'reservations' => $reservations,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

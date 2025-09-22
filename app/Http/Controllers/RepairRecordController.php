@@ -168,10 +168,7 @@ class RepairRecordController extends Controller
             DB::transaction(function () use ($validated) {
                 $repairRecord = RepairRecord::create($validated);
 
-                // 機材ステータスを修理中に更新（必要に応じて）
-                if ($validated['status'] === 'in_progress') {
-                    Equipment::find($validated['equipment_id'])->update(['status' => 'repair']);
-                }
+                // 機材ステータスは報告時は変更しない（修理開始時に手動で変更）
             });
 
             return redirect()
@@ -205,7 +202,13 @@ class RepairRecordController extends Controller
             ->limit(5)
             ->get();
 
-        return view('repair-records.show', compact('repairRecord', 'relatedRepairs'));
+        // 将来の使用予約を取得
+        $futureReservations = $repairRecord->equipment->getFutureReservations();
+
+        // 代替機候補を取得
+        $alternatives = $repairRecord->equipment->findAlternatives();
+
+        return view('repair-records.show', compact('repairRecord', 'relatedRepairs', 'futureReservations', 'alternatives'));
     }
 
     /**
@@ -490,17 +493,110 @@ class RepairRecordController extends Controller
 
     /**
      * Update equipment status based on repair status.
+     * NOTE: 機材ステータスは手動操作（start/complete/cancel）で変更するため、
+     *       このメソッドは現在使用されていません。
      */
     private function updateEquipmentStatus(Equipment $equipment, string $repairStatus): void
     {
-        $equipmentStatus = match ($repairStatus) {
-            'in_progress' => 'repair',
-            'completed', 'cancelled' => 'available',
-            default => $equipment->status,
-        };
+        // 機材ステータスは各ワークフローメソッド（start/complete/cancel）で
+        // 明示的に管理するため、このメソッドは使用しない
 
-        if ($equipment->status !== $equipmentStatus) {
-            $equipment->update(['status' => $equipmentStatus]);
+        // 従来のロジック（参考用）:
+        // $equipmentStatus = match ($repairStatus) {
+        //     'in_progress' => 'repair',
+        //     'completed', 'cancelled' => 'available',
+        //     default => $equipment->status,
+        // };
+    }
+
+
+    /**
+     * 代替機への予約置換
+     */
+    public function substituteEquipment(Request $request, RepairRecord $repairRecord): RedirectResponse
+    {
+        $request->validate([
+            'substitute_equipment_id' => 'required|exists:equipments,id',
+            'selected_reservations' => 'nullable|array',
+            'selected_reservations.*' => 'exists:phase_equipment,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $originalEquipment = $repairRecord->equipment;
+            $substituteEquipment = Equipment::findOrFail($request->substitute_equipment_id);
+
+            // 選択された予約がある場合は置換、なければ全ての将来予約を置換
+            if ($request->filled('selected_reservations')) {
+                $reservationIds = $request->selected_reservations;
+            } else {
+                $reservationIds = $originalEquipment->getFutureReservations()->pluck('id')->toArray();
+            }
+
+            if (!empty($reservationIds)) {
+                // 予約を代替機に置換
+                DB::table('phase_equipment')
+                    ->whereIn('id', $reservationIds)
+                    ->update([
+                        'equipment_id' => $substituteEquipment->id,
+                        'note' => DB::raw("CONCAT(COALESCE(note, ''), ' [代替機: {$originalEquipment->display_name} → {$substituteEquipment->display_name}]')")
+                    ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('repair-records.show', $repairRecord)
+                ->with('success', "予約を代替機（{$substituteEquipment->display_name}）に置換しました。");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('repair-records.show', $repairRecord)
+                ->with('error', '代替機への置換に失敗しました: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 将来予約の一括解除
+     */
+    public function cancelFutureReservations(Request $request, RepairRecord $repairRecord): RedirectResponse
+    {
+        $request->validate([
+            'selected_reservations' => 'nullable|array',
+            'selected_reservations.*' => 'exists:phase_equipment,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $originalEquipment = $repairRecord->equipment;
+
+            // 選択された予約がある場合は解除、なければ全ての将来予約を解除
+            if ($request->filled('selected_reservations')) {
+                $reservationIds = $request->selected_reservations;
+            } else {
+                $reservationIds = $originalEquipment->getFutureReservations()->pluck('id')->toArray();
+            }
+
+            if (!empty($reservationIds)) {
+                // 予約をキャンセル状態に変更
+                DB::table('phase_equipment')
+                    ->whereIn('id', $reservationIds)
+                    ->update([
+                        'status' => 'cancelled',
+                        'note' => DB::raw("CONCAT(COALESCE(note, ''), ' [故障により予約解除]')")
+                    ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('repair-records.show', $repairRecord)
+                ->with('success', '将来予約を解除しました。');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('repair-records.show', $repairRecord)
+                ->with('error', '予約解除に失敗しました: ' . $e->getMessage());
         }
     }
 }

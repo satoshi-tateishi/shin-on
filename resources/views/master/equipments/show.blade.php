@@ -189,6 +189,16 @@
                         @endif
 
                         <div>
+                            <dt class="text-sm font-medium text-gray-500">スケジュール表示</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    {{ $equipment->is_schedule_visible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    {{ $equipment->is_schedule_visible ? '表示' : '非表示' }}
+                                </span>
+                            </dd>
+                        </div>
+
+                        <div>
                             <dt class="text-sm font-medium text-gray-500">ソート順</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $equipment->sort }}</dd>
                         </div>

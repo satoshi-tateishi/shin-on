@@ -223,7 +223,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <h3 class="text-lg font-medium text-gray-900">公演一覧</h3>
-                                    <p class="text-sm text-gray-500">公演・フェーズ・機材使用管理</p>
+                                    <p class="text-sm text-gray-500">公演・フェーズ・使用機材管理</p>
                                 </div>
                             </div>
                         </div>
@@ -240,7 +240,6 @@
                                 </div>
                                 <div class="ml-4">
                                     <h3 class="text-lg font-medium text-gray-900">機材スケジュール表</h3>
-                                    <p class="text-sm text-gray-500">Excel風スケジュール表・色分け表示</p>
                                 </div>
                             </div>
                         </div>

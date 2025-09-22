@@ -14,7 +14,6 @@ class Phase extends Model
     protected $fillable = [
         'performance_id',
         'location_id',
-        'sort',
         'name',
         'start_date',
         'end_date',
@@ -28,7 +27,6 @@ class Phase extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'is_active' => 'boolean',
-            'sort' => 'integer',
         ];
     }
 
@@ -81,11 +79,11 @@ class Phase extends Model
     }
 
     /**
-     * スコープ: ソート順で並び替え
+     * スコープ: 開始日順で並び替え
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort')->orderBy('start_date');
+        return $query->orderBy('start_date');
     }
 
     /**
