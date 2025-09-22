@@ -245,6 +245,23 @@
                         </div>
                     </a>
 
+                    <!-- 在庫管理 -->
+                    <a href="{{ route('inventory.index') }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition-shadow cursor-pointer block">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">在庫管理</h3>
+                                    <p class="text-sm text-gray-500">基準日指定在庫・倉庫別管理・アラート</p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
 
                 </div>
 

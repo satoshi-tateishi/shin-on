@@ -52,7 +52,7 @@ class InventorySnapshot extends Model
             self::where('snapshot_date', $dateString)->delete();
 
             // 全機材の在庫状況を計算
-            $equipments = Equipment::where('is_active', true)->get();
+            $equipments = Equipment::active()->get();
 
             foreach ($equipments as $equipment) {
                 $inventoryData = self::calculateInventoryAsOf($equipment->id, $asOfDate);

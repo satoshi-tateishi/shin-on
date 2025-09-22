@@ -49,6 +49,13 @@ class EquipmentSubcategory extends Model
         return $query->where('category_id', $categoryId);
     }
 
+    // スコープ: 有効なレコードのみ（is_activeフィールドがない場合は全て有効とみなす）
+    public function scopeActive($query)
+    {
+        // サブカテゴリにis_activeフィールドがない場合は条件なし
+        return $query; // 全て有効とみなす
+    }
+
     // 表示名取得（N+1クエリを避けるため条件付き）
     public function getDisplayNameAttribute(): string
     {

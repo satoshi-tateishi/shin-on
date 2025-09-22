@@ -31,11 +31,17 @@ class InventoryController extends Controller
 
         // カテゴリ別統計
         $categoryStats = EquipmentCategory::active()
-            ->withCount(['equipments' => function ($query) {
-                $query->active();
+            ->with(['subcategories' => function ($query) {
+                $query->active()->withCount(['equipments' => function ($equipmentQuery) {
+                    $equipmentQuery->active();
+                }]);
             }])
             ->ordered()
-            ->get();
+            ->get()
+            ->map(function ($category) {
+                $category->equipments_count = $category->subcategories->sum('equipments_count');
+                return $category;
+            });
 
         // 場所別統計
         $locationStats = Location::active()
@@ -46,6 +52,7 @@ class InventoryController extends Controller
             ->get()
             ->map(function ($location) {
                 $location->capacity_usage = $location->capacity_usage;
+                $location->display_name = $location->display_name; // アクセサー呼び出し
                 return $location;
             });
 
@@ -100,7 +107,7 @@ class InventoryController extends Controller
             $paginatedSnapshots = $snapshots->slice(($page - 1) * $perPage, $perPage);
 
             // レスポンス構築
-            $inventoryData = $paginatedSnapshots->map(function ($snapshot) {
+            $inventoryData = $paginatedSnapshots->map(function ($snapshot) use ($asOfDate) {
                 return [
                     'equipment_id' => $snapshot->equipment_id,
                     'equipment_name' => $snapshot->equipment->name,
