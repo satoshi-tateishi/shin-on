@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipment;
-use App\Models\EquipmentCategory;
 use App\Models\EquipmentSubcategory;
 use App\Models\PhaseEquipment;
 use App\Models\RepairRecord;
@@ -39,7 +38,7 @@ class ScheduleController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'バリデーションエラー: ' . $e->getMessage()
+                'error' => 'バリデーションエラー: '.$e->getMessage(),
             ], 422);
         }
 
@@ -118,13 +117,13 @@ class ScheduleController extends Controller
                 'start_date' => $startDate->format('Y-m-d'),
                 'end_date' => $endDate->format('Y-m-d'),
             ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => 'サーバーエラーが発生しました: ' . $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'サーバーエラーが発生しました: '.$e->getMessage(),
+            ], 500);
+        }
     }
-}
 
     /**
      * 指定期間内のフェーズ機材使用データを取得
@@ -319,7 +318,7 @@ class ScheduleController extends Controller
 
         return response()->json([
             'success' => true,
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
 
@@ -344,7 +343,7 @@ class ScheduleController extends Controller
 
         return response()->json([
             'success' => true,
-            'subcategories' => $subcategories
+            'subcategories' => $subcategories,
         ]);
     }
 

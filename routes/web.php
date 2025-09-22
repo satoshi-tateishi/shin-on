@@ -203,5 +203,4 @@ Route::prefix('test-api')->group(function () {
         return view('schedule.simple');
     });
 
-
 });

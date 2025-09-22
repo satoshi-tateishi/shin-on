@@ -509,7 +509,6 @@ class RepairRecordController extends Controller
         // };
     }
 
-
     /**
      * 代替機への予約置換
      */
@@ -534,13 +533,13 @@ class RepairRecordController extends Controller
                 $reservationIds = $originalEquipment->getFutureReservations()->pluck('id')->toArray();
             }
 
-            if (!empty($reservationIds)) {
+            if (! empty($reservationIds)) {
                 // 予約を代替機に置換
                 DB::table('phase_equipment')
                     ->whereIn('id', $reservationIds)
                     ->update([
                         'equipment_id' => $substituteEquipment->id,
-                        'note' => DB::raw("CONCAT(COALESCE(note, ''), ' [代替機: {$originalEquipment->display_name} → {$substituteEquipment->display_name}]')")
+                        'note' => DB::raw("CONCAT(COALESCE(note, ''), ' [代替機: {$originalEquipment->display_name} → {$substituteEquipment->display_name}]')"),
                     ]);
             }
 
@@ -551,8 +550,9 @@ class RepairRecordController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->route('repair-records.show', $repairRecord)
-                ->with('error', '代替機への置換に失敗しました: ' . $e->getMessage());
+                ->with('error', '代替機への置換に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -578,13 +578,13 @@ class RepairRecordController extends Controller
                 $reservationIds = $originalEquipment->getFutureReservations()->pluck('id')->toArray();
             }
 
-            if (!empty($reservationIds)) {
+            if (! empty($reservationIds)) {
                 // 予約をキャンセル状態に変更
                 DB::table('phase_equipment')
                     ->whereIn('id', $reservationIds)
                     ->update([
                         'status' => 'cancelled',
-                        'note' => DB::raw("CONCAT(COALESCE(note, ''), ' [故障により予約解除]')")
+                        'note' => DB::raw("CONCAT(COALESCE(note, ''), ' [故障により予約解除]')"),
                     ]);
             }
 
@@ -595,8 +595,9 @@ class RepairRecordController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->route('repair-records.show', $repairRecord)
-                ->with('error', '予約解除に失敗しました: ' . $e->getMessage());
+                ->with('error', '予約解除に失敗しました: '.$e->getMessage());
         }
     }
 }

@@ -107,7 +107,6 @@ class PhaseEquipment extends Model
         return $query->where('status', 'checked_in');
     }
 
-
     /**
      * スコープ: 特定の機材
      */
@@ -185,7 +184,6 @@ class PhaseEquipment extends Model
         return $this->status === 'checked_out';
     }
 
-
     /**
      * 機材使用期間の取得
      */
@@ -231,18 +229,18 @@ class PhaseEquipment extends Model
             ->whereHas('phase', function ($phaseQuery) use ($phaseStartDate, $phaseEndDate) {
                 $phaseQuery->where(function ($q) use ($phaseStartDate, $phaseEndDate) {
                     // 期間が重複する条件
-                    $q->where(function ($subQuery) use ($phaseStartDate, $phaseEndDate) {
+                    $q->where(function ($subQuery) use ($phaseStartDate) {
                         // 新しい期間の開始日が既存期間内にある
                         $subQuery->where('start_date', '<=', $phaseStartDate)
-                                 ->where('end_date', '>=', $phaseStartDate);
-                    })->orWhere(function ($subQuery) use ($phaseStartDate, $phaseEndDate) {
+                            ->where('end_date', '>=', $phaseStartDate);
+                    })->orWhere(function ($subQuery) use ($phaseEndDate) {
                         // 新しい期間の終了日が既存期間内にある
                         $subQuery->where('start_date', '<=', $phaseEndDate)
-                                 ->where('end_date', '>=', $phaseEndDate);
+                            ->where('end_date', '>=', $phaseEndDate);
                     })->orWhere(function ($subQuery) use ($phaseStartDate, $phaseEndDate) {
                         // 新しい期間が既存期間を完全に包含する
                         $subQuery->where('start_date', '>=', $phaseStartDate)
-                                 ->where('end_date', '<=', $phaseEndDate);
+                            ->where('end_date', '<=', $phaseEndDate);
                     });
                 });
             });

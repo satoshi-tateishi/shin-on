@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('equipments', function (Blueprint $table) {
             $table->boolean('is_schedule_visible')->default(true)->after('is_discard')
-                  ->comment('スケジュール表に表示する対象機材かどうか');
+                ->comment('スケジュール表に表示する対象機材かどうか');
         });
     }
 

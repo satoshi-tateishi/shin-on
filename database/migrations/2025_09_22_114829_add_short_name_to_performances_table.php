@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('performances', function (Blueprint $table) {
             $table->string('short_name', 50)->nullable()->after('title')
-                  ->comment('公演略称（スケジュール表示用）');
+                ->comment('公演略称（スケジュール表示用）');
         });
     }
 

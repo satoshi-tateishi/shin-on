@@ -40,7 +40,6 @@ class PhaseEquipmentController extends Controller
         return view('phase-equipment.index', compact('phase', 'phaseEquipments', 'equipmentStats'));
     }
 
-
     /**
      * Show the form for adding equipment to phase.
      */
@@ -174,7 +173,6 @@ class PhaseEquipmentController extends Controller
             ->with(['phase.performance'])
             ->get();
 
-
         return view('phase-equipment.show', compact('phase', 'phaseEquipment', 'movements', 'otherUsages'));
     }
 
@@ -187,7 +185,7 @@ class PhaseEquipmentController extends Controller
         $phaseEquipment->load([
             'equipment.subcategory.category',
             'checkoutUser',
-            'checkinUser'
+            'checkinUser',
         ]);
 
         // phaseにperformanceリレーションを読み込む
@@ -386,7 +384,6 @@ class PhaseEquipmentController extends Controller
         }
     }
 
-
     /**
      * Get available equipment for phase (AJAX)
      */
@@ -526,8 +523,9 @@ class PhaseEquipmentController extends Controller
 
             foreach ($equipmentData as $index => $item) {
                 $equipment = Equipment::find($item['equipment_id']);
-                if (!$equipment) {
+                if (! $equipment) {
                     $errors[] = "機材ID {$item['equipment_id']} が見つかりません。";
+
                     continue;
                 }
 
@@ -541,6 +539,7 @@ class PhaseEquipmentController extends Controller
 
                     if ($hasConflict) {
                         $errors[] = "{$equipment->name} は、この期間中に他のフェーズで使用予定です。";
+
                         continue;
                     }
                 }
@@ -549,10 +548,11 @@ class PhaseEquipmentController extends Controller
                 if ($equipment->management_type === 'quantity') {
                     $existingRecord = PhaseEquipment::where('phase_id', $phase->id)
                         ->where('equipment_id', $equipment->id)
-                                ->first();
+                        ->first();
 
                     if ($existingRecord) {
                         $errors[] = "{$equipment->name} は既にこのフェーズに登録されています。数量を変更する場合は編集画面をご利用ください。";
+
                         continue;
                     }
 
@@ -564,6 +564,7 @@ class PhaseEquipmentController extends Controller
 
                     if ($item['quantity'] > $availableQuantity) {
                         $errors[] = "{$equipment->name} の使用可能数量は最大 {$availableQuantity} 個です。";
+
                         continue;
                     }
                 }
@@ -595,8 +596,8 @@ class PhaseEquipmentController extends Controller
 
             if ($successCount > 0) {
                 $message = "{$successCount}件の機材を追加しました";
-                if (!empty($errors)) {
-                    $message .= "（" . count($errors) . "件のエラーがありました）";
+                if (! empty($errors)) {
+                    $message .= '（'.count($errors).'件のエラーがありました）';
                 }
 
                 return redirect()
@@ -608,7 +609,8 @@ class PhaseEquipmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['error' => '機材追加中にエラーが発生しました: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => '機材追加中にエラーが発生しました: '.$e->getMessage()]);
         }
     }
 
@@ -656,6 +658,7 @@ class PhaseEquipmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
         }
     }
@@ -704,6 +707,7 @@ class PhaseEquipmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
         }
     }
@@ -752,6 +756,7 @@ class PhaseEquipmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
         }
     }
@@ -800,6 +805,7 @@ class PhaseEquipmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->withErrors(['error' => '一括返却処理に失敗しました。']);
         }
     }
