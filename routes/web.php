@@ -13,6 +13,7 @@ use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PhaseEquipmentController;
 use App\Http\Controllers\RepairRecordController;
+use App\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -170,6 +171,17 @@ Route::middleware('auth')->group(function () {
     Route::get('api/schedule/categories', [\App\Http\Controllers\ScheduleController::class, 'getCategories'])->name('api.schedule.categories');
     Route::get('api/schedule/subcategories', [\App\Http\Controllers\ScheduleController::class, 'getSubcategories'])->name('api.schedule.subcategories');
     Route::get('api/schedule/equipments', [\App\Http\Controllers\ScheduleController::class, 'getEquipments'])->name('api.schedule.equipments');
+
+    // 在庫管理ルート
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::get('api/inventory', [InventoryController::class, 'getInventory'])->name('api.inventory');
+        Route::get('api/inventory/stats', [InventoryController::class, 'getInventoryStats'])->name('api.stats');
+        Route::get('api/inventory/equipment/{equipment}', [InventoryController::class, 'getEquipmentInventory'])->name('api.equipment');
+        Route::get('api/inventory/location/{location}', [InventoryController::class, 'getLocationInventory'])->name('api.location');
+        Route::post('api/inventory/generate-snapshot', [InventoryController::class, 'generateSnapshot'])->name('api.generate-snapshot');
+        Route::get('api/inventory/alerts', [InventoryController::class, 'getInventoryAlerts'])->name('api.alerts');
+    });
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）
     Route::get('positions', [PositionController::class, 'index'])->name('positions.index');

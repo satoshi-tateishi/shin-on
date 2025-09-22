@@ -365,4 +365,126 @@ class Equipment extends Model
     {
         return $this->getFutureReservations()->isNotEmpty();
     }
+
+    /**
+     * 在庫スナップショットとの関連
+     */
+    public function inventorySnapshots(): HasMany
+    {
+        return $this->hasMany(InventorySnapshot::class);
+    }
+
+    /**
+     * 指定日時点での在庫状況を取得
+     */
+    public function getInventoryAsOf(\Carbon\Carbon $asOfDate): array
+    {
+        return InventorySnapshot::calculateInventoryAsOf($this->id, $asOfDate);
+    }
+
+    /**
+     * 指定日時点での利用可能数量を取得
+     */
+    public function getAvailableQuantityAsOf(\Carbon\Carbon $asOfDate): int
+    {
+        $inventory = $this->getInventoryAsOf($asOfDate);
+        return $inventory['available_quantity'] ?? 0;
+    }
+
+    /**
+     * 在庫アラート判定（不足・過剰在庫チェック）
+     */
+    public function checkInventoryAlerts(\Carbon\Carbon $asOfDate = null): array
+    {
+        $asOfDate = $asOfDate ?? now();
+        $inventory = $this->getInventoryAsOf($asOfDate);
+        $alerts = [];
+
+        // 在庫不足チェック（最小在庫数設定があれば）
+        $minStockLevel = $this->min_stock_level ?? 1;
+        if ($inventory['available_quantity'] < $minStockLevel) {
+            $alerts[] = [
+                'type' => 'low_stock',
+                'message' => "在庫不足: {$inventory['available_quantity']}個 (最小: {$minStockLevel}個)",
+                'severity' => 'warning'
+            ];
+        }
+
+        // 長期未使用チェック（90日以上未使用）
+        $lastUsage = $this->equipmentMovements()
+            ->where('movement_type', 'checkout')
+            ->orderBy('moved_at', 'desc')
+            ->first();
+
+        if (!$lastUsage || $lastUsage->moved_at->lt(now()->subDays(90))) {
+            $days = $lastUsage ? $lastUsage->moved_at->diffInDays(now()) : '不明';
+            $alerts[] = [
+                'type' => 'unused',
+                'message' => "長期未使用: {$days}日間未使用",
+                'severity' => 'info'
+            ];
+        }
+
+        return $alerts;
+    }
+
+    /**
+     * 機材の移動履歴統計を取得
+     */
+    public function getMovementStats(\Carbon\Carbon $startDate = null, \Carbon\Carbon $endDate = null): array
+    {
+        $startDate = $startDate ?? now()->subYear();
+        $endDate = $endDate ?? now();
+
+        $movements = $this->equipmentMovements()
+            ->whereBetween('moved_at', [$startDate, $endDate])
+            ->get();
+
+        return [
+            'total_movements' => $movements->count(),
+            'checkout_count' => $movements->where('movement_type', 'checkout')->count(),
+            'checkin_count' => $movements->where('movement_type', 'checkin')->count(),
+            'transfer_count' => $movements->where('movement_type', 'transfer')->count(),
+            'repair_count' => $movements->whereIn('movement_type', ['repair_start', 'repair_complete'])->count(),
+            'most_frequent_location' => $movements->groupBy('to_location_id')->sortByDesc(function ($group) {
+                return $group->count();
+            })->keys()->first()
+        ];
+    }
+
+    /**
+     * 機材の使用パターン分析
+     */
+    public function analyzeUsagePattern(\Carbon\Carbon $startDate = null, \Carbon\Carbon $endDate = null): array
+    {
+        $startDate = $startDate ?? now()->subYear();
+        $endDate = $endDate ?? now();
+
+        $usages = $this->phaseEquipments()
+            ->whereHas('phase', function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate]);
+            })
+            ->with(['phase.performance'])
+            ->get();
+
+        $monthlyUsage = $usages->groupBy(function ($usage) {
+            return $usage->phase->start_date->format('Y-m');
+        })->map(function ($group) {
+            return $group->count();
+        });
+
+        $performanceTypes = $usages->groupBy(function ($usage) {
+            return $usage->phase->performance->type ?? 'その他';
+        })->map(function ($group) {
+            return $group->count();
+        });
+
+        return [
+            'total_usage_count' => $usages->count(),
+            'monthly_usage' => $monthlyUsage->toArray(),
+            'performance_types' => $performanceTypes->toArray(),
+            'average_usage_per_month' => $monthlyUsage->avg(),
+            'peak_usage_month' => $monthlyUsage->keys()->first()
+        ];
+    }
 }
