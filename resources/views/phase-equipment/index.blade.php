@@ -200,8 +200,11 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($phaseEquipments as $phaseEquipment)
-                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('phases.equipment.show', [$phase, $phaseEquipment]) }}'"
->
+                        <tr class="hover:bg-gray-50 cursor-pointer"
+                            onclick="window.location='{{ route('phases.equipment.show', [$phase, $phaseEquipment]) }}'"
+                            data-phase-equipment-id="{{ $phaseEquipment->id }}"
+                            data-equipment-location="{{ $phaseEquipment->equipment->location_id }}"
+                        >
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ $phaseEquipment->equipment->subcategory->category->name }}</div>
                                 <div class="text-sm text-gray-500">{{ $phaseEquipment->equipment->subcategory->name }}</div>
@@ -356,6 +359,27 @@
                            value="{{ date('Y-m-d') }}"
                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
+
+                <!-- 返却先選択（location_id=90の機材のみ表示） -->
+                <div id="locationSelectDiv" class="mb-4 hidden">
+                    <label for="to_location_id" class="block text-sm font-medium text-gray-700">返却先倉庫 <span class="text-red-500">*</span></label>
+                    <div class="mt-1 flex">
+                        <input type="hidden" name="to_location_id" id="to_location_id">
+                        <button type="button" id="selectLocationBtn" onclick="openLocationSelector()"
+                                class="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 text-left shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <span id="selectedLocationText" class="text-gray-500">返却先倉庫を選択してください...</span>
+                        </button>
+                    </div>
+                    <div id="locationError" class="text-red-500 text-sm mt-1 hidden">返却先倉庫を選択してください</div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="checkin_note" class="block text-sm font-medium text-gray-700">備考</label>
+                    <textarea name="note" id="checkin_note" rows="3"
+                              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="返却時の備考があれば入力してください"></textarea>
+                </div>
+
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="closeCheckinModal()"
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
@@ -371,6 +395,15 @@
     </div>
 </div>
 
+<!-- 場所選択モーダル -->
+<x-location-selector-modal
+    id="checkin-location-modal"
+    title="返却先倉庫選択"
+    placeholder="返却先倉庫を選択してください..."
+    confirm-text="選択"
+    :required="true"
+/>
+
 <script>
 function openCheckoutModal(phaseEquipmentId) {
     const form = document.getElementById('checkoutForm');
@@ -382,15 +415,89 @@ function closeCheckoutModal() {
     document.getElementById('checkoutModal').classList.add('hidden');
 }
 
-function openCheckinModal(phaseEquipmentId) {
+async function openCheckinModal(phaseEquipmentId) {
     const form = document.getElementById('checkinForm');
     form.action = `{{ route('phases.equipment.checkin', [$phase, '__ID__']) }}`.replace('__ID__', phaseEquipmentId);
+
+    // フォームをリセット
+    form.reset();
+    document.getElementById('checkin_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('to_location_id').value = '';
+    document.getElementById('selectedLocationText').textContent = '返却先倉庫を選択してください...';
+    document.getElementById('locationError').classList.add('hidden');
+
+    // 機材情報を取得してlocation_id=90かチェック
+    try {
+        const equipmentData = await getEquipmentData(phaseEquipmentId);
+        const requiresLocationSelection = equipmentData && equipmentData.location_id == 90;
+
+        const locationSelectDiv = document.getElementById('locationSelectDiv');
+        if (requiresLocationSelection) {
+            locationSelectDiv.classList.remove('hidden');
+        } else {
+            locationSelectDiv.classList.add('hidden');
+        }
+    } catch (error) {
+        console.error('機材情報の取得に失敗:', error);
+        // エラーの場合は安全側に倒して場所選択を非表示
+        document.getElementById('locationSelectDiv').classList.add('hidden');
+    }
+
     document.getElementById('checkinModal').classList.remove('hidden');
+}
+
+// 機材データを取得する関数（簡易実装）
+async function getEquipmentData(phaseEquipmentId) {
+    // 既存のテーブル行から機材情報を取得
+    const equipmentRows = document.querySelectorAll('[data-equipment-location]');
+    for (const row of equipmentRows) {
+        const rowPhaseEquipmentId = row.getAttribute('data-phase-equipment-id');
+        if (rowPhaseEquipmentId == phaseEquipmentId) {
+            return {
+                location_id: parseInt(row.getAttribute('data-equipment-location'))
+            };
+        }
+    }
+    return null;
 }
 
 function closeCheckinModal() {
     document.getElementById('checkinModal').classList.add('hidden');
 }
+
+// 場所選択モーダルを開く
+function openLocationSelector() {
+    const modalEvent = new CustomEvent('open-checkin-location-modal', {
+        detail: {
+            onConfirm: (location) => {
+                selectReturnLocation(location);
+            }
+        }
+    });
+    window.dispatchEvent(modalEvent);
+}
+
+// 返却先倉庫を選択
+function selectReturnLocation(location) {
+    if (location) {
+        document.getElementById('to_location_id').value = location.id;
+        document.getElementById('selectedLocationText').textContent = location.name;
+        document.getElementById('locationError').classList.add('hidden');
+    }
+}
+
+// フォーム送信時のバリデーション
+document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    const locationSelectDiv = document.getElementById('locationSelectDiv');
+    const toLocationId = document.getElementById('to_location_id').value;
+
+    // location_id=90の機材で返却先が選択されていない場合
+    if (!locationSelectDiv.classList.contains('hidden') && !toLocationId) {
+        e.preventDefault();
+        document.getElementById('locationError').classList.remove('hidden');
+        return false;
+    }
+});
 
 // モーダル外クリックで閉じる
 document.addEventListener('click', function(event) {

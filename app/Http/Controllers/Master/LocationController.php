@@ -20,7 +20,7 @@ class LocationController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Location::withCount('equipments');
+        $query = Location::query();
         $query = $this->applyFilters($query, $request);
 
         // タイプでのフィルター

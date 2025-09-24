@@ -6,6 +6,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentMovement;
 use App\Models\EquipmentSet;
+use App\Models\Location;
 use App\Models\Phase;
 use App\Models\PhaseEquipment;
 use Illuminate\Http\JsonResponse;
@@ -344,11 +345,30 @@ class PhaseEquipmentController extends Controller
             ]);
         }
 
-        $validated = $request->validate([
+        $equipment = $phaseEquipment->equipment;
+
+        // location_id=90の機材は返却先選択が必要
+        $requiresLocationSelection = $equipment->location_id == 90;
+
+        $validationRules = [
             'checkin_date' => 'required|date',
-            'to_location_id' => 'nullable|exists:locations,id',
             'note' => 'nullable|string|max:1000',
-        ]);
+        ];
+
+        if ($requiresLocationSelection) {
+            $validationRules['to_location_id'] = 'required|exists:locations,id';
+        } else {
+            $validationRules['to_location_id'] = 'nullable|exists:locations,id';
+        }
+
+        $validated = $request->validate($validationRules);
+
+        // location_id=90で返却先が選択されていない場合のエラー
+        if ($requiresLocationSelection && empty($validated['to_location_id'])) {
+            return back()->withErrors([
+                'to_location_id' => 'この機材は返却先倉庫の選択が必要です。',
+            ])->withInput();
+        }
 
         try {
             DB::beginTransaction();
@@ -361,19 +381,31 @@ class PhaseEquipmentController extends Controller
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
 
+            // location_id=90の機材の場合、機材の場所を更新
+            $toLocationId = $validated['to_location_id'] ?? null;
+            if ($requiresLocationSelection && $toLocationId) {
+                $equipment->update(['location_id' => $toLocationId]);
+            }
+
             // EquipmentMovement レコードを作成
             EquipmentMovement::createCheckin(
                 $phaseEquipment->equipment_id,
                 $phase->id,
                 $phaseEquipment->quantity,
                 auth()->id(),
-                $validated['to_location_id'] ?? null,
+                $toLocationId,
                 $validated['note'] ?? null
             );
 
             DB::commit();
 
-            return back()->with('success', '機材を返却しました。');
+            $message = '機材を返却しました。';
+            if ($requiresLocationSelection && $toLocationId) {
+                $locationName = Location::find($toLocationId)?->name;
+                $message .= "（返却先: {$locationName}）";
+            }
+
+            return back()->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollback();

@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="text-center">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ config('app.name', 'shin-on') }}</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ config('app.name', 'shin-on dB') }}</h1>
         <p class="text-gray-500 mb-8">業務アプリポータル</p>
 
         @if ($errors->any())

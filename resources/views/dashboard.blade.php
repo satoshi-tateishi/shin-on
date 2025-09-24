@@ -27,7 +27,7 @@
                                  class="h-10 w-auto object-contain">
                         @endif
                         <h1 class="text-xl font-semibold text-gray-900">
-                            shin-on 業務アプリポータル
+                            shin-on dB
                         </h1>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -257,6 +257,23 @@
                                 <div class="ml-4">
                                     <h3 class="text-lg font-medium text-gray-900">在庫管理</h3>
                                     <p class="text-sm text-gray-500">基準日指定在庫・倉庫別管理・アラート</p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 倉庫間移動 -->
+                    <a href="{{ route('equipment-transfer.index') }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition-shadow cursor-pointer block">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">倉庫間移動</h3>
+                                    <p class="text-sm text-gray-500">個別機材の倉庫間移動・履歴管理</p>
                                 </div>
                             </div>
                         </div>

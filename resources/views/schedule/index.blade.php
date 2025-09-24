@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>機材スケジュール表 - shin-on</title>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+@extends('layouts.master')
+
+@section('title', '機材スケジュール表')
+
+@section('breadcrumb')
+    > <span class="text-gray-800">機材スケジュール表</span>
+@endsection
+
+@push('head')
     <style>
         .schedule-table {
             border-spacing: 0;
@@ -100,48 +100,20 @@
             padding: 0 2px;
         }
     </style>
-</head>
-<body class="bg-gray-100">
-    <!-- Navigation -->
-    <nav class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-semibold text-gray-900">
-                        shin-on 機材スケジュール表
-                    </h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('dashboard') }}" class="text-gray-500 hover:text-gray-700">
-                        ダッシュボードに戻る
-                    </a>
-                    <div class="flex items-center space-x-2">
-                        @if(auth()->user()->icon)
-                            <img src="{{ auth()->user()->icon }}" alt="Icon" class="w-8 h-8 rounded-full">
-                        @endif
-                        <span class="text-gray-700">{{ auth()->user()->name }}</span>
-                    </div>
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
-                        @csrf
-                        <button type="submit" class="text-gray-500 hover:text-gray-700">
-                            ログアウト
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </nav>
+@endpush
 
-    <div class="w-full px-4 py-6" x-data="scheduleManager()">
-        <!-- ヘッダー -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-900">機材スケジュール表</h1>
-                <p class="text-sm text-gray-600 mt-1">機材の使用状況をExcel風の表形式で表示します</p>
-            </div>
+@section('header')
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">機材スケジュール表</h1>
+    </div>
+@endsection
 
-            <!-- フィルター -->
-            <div class="px-6 py-4 space-y-4">
+@section('content')
+
+    <div class="p-6" x-data="scheduleManager()">
+        <!-- フィルター -->
+        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+            <div class="space-y-4">
                 <!-- フォーム全体でEnterキー対応 -->
                 <form @submit.prevent="loadScheduleData()" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -439,7 +411,8 @@
         </div>
     </div>
 
-    <script>
+@push('scripts')
+<script>
         function scheduleManager() {
             return {
                 // データ
@@ -716,6 +689,6 @@
 
             };
         }
-    </script>
-</body>
-</html>
+</script>
+@endpush
+@endsection

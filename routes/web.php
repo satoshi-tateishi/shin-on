@@ -181,6 +181,19 @@ Route::middleware('auth')->group(function () {
         Route::get('api/inventory/location/{location}', [InventoryController::class, 'getLocationInventory'])->name('api.location');
         Route::post('api/inventory/generate-snapshot', [InventoryController::class, 'generateSnapshot'])->name('api.generate-snapshot');
         Route::get('api/inventory/alerts', [InventoryController::class, 'getInventoryAlerts'])->name('api.alerts');
+        Route::get('api/equipment/{equipment}/usage', [InventoryController::class, 'getEquipmentUsage'])->name('api.equipment.usage');
+        Route::get('api/equipment/{equipment}/usage-test', [InventoryController::class, 'getEquipmentUsageTest'])->name('api.equipment.usage.test');
+
+        // 倉庫間移動機能
+        Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
+        Route::get('api/warehouses', [InventoryController::class, 'getWarehouses'])->name('api.warehouses');
+    });
+
+    // 倉庫間移動専用画面
+    Route::prefix('equipment-transfer')->name('equipment-transfer.')->group(function () {
+        Route::get('/', [InventoryController::class, 'transferIndex'])->name('index');
+        Route::get('api/equipment', [InventoryController::class, 'getTransferableEquipment'])->name('api.equipment');
+        Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
     });
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）
@@ -209,10 +222,37 @@ Route::prefix('test-api')->group(function () {
             'phase_equipment_count' => \App\Models\PhaseEquipment::count(),
         ]);
     });
-    Route::get('schedule/equipment', [\App\Http\Controllers\ScheduleControllerSimple::class, 'getEquipmentSchedule']);
-    Route::get('schedule/categories', [\App\Http\Controllers\ScheduleControllerSimple::class, 'getCategories']);
-    Route::get('schedule', function () {
-        return view('schedule.simple');
-    });
 
+    // テスト用機材使用状況API（認証なし）
+    Route::get('equipment/{equipment}/usage', [InventoryController::class, 'getEquipmentUsageTest']);
+
+    // 超シンプルテスト（UUIDハッシュID対応）
+    Route::get('simple-test/{id}', function ($id) {
+        // IDの最初の8文字を使って番号生成
+        $shortId = substr($id, 0, 8);
+        $numericId = abs(crc32($shortId)) % 1000; // 0-999の数値に変換
+
+        return response()->json([
+            'success' => true,
+            'message' => 'シンプルテスト成功',
+            'data' => [
+                'equipment' => [
+                    'id' => $id,
+                    'name' => 'テスト機材 #' . $numericId,
+                    'company_number' => 'TEST' . str_pad($numericId, 3, '0', STR_PAD_LEFT),
+                    'subcategory' => 'テストカテゴリ',
+                    'location' => 'テスト倉庫',
+                ],
+                'usage_info' => [
+                    [
+                        'type' => 'available',
+                        'status' => '利用可能',
+                        'details' => 'テスト倉庫保管',
+                        'company_number' => 'TEST' . str_pad($numericId, 3, '0', STR_PAD_LEFT),
+                    ]
+                ],
+                'as_of_date' => now()->format('Y-m-d'),
+            ]
+        ]);
+    });
 });

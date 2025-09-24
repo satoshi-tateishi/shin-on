@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>在庫管理 - shin-on</title>
+    <title>在庫管理 - shin-on dB</title>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -15,20 +15,6 @@
         .inventory-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .status-sufficient { @apply bg-green-100 text-green-800; }
-        .status-caution { @apply bg-yellow-100 text-yellow-800; }
-        .status-shortage { @apply bg-red-100 text-red-800; }
-        .alert-badge {
-            animation: pulse 2s infinite;
         }
     </style>
 </head>
@@ -102,80 +88,6 @@
         <!-- Main Content -->
         <div x-show="!loading && !error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-            <!-- Statistics Overview -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">総機材数</dt>
-                                    <dd class="text-lg font-medium text-gray-900" x-text="stats.total_items || 0"></dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">利用可能</dt>
-                                    <dd class="text-lg font-medium text-gray-900" x-text="stats.status_distribution?.sufficient || 0"></dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">要注意</dt>
-                                    <dd class="text-lg font-medium text-gray-900" x-text="stats.status_distribution?.caution || 0"></dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">不足</dt>
-                                    <dd class="text-lg font-medium text-gray-900" x-text="stats.status_distribution?.shortage || 0"></dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Filters and Controls -->
             <div class="bg-white shadow rounded-lg mb-6">
@@ -183,7 +95,7 @@
                     <h3 class="text-lg leading-6 font-medium text-gray-900">フィルタ・検索</h3>
                 </div>
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <!-- カテゴリフィルタ -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">カテゴリ</label>
@@ -195,27 +107,16 @@
                             </select>
                         </div>
 
-                        <!-- 場所フィルタ -->
+                        <!-- 倉庫フィルタ -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">場所</label>
-                            <select x-model="filters.location_id" @change="loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
-                                <option value="">全ての場所</option>
+                            <label class="block text-sm font-medium text-gray-700">倉庫</label>
+                            <select x-model="filters.location_id" @change="filters.category_id = ''; loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
                                 <template x-for="location in locations" :key="location.id">
-                                    <option :value="location.id" x-text="location.display_name"></option>
+                                    <option :value="location.id" :selected="location.id == 90" x-text="location.name"></option>
                                 </template>
                             </select>
                         </div>
 
-                        <!-- ステータスフィルタ -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">在庫状況</label>
-                            <select x-model="filters.status_filter" @change="loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
-                                <option value="">全ての状況</option>
-                                <option value="available">十分</option>
-                                <option value="low_stock">要注意</option>
-                                <option value="out_of_stock">不足</option>
-                            </select>
-                        </div>
 
                         <!-- 検索 -->
                         <div>
@@ -272,62 +173,165 @@
                 </div>
             </div>
 
-            <!-- Inventory List -->
-            <div class="bg-white shadow overflow-hidden sm:rounded-md">
-                <ul class="divide-y divide-gray-200">
-                    <template x-for="item in inventoryData" :key="item.equipment_id">
-                        <li class="inventory-card">
-                            <div class="px-4 py-4 sm:px-6">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                                <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="flex items-center space-x-2">
-                                                <h4 class="text-sm font-medium text-gray-900" x-text="item.equipment_name"></h4>
-                                                <span class="status-badge" :class="'status-' + item.status_color" x-text="item.status_text"></span>
-                                            </div>
-                                            <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                                                <span x-text="item.category_name + ' > ' + item.subcategory_name"></span>
-                                                <span x-text="'[' + item.location.type + '] ' + item.location.name"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-4">
-                                        <div class="text-right">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                <span x-text="item.available_quantity"></span> / <span x-text="item.total_quantity"></span>
-                                            </div>
-                                            <div class="text-xs text-gray-500">利用可能 / 総数</div>
-                                        </div>
+            <!-- Inventory Table -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                                カテゴリ
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                                機材名
+                            </th>
+                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20 border-l border-gray-300">
+                                在庫数
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-300" style="width: 50%;">
+                                新音番号
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="item in inventoryData" :key="item.id">
+                            <tr class="hover:bg-gray-50 cursor-pointer" @click="viewEquipmentUsage(item.id)">
+                                <!-- カテゴリ -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs text-gray-400" x-text="item.category_name"></div>
+                                    <div class="text-xs text-gray-400" x-text="item.subcategory_name"></div>
+                                </td>
+
+                                <!-- 機材名 -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-sm font-medium text-gray-900" x-text="item.equipment_name"></div>
+                                        <!-- 個体管理機材のみ移動ボタン表示 -->
                                         <button
-                                            @click="viewEquipmentDetail(item.equipment_id)"
-                                            class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                                            x-show="item.is_individual && item.available_quantity > 0"
+                                            @click="openTransferModal(item)"
+                                            class="ml-2 inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-cyan-700 bg-cyan-100 hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                                            title="倉庫間移動"
                                         >
-                                            詳細
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                            </svg>
+                                            移動
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-                        </li>
-                    </template>
-                </ul>
+                                </td>
 
-                <!-- Empty State -->
-                <div x-show="inventoryData.length === 0" class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">在庫データがありません</h3>
-                    <p class="mt-1 text-sm text-gray-500">検索条件を変更するか、スナップショットを生成してください。</p>
+                                <!-- 在庫数 -->
+                                <td class="px-2 py-4 whitespace-nowrap text-center border-l border-gray-200">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <span x-text="item.available_quantity"></span>
+                                    </div>
+                                </td>
+
+                                <!-- 新音番号 -->
+                                <td class="px-6 py-4 border-l border-gray-200">
+                                    <div class="text-sm text-gray-900 break-words" x-text="item.company_numbers"></div>
+                                </td>
+                            </tr>
+                        </template>
+
+                        <!-- Empty State Row -->
+                        <tr x-show="inventoryData.length === 0">
+                            <td colspan="4" class="px-6 py-12 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">在庫データがありません</h3>
+                                <p class="mt-1 text-sm text-gray-500">検索条件を変更するか、スナップショットを生成してください。</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 使用状況詳細モーダル -->
+        <div x-show="showUsageModal" x-transition.opacity class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="showUsageModal = false">
+            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
+                <div class="mt-3">
+                    <!-- ヘッダー -->
+                    <div class="flex items-center justify-between pb-3 border-b">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">機材使用状況</h3>
+                        <button @click="showUsageModal = false" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- 機材情報 -->
+                    <div class="py-4" x-show="selectedEquipment">
+                        <h4 class="text-md font-semibold text-gray-800 mb-2">機材情報</h4>
+                        <div class="bg-gray-50 p-3 rounded">
+                            <p class="text-sm"><span class="font-medium">機材名:</span> <span x-text="selectedEquipment?.name"></span></p>
+                            <p class="text-sm"><span class="font-medium">カテゴリ:</span> <span x-text="selectedEquipment?.subcategory"></span></p>
+                            <p class="text-sm"><span class="font-medium">保管場所:</span> <span x-text="selectedEquipment?.location"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- 使用状況一覧 -->
+                    <div class="py-4">
+                        <h4 class="text-md font-semibold text-gray-800 mb-3">
+                            使用状況 <span class="text-sm font-normal text-gray-500">（基準日: <span x-text="formatDate(asOfDate)"></span>）</span>
+                        </h4>
+
+                        <div x-show="usageDetails.length === 0" class="text-center py-6 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p>修理中・使用中の機材はありません</p>
+                            <p class="text-sm text-gray-400 mt-1">利用可能な機材は表の在庫数に表示されています</p>
+                        </div>
+
+
+                        <div class="space-y-3">
+                            <template x-for="usage in usageDetails" :key="usage.company_number + usage.type + usage.status">
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <span class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-mono text-gray-600 bg-gray-50"
+                                                      x-text="usage.company_number">
+                                                </span>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                      :class="{
+                                                          'bg-red-100 text-red-800': usage.type === 'repair',
+                                                          'bg-blue-100 text-blue-800': usage.type === 'phase',
+                                                          'bg-green-100 text-green-800': usage.type === 'available'
+                                                      }"
+                                                      x-text="usage.status">
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-900" x-text="usage.details"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- フッター -->
+                    <div class="flex justify-end pt-4 border-t">
+                        <button @click="showUsageModal = false" class="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+                            閉じる
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- 倉庫間移動用場所選択モーダル -->
+        <x-location-selector-modal
+            id="transfer-modal"
+            title="移動先倉庫選択"
+            placeholder="移動先倉庫を選択してください..."
+            confirm-text="移動実行"
+            :required="true"
+        />
     </div>
 
     <script>
@@ -343,17 +347,24 @@
                 locations: [],
                 filters: {
                     category_id: '',
-                    location_id: '',
-                    status_filter: '',
+                    location_id: 90, // デフォルトをすみだ倉庫に設定（数値型）
                     search: '',
                     page: 1,
-                    per_page: 50
+                    per_page: 100
                 },
+                showUsageModal: false,
+                selectedEquipment: null,
+                usageDetails: [],
 
                 async init() {
-                    await this.loadMasterData();
-                    await this.loadInventoryData();
-                    await this.loadInventoryStats();
+                    try {
+                        await this.loadMasterData();
+                        await this.loadInventoryData();
+                        await this.loadInventoryStats();
+                    } catch (error) {
+                        console.error('Initialization error:', error);
+                        this.error = 'システムの初期化中にエラーが発生しました: ' + error.message;
+                    }
                 },
 
                 async loadMasterData() {
@@ -365,7 +376,7 @@
                             this.categories = categoryData.categories || [];
                         }
 
-                        // 場所一覧取得（既存のAPIを活用）
+                        // 倉庫一覧取得（倉庫のみに限定）
                         this.locations = @json($locationStats ?? []);
                     } catch (error) {
                         console.error('Master data loading error:', error);
@@ -398,6 +409,7 @@
                             throw new Error(data.error || '在庫データの取得に失敗しました');
                         }
                     } catch (error) {
+                        console.error('Error loading inventory data:', error);
                         this.error = error.message;
                         this.inventoryData = [];
                     } finally {
@@ -449,6 +461,34 @@
                     }
                 },
 
+                async viewEquipmentUsage(equipmentId) {
+                    try {
+                        this.loading = true;
+                        this.error = null;
+
+                        const response = await fetch(`/test-api/equipment/${equipmentId}/usage?as_of_date=${this.asOfDate}`);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            this.selectedEquipment = data.data.equipment;
+                            this.usageDetails = data.data.usage_info;
+                            this.showUsageModal = true;
+                        } else {
+                            throw new Error(data.error || '使用状況の取得に失敗しました');
+                        }
+                    } catch (error) {
+                        console.error('Error loading equipment usage:', error);
+                        this.error = error.message || 'ネットワークエラーが発生しました';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
                 viewEquipmentDetail(equipmentId) {
                     // 機材詳細モーダルまたはページに遷移
                     window.open(`/master/equipments/${equipmentId}`, '_blank');
@@ -476,6 +516,66 @@
                         day: 'numeric',
                         weekday: 'short'
                     });
+                },
+
+                // 倉庫間移動モーダルを開く
+                openTransferModal(equipment) {
+                    const modalEvent = new CustomEvent('open-transfer-modal', {
+                        detail: {
+                            onConfirm: (location) => {
+                                this.transferEquipment(equipment, location);
+                            }
+                        }
+                    });
+                    window.dispatchEvent(modalEvent);
+                },
+
+                // 倉庫間移動実行
+                async transferEquipment(equipment, toLocation) {
+                    if (!toLocation || !equipment) {
+                        return;
+                    }
+
+                    this.loading = true;
+
+                    try {
+                        const response = await fetch('/inventory/api/transfer', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                equipment_id: equipment.equipment_id,
+                                to_location_id: toLocation.id,
+                                note: `在庫管理からの移動`
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // 成功メッセージを表示
+                            this.showSuccessMessage(`${equipment.equipment_name}を${toLocation.name}に移動しました`);
+
+                            // データを再読み込み
+                            await this.loadInventoryData();
+                            await this.loadInventoryStats();
+                        } else {
+                            throw new Error(data.error || '倉庫間移動に失敗しました');
+                        }
+                    } catch (error) {
+                        console.error('Transfer error:', error);
+                        this.error = error.message;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // 成功メッセージ表示（簡易実装）
+                showSuccessMessage(message) {
+                    // 一時的にアラートで表示（後でトーストなどに変更可能）
+                    alert(message);
                 }
             }
         }

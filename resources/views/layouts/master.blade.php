@@ -13,6 +13,9 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    @stack('head')
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-gray-100">

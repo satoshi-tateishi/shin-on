@@ -51,8 +51,12 @@ class InventorySnapshot extends Model
             // 既存のスナップショットを削除
             self::where('snapshot_date', $dateString)->delete();
 
-            // 全機材の在庫状況を計算
-            $equipments = Equipment::active()->get();
+            // 倉庫に保管されている機材のみの在庫状況を計算
+            $equipments = Equipment::active()
+                ->whereHas('location', function ($query) {
+                    $query->where('type', '倉庫');
+                })
+                ->get();
 
             foreach ($equipments as $equipment) {
                 $inventoryData = self::calculateInventoryAsOf($equipment->id, $asOfDate);
@@ -94,11 +98,13 @@ class InventorySnapshot extends Model
     {
         // 基準日時点での機材状態を確認
         $isInUse = DB::table('phase_equipment')
-            ->join('phases', 'phase_equipment.phase_id', '=', 'phases.id')
-            ->where('phase_equipment.equipment_id', $equipmentId)
-            ->where('phase_equipment.status', 'checked_out')
-            ->where('phases.start_date', '<=', $asOfDate)
-            ->where('phases.end_date', '>=', $asOfDate)
+            ->where('equipment_id', $equipmentId)
+            ->where('status', 'checked_out')
+            ->where('checkout_date', '<=', $asOfDate)
+            ->where(function ($query) use ($asOfDate) {
+                $query->whereNull('checkin_date')
+                      ->orWhere('checkin_date', '>', $asOfDate);
+            })
             ->exists();
 
         $isInRepair = DB::table('repair_records')
@@ -111,14 +117,9 @@ class InventorySnapshot extends Model
             ->where('status', 'in_progress')
             ->exists();
 
-        // デフォルト場所を取得（最後の移動記録から）
-        $lastMovement = DB::table('equipment_movements')
-            ->where('equipment_id', $equipmentId)
-            ->where('moved_at', '<=', $asOfDate)
-            ->orderBy('moved_at', 'desc')
-            ->first();
-
-        $defaultLocationId = $lastMovement ? $lastMovement->to_location_id : 1; // デフォルト倉庫
+        // 機材の基本保管場所を取得
+        $equipment = Equipment::findOrFail($equipmentId);
+        $defaultLocationId = $equipment->location_id;
 
         $quantity = 1;
         if ($isInUse || $isInRepair) {
@@ -147,17 +148,19 @@ class InventorySnapshot extends Model
 
         // 基準日時点での使用中数量を計算
         $inUseQuantity = DB::table('phase_equipment')
-            ->join('phases', 'phase_equipment.phase_id', '=', 'phases.id')
-            ->where('phase_equipment.equipment_id', $equipmentId)
-            ->where('phase_equipment.status', 'checked_out')
-            ->where('phases.start_date', '<=', $asOfDate)
-            ->where('phases.end_date', '>=', $asOfDate)
-            ->sum('phase_equipment.quantity');
+            ->where('equipment_id', $equipmentId)
+            ->where('status', 'checked_out')
+            ->where('checkout_date', '<=', $asOfDate)
+            ->where(function ($query) use ($asOfDate) {
+                $query->whereNull('checkin_date')
+                      ->orWhere('checkin_date', '>', $asOfDate);
+            })
+            ->sum('quantity');
 
         $availableQuantity = max(0, $totalQuantity - $inUseQuantity);
 
-        // デフォルト場所に全て配置
-        $defaultLocationId = 1; // メイン倉庫
+        // 機材の基本保管場所に全て配置
+        $defaultLocationId = $equipment->location_id;
 
         return [
             'total_quantity' => $totalQuantity,
@@ -172,7 +175,7 @@ class InventorySnapshot extends Model
     }
 
     /**
-     * 指定日のスナップショット一覧を取得
+     * 指定日のスナップショット一覧を取得（倉庫保管機材のみ）
      */
     public static function getSnapshotsByDate(Carbon $date, array $filters = []): Collection
     {
