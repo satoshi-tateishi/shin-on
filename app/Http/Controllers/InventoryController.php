@@ -712,19 +712,23 @@ class InventoryController extends Controller
                 ], 400);
             }
 
-            $fromLocationId = $equipment->location_id;
+            $currentLocationId = $equipment->now_location_id ?? $equipment->location_id;
             $toLocationId = $validated['to_location_id'];
 
             // 同じ場所への移動はエラー
-            if ($fromLocationId == $toLocationId) {
+            if ($currentLocationId == $toLocationId) {
                 return response()->json([
                     'success' => false,
                     'error' => '同じ場所への移動はできません。',
                 ], 400);
             }
 
-            // 機材の現在地を更新
-            $equipment->update(['location_id' => $toLocationId]);
+            // 基本倉庫への移動の場合は現在地をクリア、それ以外は現在地を設定
+            if ($toLocationId == $equipment->location_id) {
+                $equipment->update(['now_location_id' => null]);
+            } else {
+                $equipment->update(['now_location_id' => $toLocationId]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -732,7 +736,7 @@ class InventoryController extends Controller
                 'equipment' => [
                     'id' => $equipment->id,
                     'name' => $equipment->name,
-                    'from_location' => Location::find($fromLocationId)?->name,
+                    'from_location' => Location::find($currentLocationId)?->name,
                     'to_location' => Location::find($toLocationId)?->name,
                 ],
             ]);
@@ -741,6 +745,65 @@ class InventoryController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => '倉庫間移動に失敗しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 機材を基本倉庫に返却API
+     */
+    public function returnEquipmentToBase(Request $request, Equipment $equipment): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'note' => 'nullable|string|max:500',
+            ]);
+
+            // 個体管理機材のみ対象
+            if ($equipment->management_type !== 'individual') {
+                return response()->json([
+                    'success' => false,
+                    'error' => '数量管理機材の返却はサポートされていません。',
+                ], 400);
+            }
+
+            // 現在地にない機材（already at base location）はエラー
+            if (!$equipment->now_location_id) {
+                return response()->json([
+                    'success' => false,
+                    'error' => '機材は既に基本倉庫にあります。',
+                ], 400);
+            }
+
+            // 基本倉庫が設定されていない場合はエラー
+            if (!$equipment->location_id) {
+                return response()->json([
+                    'success' => false,
+                    'error' => '基本倉庫が設定されていません。',
+                ], 400);
+            }
+
+            $fromLocationName = $equipment->nowLocation?->name ?? '不明';
+            $toLocationName = $equipment->location?->name ?? '不明';
+
+            // 現在地をクリアして基本倉庫に戻す
+            $equipment->update(['now_location_id' => null]);
+
+            return response()->json([
+                'success' => true,
+                'message' => '機材を基本倉庫に返却しました。',
+                'equipment' => [
+                    'id' => $equipment->id,
+                    'name' => $equipment->name,
+                    'from_location' => $fromLocationName,
+                    'to_location' => $toLocationName,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '返却に失敗しました: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -859,6 +922,8 @@ class InventoryController extends Controller
                     'company_number' => $item->company_number,
                     'manufacturer' => $item->manufacturer,
                     'status' => $item->status,
+                    'location_id' => $item->location_id,
+                    'now_location_id' => $item->now_location_id,
                     'location' => [
                         'id' => $item->location->id,
                         'name' => $item->location->name,

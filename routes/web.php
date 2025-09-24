@@ -194,6 +194,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InventoryController::class, 'transferIndex'])->name('index');
         Route::get('api/equipment', [InventoryController::class, 'getTransferableEquipment'])->name('api.equipment');
         Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
+        Route::post('api/return/{equipment}', [InventoryController::class, 'returnEquipmentToBase'])->name('api.return');
     });
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）

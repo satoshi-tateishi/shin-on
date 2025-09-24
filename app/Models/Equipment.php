@@ -32,6 +32,7 @@ class Equipment extends Model
         'price',
         'status',
         'location_id',
+        'now_location_id',
         'is_discard',
         'is_schedule_visible',
         'discard_at',
@@ -43,6 +44,7 @@ class Equipment extends Model
         return [
             'subcategory_id' => 'integer',
             'location_id' => 'integer',
+            'now_location_id' => 'integer',
             'sort' => 'integer',
             'quantity' => 'integer',
             'purchase_date' => 'date',
@@ -64,6 +66,12 @@ class Equipment extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'location_id');
+    }
+
+    // リレーション: 現在地
+    public function nowLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'now_location_id');
     }
 
     // リレーション: 機材カテゴリ（サブカテゴリ経由）
@@ -143,6 +151,24 @@ class Equipment extends Model
         }
 
         return $name;
+    }
+
+    // 実際の位置取得（現在地がある場合は現在地、ない場合は基本倉庫）
+    public function getActualLocationAttribute(): ?Location
+    {
+        return $this->nowLocation ?? $this->location;
+    }
+
+    // 実際の位置ID取得
+    public function getActualLocationIdAttribute(): ?int
+    {
+        return $this->now_location_id ?? $this->location_id;
+    }
+
+    // 現在地にある機材かどうか
+    public function isAtTemporaryLocationAttribute(): bool
+    {
+        return !is_null($this->now_location_id);
     }
 
     // ステータスの日本語表示

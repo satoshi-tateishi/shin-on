@@ -151,14 +151,28 @@
 
                                 <!-- アクション -->
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <button @click="openTransferModal(equipment)"
-                                            :disabled="equipment.status !== 'available'"
-                                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                                        </svg>
-                                        移動
-                                    </button>
+                                    <div class="flex space-x-2 justify-center">
+                                        <!-- 移動ボタン -->
+                                        <button @click="openTransferModal(equipment)"
+                                                :disabled="equipment.status !== 'available'"
+                                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                            </svg>
+                                            移動
+                                        </button>
+
+                                        <!-- 返却ボタン（現在地にある場合のみ表示） -->
+                                        <button x-show="equipment.now_location_id"
+                                                @click="returnToBaseLocation(equipment)"
+                                                :disabled="equipment.status !== 'available' || isReturning"
+                                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                            </svg>
+                                            返却
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
@@ -249,6 +263,7 @@
             loading: false,
             error: null,
             showModal: false,
+            isReturning: false,
 
             // モーダル用データ
             selectedEquipment: null,
@@ -328,6 +343,44 @@
                 return this.locations.filter(location =>
                     location.id !== this.selectedEquipment.location.id
                 );
+            },
+
+            async returnToBaseLocation(equipment) {
+                if (!equipment.location_id) {
+                    alert('基本倉庫が設定されていません');
+                    return;
+                }
+
+                this.isReturning = true;
+
+                try {
+                    const response = await fetch(`/equipment-transfer/api/return/${equipment.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            note: `基本倉庫への返却`
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // 成功メッセージ表示
+                        this.showSuccessMessage(`${equipment.name} を基本倉庫に返却しました`);
+                        // データを再読み込み
+                        this.loadEquipmentData();
+                    } else {
+                        throw new Error(data.error || '返却に失敗しました');
+                    }
+                } catch (error) {
+                    console.error('Return error:', error);
+                    alert(error.message);
+                } finally {
+                    this.isReturning = false;
+                }
             },
 
             async executeTransfer() {
