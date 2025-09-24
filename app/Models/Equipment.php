@@ -153,22 +153,22 @@ class Equipment extends Model
         return $name;
     }
 
-    // 実際の位置取得（現在地がある場合は現在地、ない場合は基本倉庫）
+    // 実際の位置取得（常に現在地を返す）
     public function getActualLocationAttribute(): ?Location
     {
-        return $this->nowLocation ?? $this->location;
+        return $this->nowLocation;
     }
 
-    // 実際の位置ID取得
+    // 実際の位置ID取得（常に現在地IDを返す）
     public function getActualLocationIdAttribute(): ?int
     {
-        return $this->now_location_id ?? $this->location_id;
+        return $this->now_location_id;
     }
 
-    // 現在地にある機材かどうか
+    // 基本倉庫以外にある機材かどうか
     public function isAtTemporaryLocationAttribute(): bool
     {
-        return !is_null($this->now_location_id);
+        return $this->now_location_id !== $this->location_id;
     }
 
     // ステータスの日本語表示

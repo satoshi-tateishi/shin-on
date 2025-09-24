@@ -193,7 +193,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('equipment-transfer')->name('equipment-transfer.')->group(function () {
         Route::get('/', [InventoryController::class, 'transferIndex'])->name('index');
         Route::get('api/equipment', [InventoryController::class, 'getTransferableEquipment'])->name('api.equipment');
+        Route::get('api/categories', [InventoryController::class, 'getTransferableCategories'])->name('api.categories');
         Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
+        Route::post('api/bulk-transfer', [InventoryController::class, 'bulkTransferEquipment'])->name('api.bulk-transfer');
         Route::post('api/return/{equipment}', [InventoryController::class, 'returnEquipmentToBase'])->name('api.return');
     });
 

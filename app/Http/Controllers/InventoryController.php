@@ -712,7 +712,7 @@ class InventoryController extends Controller
                 ], 400);
             }
 
-            $currentLocationId = $equipment->now_location_id ?? $equipment->location_id;
+            $currentLocationId = $equipment->now_location_id;
             $toLocationId = $validated['to_location_id'];
 
             // 同じ場所への移動はエラー
@@ -723,12 +723,8 @@ class InventoryController extends Controller
                 ], 400);
             }
 
-            // 基本倉庫への移動の場合は現在地をクリア、それ以外は現在地を設定
-            if ($toLocationId == $equipment->location_id) {
-                $equipment->update(['now_location_id' => null]);
-            } else {
-                $equipment->update(['now_location_id' => $toLocationId]);
-            }
+            // 現在地を移動先に設定
+            $equipment->update(['now_location_id' => $toLocationId]);
 
             return response()->json([
                 'success' => true,
@@ -767,8 +763,8 @@ class InventoryController extends Controller
                 ], 400);
             }
 
-            // 現在地にない機材（already at base location）はエラー
-            if (!$equipment->now_location_id) {
+            // 基本倉庫と現在地が同じ場合はエラー
+            if ($equipment->now_location_id == $equipment->location_id) {
                 return response()->json([
                     'success' => false,
                     'error' => '機材は既に基本倉庫にあります。',
@@ -786,8 +782,8 @@ class InventoryController extends Controller
             $fromLocationName = $equipment->nowLocation?->name ?? '不明';
             $toLocationName = $equipment->location?->name ?? '不明';
 
-            // 現在地をクリアして基本倉庫に戻す
-            $equipment->update(['now_location_id' => null]);
+            // 現在地を基本倉庫に設定して返却
+            $equipment->update(['now_location_id' => $equipment->location_id]);
 
             return response()->json([
                 'success' => true,
@@ -816,6 +812,7 @@ class InventoryController extends Controller
         try {
             $warehouses = Location::active()
                 ->warehouses()
+                ->whereNotIn('id', [93, 94, 95, 96]) // 事務所系・青年座の倉庫を除外
                 ->ordered()
                 ->get(['id', 'name', 'address', 'type'])
                 ->map(function ($location) {
@@ -836,6 +833,40 @@ class InventoryController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => '倉庫一覧の取得に失敗しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 倉庫間移動対象機材のカテゴリ一覧取得
+     */
+    public function getTransferableCategories(): JsonResponse
+    {
+        try {
+            // location_id が 90-92 の機材の subcategory_id を取得
+            $subcategoryIds = Equipment::whereIn('location_id', [90, 91, 92])
+                ->where('management_type', 'individual')
+                ->where('is_discard', false)
+                ->distinct()
+                ->pluck('subcategory_id');
+
+            // subcategory から category を取得
+            $categories = EquipmentCategory::whereHas('subcategories', function ($query) use ($subcategoryIds) {
+                $query->whereIn('id', $subcategoryIds);
+            })
+            ->active()
+            ->ordered()
+            ->get(['id', 'name']);
+
+            return response()->json([
+                'success' => true,
+                'categories' => $categories,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'カテゴリ一覧の取得に失敗しました: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -885,14 +916,16 @@ class InventoryController extends Controller
 
             $query = Equipment::with([
                 'location',
+                'nowLocation',
                 'subcategory.category'
             ])
             ->where('management_type', 'individual') // 個体管理機材のみ
-            ->where('is_discard', false); // 廃棄されていないもののみ
+            ->where('is_discard', false) // 廃棄されていないもののみ
+            ->whereNotIn('location_id', [89, 93, 94, 95, 96]); // 赤堤倉庫(89)とID 93-96の倉庫の機材を除外
 
             // フィルタ適用
             if (!empty($validated['location_id'])) {
-                $query->where('location_id', $validated['location_id']);
+                $query->where('now_location_id', $validated['location_id']);
             }
 
             if (!empty($validated['category_id'])) {
@@ -955,6 +988,89 @@ class InventoryController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => '機材データの取得に失敗しました: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 一括倉庫間移動
+     */
+    public function bulkTransferEquipment(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'transfers' => 'required|array|min:1',
+                'transfers.*.equipment_id' => 'required|exists:equipments,id',
+                'transfers.*.to_location_id' => 'required|exists:locations,id',
+                'transfers.*.note' => 'nullable|string|max:500',
+            ]);
+
+            $results = [];
+            $errors = [];
+
+            DB::transaction(function () use ($validated, &$results, &$errors) {
+                foreach ($validated['transfers'] as $index => $transferData) {
+                    try {
+                        $equipment = Equipment::findOrFail($transferData['equipment_id']);
+
+                        // 個体管理機材のみ対象
+                        if ($equipment->management_type !== 'individual') {
+                            $errors[] = "機材「{$equipment->name}」: 数量管理機材の倉庫間移動はサポートされていません。";
+                            continue;
+                        }
+
+                        $currentLocationId = $equipment->now_location_id;
+                        $toLocationId = $transferData['to_location_id'];
+
+                        // 同じ場所への移動はスキップ
+                        if ($currentLocationId == $toLocationId) {
+                            $errors[] = "機材「{$equipment->name}」: 同じ場所への移動はできません。";
+                            continue;
+                        }
+
+                        // 現在地を移動先に設定
+                        $equipment->update(['now_location_id' => $toLocationId]);
+
+                        $results[] = [
+                            'id' => $equipment->id,
+                            'name' => $equipment->name,
+                            'from_location' => Location::find($currentLocationId)?->name,
+                            'to_location' => Location::find($toLocationId)?->name,
+                        ];
+                    } catch (\Exception $e) {
+                        $errors[] = "機材ID {$transferData['equipment_id']}: {$e->getMessage()}";
+                    }
+                }
+            });
+
+            // 結果の処理
+            $successCount = count($results);
+            $errorCount = count($errors);
+
+            if ($successCount > 0 && $errorCount === 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$successCount}件の機材移動が完了しました。",
+                    'transfers' => $results,
+                ]);
+            } elseif ($successCount > 0 && $errorCount > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$successCount}件の機材移動が完了しました。{$errorCount}件でエラーが発生しました。",
+                    'transfers' => $results,
+                    'errors' => $errors,
+                ], 206); // Partial Content
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => '機材移動に失敗しました。',
+                    'errors' => $errors,
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '一括移動処理でエラーが発生しました: ' . $e->getMessage(),
             ], 500);
         }
     }

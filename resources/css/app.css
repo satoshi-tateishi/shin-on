@@ -28,3 +28,5 @@ select option {
 select option:hover {
     background-color: #f3f4f6;
 }
+
+/* 倉庫間移動 - フローティングボタン（Tailwind CSS v4対応） */
