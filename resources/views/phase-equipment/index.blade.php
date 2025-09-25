@@ -78,18 +78,14 @@
                 @endif
 
                 @if($equipmentStats['checked_out'] > 0)
-                    <form method="POST" action="{{ route('phases.equipment.bulk-checkin', $phase) }}" class="inline">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit"
-                                onclick="return confirm('出庫中の機材 {{ $equipmentStats['checked_out'] }}件を一括で返却済みに変更しますか？')"
-                                class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-green-700">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            出庫中 → 返却済み ({{ $equipmentStats['checked_out'] }}件)
-                        </button>
-                    </form>
+                    <button type="button"
+                            onclick="handleBulkReturn({{ $phase->id }}, {{ $equipmentStats['checked_out'] }})"
+                            class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-green-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        出庫中 → 返却済み ({{ $equipmentStats['checked_out'] }}件)
+                    </button>
                 @endif
             </div>
         </div>
@@ -267,7 +263,7 @@
                                         @endif
 
                                         @if($phaseEquipment->canCheckin())
-                                            <button onclick="event.stopPropagation(); openCheckinModal({{ $phaseEquipment->id }})"
+                                            <button onclick="event.stopPropagation(); handleEquipmentReturn({{ $phaseEquipment->id }}, {{ $phase->id }})"
                                                     class="text-green-600 hover:text-green-900">返却</button>
                                         @endif
 
@@ -360,7 +356,7 @@
                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
 
-                <!-- 返却先選択（location_id=90の機材のみ表示） -->
+                <!-- 返却先選択（location_id=90-92の機材のみ表示） -->
                 <div id="locationSelectDiv" class="mb-4 hidden">
                     <label for="to_location_id" class="block text-sm font-medium text-gray-700">返却先倉庫 <span class="text-red-500">*</span></label>
                     <div class="mt-1 flex">
@@ -373,12 +369,6 @@
                     <div id="locationError" class="text-red-500 text-sm mt-1 hidden">返却先倉庫を選択してください</div>
                 </div>
 
-                <div class="mb-4">
-                    <label for="checkin_note" class="block text-sm font-medium text-gray-700">備考</label>
-                    <textarea name="note" id="checkin_note" rows="3"
-                              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="返却時の備考があれば入力してください"></textarea>
-                </div>
 
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="closeCheckinModal()"
@@ -426,10 +416,10 @@ async function openCheckinModal(phaseEquipmentId) {
     document.getElementById('selectedLocationText').textContent = '返却先倉庫を選択してください...';
     document.getElementById('locationError').classList.add('hidden');
 
-    // 機材情報を取得してlocation_id=90かチェック
+    // 機材情報を取得してlocation_id=90-92かチェック
     try {
         const equipmentData = await getEquipmentData(phaseEquipmentId);
-        const requiresLocationSelection = equipmentData && equipmentData.location_id == 90;
+        const requiresLocationSelection = equipmentData && (equipmentData.location_id >= 90 && equipmentData.location_id <= 92);
 
         const locationSelectDiv = document.getElementById('locationSelectDiv');
         if (requiresLocationSelection) {
@@ -459,6 +449,151 @@ async function getEquipmentData(phaseEquipmentId) {
         }
     }
     return null;
+}
+
+// 統一された返却処理関数（show.blade.phpのcheckinEquipmentと同様）
+async function handleEquipmentReturn(phaseEquipmentId, phaseId) {
+    try {
+        // 機材情報をAPIから取得してlocation_idをチェック
+        const response = await fetch(`/phases/${phaseId}/equipment/${phaseEquipmentId}/equipment-info`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('機材情報の取得に失敗しました');
+        }
+
+        const data = await response.json();
+        const equipment = data.equipment;
+
+        // location_id が 90-92 の場合は返却先選択画面へ遷移
+        if (equipment.location_id >= 90 && equipment.location_id <= 92) {
+            // 機材情報をセッションストレージに保存
+            sessionStorage.setItem('returnEquipmentData', JSON.stringify({
+                phaseEquipmentId: phaseEquipmentId,
+                phaseId: phaseId,
+                equipmentId: equipment.id,
+                equipmentName: equipment.name,
+                companyNumber: equipment.company_number,
+                locationId: equipment.location_id
+            }));
+
+            // 返却先選択画面へ遷移
+            window.location.href = '/equipment-transfer/return-select';
+            return;
+        }
+
+        // 通常の返却処理（location_id が 90-92 以外）
+        // 既存のモーダルを開く
+        openCheckinModal(phaseEquipmentId);
+
+    } catch (error) {
+        console.error('Equipment info fetch error:', error);
+        alert('機材情報の取得中にエラーが発生しました: ' + error.message);
+    }
+}
+
+// 一括返却処理（90-92の機材チェック含む）
+async function handleBulkReturn(phaseId, equipmentCount) {
+    if (!confirm(`出庫中の機材 ${equipmentCount}件を一括で返却済みに変更しますか？`)) {
+        return;
+    }
+
+    try {
+        // 出庫中のPhaseEquipmentと機材情報を取得
+        const checkedOutEquipments = await getCheckedOutEquipments(phaseId);
+
+        // location_id 90-92の機材と通常機材を分類
+        const requiresLocationSelection = checkedOutEquipments.filter(item =>
+            item.equipment.location_id >= 90 && item.equipment.location_id <= 92
+        );
+        const normalEquipments = checkedOutEquipments.filter(item =>
+            item.equipment.location_id < 90 || item.equipment.location_id > 92
+        );
+
+        // まず通常機材（90-92以外）を自動返却
+        if (normalEquipments.length > 0) {
+            const normalEquipmentIds = normalEquipments.map(item => item.id);
+
+            // 通常機材の自動返却API呼び出し
+            const response = await fetch(`/phases/${phaseId}/equipment/bulk-checkin`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    equipment_ids: normalEquipmentIds
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('通常機材の返却処理に失敗しました');
+            }
+        }
+
+        // 90-92の機材がある場合は返却先選択画面に遷移
+        if (requiresLocationSelection.length > 0) {
+            const bulkReturnData = requiresLocationSelection.map(item => ({
+                phaseEquipmentId: item.id,
+                phaseId: phaseId,
+                equipmentId: item.equipment.id,
+                equipmentName: item.equipment.name,
+                companyNumber: item.equipment.company_number,
+                locationId: item.equipment.location_id
+            }));
+
+            // 90-92機材のみを返却先選択画面に送る
+            sessionStorage.setItem('bulkReturnData', JSON.stringify(bulkReturnData));
+
+            // 返却先選択画面へ遷移
+            window.location.href = '/equipment-transfer/return-select';
+            return;
+        }
+
+        // 90-92機材がなく、通常機材のみの場合はページをリロード
+        if (normalEquipments.length > 0 && requiresLocationSelection.length === 0) {
+            window.location.reload();
+            return;
+        }
+
+        // どちらもない場合（すべて返却済み）
+        alert('返却対象の機材がありません。');
+
+    } catch (error) {
+        console.error('Bulk return error:', error);
+        alert('一括返却処理中にエラーが発生しました: ' + error.message);
+    }
+}
+
+// 出庫中のPhaseEquipmentと機材情報を取得
+async function getCheckedOutEquipments(phaseId) {
+    const url = `/phases/${phaseId}/equipment/checked-out-equipments`;
+    console.log('Requesting URL:', url);
+
+    const response = await fetch(url, {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (!response.ok) {
+        const responseText = await response.text();
+        console.error('Response text:', responseText);
+        throw new Error('出庫中機材の取得に失敗しました');
+    }
+
+    const data = await response.json();
+    console.log('Response data:', data);
+    return data.equipments || [];
 }
 
 function closeCheckinModal() {
@@ -491,7 +626,7 @@ document.getElementById('checkinForm').addEventListener('submit', function(e) {
     const locationSelectDiv = document.getElementById('locationSelectDiv');
     const toLocationId = document.getElementById('to_location_id').value;
 
-    // location_id=90の機材で返却先が選択されていない場合
+    // location_id=90-92の機材で返却先が選択されていない場合
     if (!locationSelectDiv.classList.contains('hidden') && !toLocationId) {
         e.preventDefault();
         document.getElementById('locationError').classList.remove('hidden');

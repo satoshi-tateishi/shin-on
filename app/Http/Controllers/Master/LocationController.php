@@ -66,6 +66,8 @@ class LocationController extends Controller
             'address' => 'nullable|string',
             'note' => 'nullable|string',
             'is_active' => 'sometimes|boolean',
+            'is_inventory_visible' => 'sometimes|boolean',
+            'is_transfer_visible' => 'sometimes|boolean',
         ], [
             'type.required' => '場所タイプは必須です。',
             'name.required' => '場所名は必須です。',
@@ -75,6 +77,8 @@ class LocationController extends Controller
 
         $validated['sort'] = $this->getNextSortOrder();
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_inventory_visible'] = $request->boolean('is_inventory_visible', true);
+        $validated['is_transfer_visible'] = $request->boolean('is_transfer_visible', true);
 
         Location::create($validated);
 
@@ -124,6 +128,8 @@ class LocationController extends Controller
             'address' => 'nullable|string',
             'note' => 'nullable|string',
             'is_active' => 'sometimes|boolean',
+            'is_inventory_visible' => 'sometimes|boolean',
+            'is_transfer_visible' => 'sometimes|boolean',
         ], [
             'type.required' => '場所タイプは必須です。',
             'name.required' => '場所名は必須です。',
@@ -132,6 +138,8 @@ class LocationController extends Controller
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', false);
+        $validated['is_inventory_visible'] = $request->boolean('is_inventory_visible', false);
+        $validated['is_transfer_visible'] = $request->boolean('is_transfer_visible', false);
 
         $location->update($validated);
 
@@ -200,7 +208,7 @@ class LocationController extends Controller
         return [
             'sort', 'type', 'name', 'furigana', 'tel1_name', 'tel1', 'tel2_name', 'tel2',
             'fax', 'email1_name', 'email1', 'email2_name', 'email2', 'postal_code', 'address',
-            'note', 'is_active', 'created_at', 'updated_at',
+            'note', 'is_active', 'is_inventory_visible', 'is_transfer_visible', 'created_at', 'updated_at',
         ];
     }
 
@@ -224,6 +232,8 @@ class LocationController extends Controller
             $record->address,
             $record->note,
             $record->is_active ? '1' : '0',
+            $record->is_inventory_visible ? '1' : '0',
+            $record->is_transfer_visible ? '1' : '0',
             $record->created_at?->format('Y-m-d H:i:s'),
             $record->updated_at?->format('Y-m-d H:i:s'),
         ];
@@ -287,6 +297,12 @@ class LocationController extends Controller
                     break;
                 case 'is_active':
                     $recordData['is_active'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_inventory_visible':
+                    $recordData['is_inventory_visible'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
+                case 'is_transfer_visible':
+                    $recordData['is_transfer_visible'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
                     break;
             }
         }

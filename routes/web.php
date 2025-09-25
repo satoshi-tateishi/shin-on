@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LineWorksController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\Master\EquipmentCategoryController;
 use App\Http\Controllers\Master\EquipmentController;
 use App\Http\Controllers\Master\EquipmentSetController;
@@ -13,7 +14,6 @@ use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PhaseEquipmentController;
 use App\Http\Controllers\RepairRecordController;
-use App\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -134,15 +134,17 @@ Route::middleware('auth')->group(function () {
         Route::patch('equipment/bulk-checkout-checked-in', [PhaseEquipmentController::class, 'bulkCheckoutCheckedIn'])->name('equipment.bulk-checkout-checked-in');
         Route::patch('equipment/bulk-checkin', [PhaseEquipmentController::class, 'bulkCheckin'])->name('equipment.bulk-checkin');
 
+        // AJAX API（resourceルートより前に配置）
+        Route::get('available-equipment', [PhaseEquipmentController::class, 'getAvailableEquipment'])->name('available-equipment');
+        Route::get('equipment-set-availability', [PhaseEquipmentController::class, 'checkSetAvailability'])->name('equipment-set-availability');
+        Route::get('equipment/checked-out-equipments', [PhaseEquipmentController::class, 'getCheckedOutEquipments'])->name('equipment.checked-out-equipments');
+        Route::get('equipment/{phaseEquipment}/equipment-info', [PhaseEquipmentController::class, 'getEquipmentInfo'])->name('equipment.equipment-info');
+
         Route::resource('equipment', PhaseEquipmentController::class)->parameter('equipment', 'phaseEquipment');
 
         // 機材出庫・返却
         Route::patch('equipment/{phaseEquipment}/checkout', [PhaseEquipmentController::class, 'checkout'])->name('equipment.checkout');
         Route::patch('equipment/{phaseEquipment}/checkin', [PhaseEquipmentController::class, 'checkin'])->name('equipment.checkin');
-
-        // AJAX API
-        Route::get('available-equipment', [PhaseEquipmentController::class, 'getAvailableEquipment'])->name('available-equipment');
-        Route::get('equipment-set-availability', [PhaseEquipmentController::class, 'checkSetAvailability'])->name('equipment-set-availability');
     });
 
     // 修理管理ルート
@@ -192,10 +194,15 @@ Route::middleware('auth')->group(function () {
     // 倉庫間移動専用画面
     Route::prefix('equipment-transfer')->name('equipment-transfer.')->group(function () {
         Route::get('/', [InventoryController::class, 'transferIndex'])->name('index');
+        Route::get('/return-select', function () {
+            return view('equipment-transfer.return-select');
+        })->name('return-select');
         Route::get('api/equipment', [InventoryController::class, 'getTransferableEquipment'])->name('api.equipment');
+        Route::get('api/equipment-for-return', [InventoryController::class, 'getEquipmentForReturn'])->name('api.equipment-for-return');
         Route::get('api/categories', [InventoryController::class, 'getTransferableCategories'])->name('api.categories');
         Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
         Route::post('api/bulk-transfer', [InventoryController::class, 'bulkTransferEquipment'])->name('api.bulk-transfer');
+        Route::post('api/bulk-return', [InventoryController::class, 'bulkReturn'])->name('api.bulk-return');
         Route::post('api/return/{equipment}', [InventoryController::class, 'returnEquipmentToBase'])->name('api.return');
     });
 
@@ -241,8 +248,8 @@ Route::prefix('test-api')->group(function () {
             'data' => [
                 'equipment' => [
                     'id' => $id,
-                    'name' => 'テスト機材 #' . $numericId,
-                    'company_number' => 'TEST' . str_pad($numericId, 3, '0', STR_PAD_LEFT),
+                    'name' => 'テスト機材 #'.$numericId,
+                    'company_number' => 'TEST'.str_pad($numericId, 3, '0', STR_PAD_LEFT),
                     'subcategory' => 'テストカテゴリ',
                     'location' => 'テスト倉庫',
                 ],
@@ -251,11 +258,11 @@ Route::prefix('test-api')->group(function () {
                         'type' => 'available',
                         'status' => '利用可能',
                         'details' => 'テスト倉庫保管',
-                        'company_number' => 'TEST' . str_pad($numericId, 3, '0', STR_PAD_LEFT),
-                    ]
+                        'company_number' => 'TEST'.str_pad($numericId, 3, '0', STR_PAD_LEFT),
+                    ],
                 ],
                 'as_of_date' => now()->format('Y-m-d'),
-            ]
+            ],
         ]);
     });
 });

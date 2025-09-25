@@ -73,9 +73,9 @@
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
                         機材名 <span class="text-red-500">*</span>
                     </label>
-                    <input type="text" name="name" id="name" value="{{ old('name', $equipment->name) }}" required
-                           class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
-                                  @error('name') border-red-300 @enderror">
+                    <textarea name="name" id="name" rows="2" required
+                              class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
+                                     @error('name') border-red-300 @enderror">{{ old('name', $equipment->name) }}</textarea>
                     @error('name')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror

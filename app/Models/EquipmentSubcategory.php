@@ -15,6 +15,7 @@ class EquipmentSubcategory extends Model
         'category_id',
         'sort',
         'name',
+        'is_active',
     ];
 
     protected function casts(): array
@@ -22,6 +23,7 @@ class EquipmentSubcategory extends Model
         return [
             'category_id' => 'integer',
             'sort' => 'integer',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -49,11 +51,10 @@ class EquipmentSubcategory extends Model
         return $query->where('category_id', $categoryId);
     }
 
-    // スコープ: 有効なレコードのみ（is_activeフィールドがない場合は全て有効とみなす）
+    // スコープ: 有効なレコードのみ
     public function scopeActive($query)
     {
-        // サブカテゴリにis_activeフィールドがない場合は条件なし
-        return $query; // 全て有効とみなす
+        return $query->where('is_active', true);
     }
 
     // 表示名取得（N+1クエリを避けるため条件付き）

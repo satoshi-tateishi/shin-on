@@ -4,13 +4,13 @@
 
 @section('breadcrumb')
     > <a href="{{ route('master.equipments.index') }}" class="text-blue-600 hover:text-blue-800">機材マスタ 一覧</a>
-    > <span class="text-gray-800">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif</span>
+    > <span class="text-gray-800">{{ str_replace(["\r\n", "\r", "\n"], ' ', $equipment->name) }}@if($equipment->company_number) <span class="inline-block px-2 py-1 font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif</span>
     > <span class="text-gray-800">詳細</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 text-3XL font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif 詳細</h1>
+        <h1 class="text-3xl font-bold text-gray-900 whitespace-pre-line">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-2 py-1 text-3XL font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif 詳細</h1>
     </div>
 
     <div class="flex space-x-3">
@@ -77,7 +77,7 @@
 
                         <div>
                             <dt class="text-sm font-medium text-gray-500">機材名</dt>
-                            <dd class="mt-1 text-sm font-gray-900 font-bold">{{ $equipment->name }}</dd>
+                            <dd class="mt-1 text-sm font-gray-900 font-bold whitespace-pre-line">{{ $equipment->name }}</dd>
                         </div>
 
                         <div>

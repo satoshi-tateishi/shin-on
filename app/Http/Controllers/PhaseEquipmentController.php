@@ -347,8 +347,8 @@ class PhaseEquipmentController extends Controller
 
         $equipment = $phaseEquipment->equipment;
 
-        // location_id=90の機材は返却先選択が必要
-        $requiresLocationSelection = $equipment->location_id == 90;
+        // location_id=90-92の機材は返却先選択が必要
+        $requiresLocationSelection = in_array($equipment->location_id, [90, 91, 92]);
 
         $validationRules = [
             'checkin_date' => 'required|date',
@@ -363,7 +363,7 @@ class PhaseEquipmentController extends Controller
 
         $validated = $request->validate($validationRules);
 
-        // location_id=90で返却先が選択されていない場合のエラー
+        // location_id=90-92で返却先が選択されていない場合のエラー
         if ($requiresLocationSelection && empty($validated['to_location_id'])) {
             return back()->withErrors([
                 'to_location_id' => 'この機材は返却先倉庫の選択が必要です。',
@@ -381,7 +381,7 @@ class PhaseEquipmentController extends Controller
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
 
-            // location_id=90の機材の場合、機材の場所を更新
+            // location_id=90-92の機材の場合、機材の場所を更新
             $toLocationId = $validated['to_location_id'] ?? null;
             if ($requiresLocationSelection && $toLocationId) {
                 $equipment->update(['location_id' => $toLocationId]);
@@ -796,16 +796,30 @@ class PhaseEquipmentController extends Controller
     /**
      * Bulk checkin checked out equipment in the phase
      */
-    public function bulkCheckin(Phase $phase): RedirectResponse
+    public function bulkCheckin(Phase $phase, Request $request)
     {
         try {
             DB::beginTransaction();
 
-            $checkedOutEquipments = $phase->phaseEquipments()
-                ->where('status', 'checked_out')
-                ->get();
+            // JSONリクエストの場合は特定の機材IDのみ処理
+            if ($request->isJson() && $request->has('equipment_ids')) {
+                $equipmentIds = $request->input('equipment_ids');
+                $checkedOutEquipments = $phase->phaseEquipments()
+                    ->where('status', 'checked_out')
+                    ->whereIn('id', $equipmentIds)
+                    ->get();
+            } else {
+                // 従来の処理（全出庫中機材を処理）
+                $checkedOutEquipments = $phase->phaseEquipments()
+                    ->where('status', 'checked_out')
+                    ->get();
+            }
 
             if ($checkedOutEquipments->isEmpty()) {
+                if ($request->isJson()) {
+                    return response()->json(['success' => false, 'message' => '対象の機材がありません。'], 404);
+                }
+
                 return back()->withErrors(['error' => '出庫中の機材がありません。']);
             }
 
@@ -833,12 +847,93 @@ class PhaseEquipmentController extends Controller
 
             DB::commit();
 
+            if ($request->isJson()) {
+                return response()->json(['success' => true, 'updated_count' => $updatedCount]);
+            }
+
             return back()->with('success', "出庫中機材 {$updatedCount}件を一括で返却済みに変更しました。");
 
         } catch (\Exception $e) {
             DB::rollback();
 
+            if ($request->isJson()) {
+                return response()->json(['success' => false, 'message' => '一括返却処理に失敗しました。'], 500);
+            }
+
             return back()->withErrors(['error' => '一括返却処理に失敗しました。']);
+        }
+    }
+
+    /**
+     * 機材情報取得API（返却時のlocation_idチェック用）
+     */
+    public function getEquipmentInfo(Phase $phase, PhaseEquipment $phaseEquipment): JsonResponse
+    {
+        try {
+            $equipment = $phaseEquipment->equipment;
+
+            return response()->json([
+                'success' => true,
+                'equipment' => [
+                    'id' => $equipment->id,
+                    'name' => $equipment->name,
+                    'company_number' => $equipment->company_number,
+                    'location_id' => $equipment->location_id,
+                    'management_type' => $equipment->management_type,
+                    'location_name' => $equipment->location->name ?? null,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '機材情報の取得に失敗しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 出庫中機材一覧取得API（一括返却用のlocation_idチェック用）
+     */
+    public function getCheckedOutEquipments(Phase $phase): JsonResponse
+    {
+        try {
+            \Log::info('getCheckedOutEquipments called for phase: '.$phase->id);
+
+            $checkedOutEquipments = $phase->phaseEquipments()
+                ->where('status', 'checked_out')
+                ->with(['equipment.location'])
+                ->get();
+
+            \Log::info('Found checked out equipments: '.$checkedOutEquipments->count());
+
+            return response()->json([
+                'success' => true,
+                'equipments' => $checkedOutEquipments->map(function ($phaseEquipment) {
+                    return [
+                        'id' => $phaseEquipment->id,
+                        'phase_id' => $phaseEquipment->phase_id,
+                        'quantity' => $phaseEquipment->quantity,
+                        'equipment' => [
+                            'id' => $phaseEquipment->equipment->id,
+                            'name' => $phaseEquipment->equipment->name,
+                            'company_number' => $phaseEquipment->equipment->company_number,
+                            'location_id' => $phaseEquipment->equipment->location_id,
+                            'management_type' => $phaseEquipment->equipment->management_type,
+                            'location_name' => $phaseEquipment->equipment->location->name ?? null,
+                        ],
+                    ];
+                }),
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in getCheckedOutEquipments: '.$e->getMessage());
+            \Log::error('Stack trace: '.$e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'error' => '出庫中機材の取得に失敗しました: '.$e->getMessage(),
+            ], 500);
         }
     }
 }

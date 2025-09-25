@@ -1,13 +1,18 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>在庫管理 - shin-on dB</title>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+@extends('layouts.master')
+
+@section('title', '倉庫別 在庫表示')
+
+@section('breadcrumb')
+    > <span class="text-gray-400">倉庫別 在庫表示</span>
+@endsection
+
+@section('header')
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">倉庫別 在庫表示</h1>
+    </div>
+@endsection
+
+@push('styles')
     <style>
         .inventory-card {
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -17,42 +22,10 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
     </style>
-</head>
-<body class="bg-gray-50">
-    <div x-data="inventoryDashboard()" x-init="init()" class="min-h-screen">
-        <!-- Header -->
-        <div class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center space-x-4">
-                        <h1 class="text-2xl font-bold text-gray-900">在庫管理</h1>
-                        <div class="text-sm text-gray-500">
-                            基準日: <span x-text="formatDate(asOfDate)" class="font-medium text-gray-700"></span>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <!-- 基準日選択 -->
-                        <div class="flex items-center space-x-2">
-                            <label for="asOfDate" class="text-sm font-medium text-gray-700">基準日:</label>
-                            <input
-                                type="date"
-                                id="asOfDate"
-                                x-model="asOfDate"
-                                @change="loadInventoryData()"
-                                class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                            >
-                        </div>
-                        <!-- 戻るボタン -->
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
-                            ダッシュボードに戻る
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+@endpush
+
+@section('content')
+    <div x-data="inventoryDashboard()" x-init="init()" class="p-6">
 
         <!-- Loading Spinner -->
         <div x-show="loading" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -86,25 +59,39 @@
         </div>
 
         <!-- Main Content -->
-        <div x-show="!loading && !error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div x-show="!loading && !error">
 
 
             <!-- Filters and Controls -->
             <div class="bg-white shadow rounded-lg mb-6">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">フィルタ・検索</h3>
-                </div>
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- カテゴリフィルタ -->
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <!-- 再計算ボタン -->
+                        <div class="flex items-end">
+                            <button
+                                @click="generateSnapshot()"
+                                :disabled="loading"
+                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-cyan-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                再計算
+                            </button>
+                        </div>
+
+                        <!-- 基準日選択 -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">カテゴリ</label>
-                            <select x-model="filters.category_id" @change="loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
-                                <option value="">全てのカテゴリ</option>
-                                <template x-for="category in categories" :key="category.id">
-                                    <option :value="category.id" x-text="category.name"></option>
-                                </template>
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700">基準日</label>
+                            <input
+                                type="date"
+                                id="asOfDate"
+                                x-model="asOfDate"
+                                @change="loadInventoryData()"
+                                @keydown.prevent
+                                :min="new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                            >
                         </div>
 
                         <!-- 倉庫フィルタ -->
@@ -117,6 +104,16 @@
                             </select>
                         </div>
 
+                        <!-- カテゴリフィルタ -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">カテゴリ</label>
+                            <select x-model="filters.category_id" @change="loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
+                                <option value="">全てのカテゴリ</option>
+                                <template x-for="category in categories" :key="category.id">
+                                    <option :value="category.id" x-text="category.name"></option>
+                                </template>
+                            </select>
+                        </div>
 
                         <!-- 検索 -->
                         <div>
@@ -135,21 +132,8 @@
 
             <!-- Actions -->
             <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center space-x-4">
-                    <button
-                        @click="generateSnapshot()"
-                        :disabled="loading"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        スナップショット生成
-                    </button>
-
-                    <div class="text-sm text-gray-500">
-                        表示件数: <span x-text="meta.from || 0"></span>-<span x-text="meta.to || 0"></span> / <span x-text="meta.total || 0"></span>件
-                    </div>
+                <div class="text-sm text-gray-500">
+                    表示件数: <span x-text="meta.from || 0"></span>-<span x-text="meta.to || 0"></span> / <span x-text="meta.total || 0"></span>件
                 </div>
 
                 <div class="flex items-center space-x-2">
@@ -241,7 +225,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
                                 </svg>
                                 <h3 class="mt-2 text-sm font-medium text-gray-900">在庫データがありません</h3>
-                                <p class="mt-1 text-sm text-gray-500">検索条件を変更するか、スナップショットを生成してください。</p>
+                                <p class="mt-1 text-sm text-gray-500">検索条件を変更するか、データを再計算してください。</p>
                             </td>
                         </tr>
                     </tbody>
@@ -333,13 +317,17 @@
             :required="true"
         />
     </div>
+@endsection
 
+@push('scripts')
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         function inventoryDashboard() {
             return {
                 loading: false,
                 error: null,
-                asOfDate: new Date().toISOString().split('T')[0],
+                asOfDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 inventoryData: [],
                 stats: {},
                 meta: {},
@@ -452,7 +440,7 @@
                             await this.loadInventoryData();
                             await this.loadInventoryStats();
                         } else {
-                            throw new Error(data.error || 'スナップショットの生成に失敗しました');
+                            throw new Error(data.error || 'データの再計算に失敗しました');
                         }
                     } catch (error) {
                         this.error = error.message;
@@ -580,5 +568,4 @@
             }
         }
     </script>
-</body>
-</html>
+@endpush

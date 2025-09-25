@@ -848,13 +848,48 @@ class PhaseEquipmentManager {
      * 機材返却処理
      */
     async checkinEquipment(phaseEquipmentId, phaseId) {
-        this.showActionModal(
-            '返却実行の確認',
-            `/phases/${phaseId}/equipment/${phaseEquipmentId}/checkin`,
-            'bg-purple-600 hover:bg-purple-700',
-            '返却実行',
-            false
-        );
+        // 機材情報を取得して location_id をチェック
+        try {
+            const response = await fetch(`/phases/${phaseId}/equipment/${phaseEquipmentId}/equipment-info`);
+
+            if (!response.ok) {
+                throw new Error('機材情報の取得に失敗しました');
+            }
+
+            const data = await response.json();
+            const equipment = data.equipment;
+
+            // location_id が 90-92 の場合は返却先選択画面へ遷移
+            if (equipment.location_id >= 90 && equipment.location_id <= 92) {
+                // 機材情報をセッションストレージに保存
+                sessionStorage.setItem('returnEquipmentData', JSON.stringify({
+                    phaseEquipmentId: phaseEquipmentId,
+                    phaseId: phaseId,
+                    equipmentId: equipment.id,
+                    equipmentName: equipment.name,
+                    companyNumber: equipment.company_number,
+                    locationId: equipment.location_id
+                }));
+
+                // 返却先選択画面へ遷移
+                window.location.href = '/equipment-transfer/return-select';
+                return;
+            }
+
+            // 通常の返却処理（location_id が 90-92 以外）
+            this.showActionModal(
+                '返却実行の確認',
+                `/phases/${phaseId}/equipment/${phaseEquipmentId}/checkin`,
+                'bg-purple-600 hover:bg-purple-700',
+                '返却実行',
+                false,
+                'PATCH'
+            );
+
+        } catch (error) {
+            console.error('Equipment info fetch error:', error);
+            this.showError('機材情報の取得中にエラーが発生しました: ' + error.message);
+        }
     }
 
     /**

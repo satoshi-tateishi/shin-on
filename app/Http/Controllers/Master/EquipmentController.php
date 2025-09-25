@@ -102,6 +102,7 @@ class EquipmentController extends Controller
             'price' => 'nullable|numeric|min:0',
             'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
             'location_id' => 'nullable|exists:locations,id',
+            'now_location_id' => 'nullable|exists:locations,id',
             'is_discard' => 'nullable|boolean',
             'is_schedule_visible' => 'nullable|boolean',
             'discard_at' => 'nullable|date',
@@ -158,6 +159,7 @@ class EquipmentController extends Controller
             'price' => 'nullable|numeric|min:0',
             'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
             'location_id' => 'nullable|exists:locations,id',
+            'now_location_id' => 'nullable|exists:locations,id',
             'is_discard' => 'nullable|boolean',
             'is_schedule_visible' => 'nullable|boolean',
             'discard_at' => 'nullable|date',
@@ -212,7 +214,7 @@ class EquipmentController extends Controller
             'subcategory_id', 'sort', 'manufacturer', 'name', 'company_number',
             'management_type', 'quantity', 'unit', 'model_number', 'serial_number',
             'supplier', 'purchase_date', 'warranty_expiry', 'price', 'status',
-            'location_id', 'is_discard', 'discard_at', 'notes', 'created_at', 'updated_at',
+            'location_id', 'now_location_id', 'is_schedule_visible', 'is_discard', 'discard_at', 'notes', 'created_at', 'updated_at',
         ];
     }
 
@@ -235,6 +237,8 @@ class EquipmentController extends Controller
             $record->price,
             $record->status,
             $record->location_id,
+            $record->now_location_id,
+            $record->is_schedule_visible ? '1' : '0',
             $record->is_discard ? '1' : '0',
             $record->discard_at?->format('Y-m-d H:i:s'),
             $record->notes,
@@ -299,6 +303,12 @@ class EquipmentController extends Controller
                 case 'location_id':
                     $recordData['location_id'] = ! empty($value) ? intval($value) : null;
                     break;
+                case 'now_location_id':
+                    $recordData['now_location_id'] = ! empty($value) ? intval($value) : null;
+                    break;
+                case 'is_schedule_visible':
+                    $recordData['is_schedule_visible'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
+                    break;
                 case 'is_discard':
                     $recordData['is_discard'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
                     break;
@@ -331,25 +341,28 @@ class EquipmentController extends Controller
         if (empty($recordData['name'])) {
             throw new \Exception('機材名が入力されていません');
         }
-        if (empty($recordData['subcategory_id']) || $recordData['subcategory_id'] <= 0) {
-            throw new \Exception('有効なサブカテゴリIDが入力されていません');
-        }
-        if (empty($recordData['location_id']) || $recordData['location_id'] <= 0) {
-            throw new \Exception('有効な場所IDが入力されていません');
+
+        // subcategory_id の確認（NULLでない場合のみ存在チェック）
+        if (!is_null($recordData['subcategory_id'])) {
+            if (! EquipmentSubcategory::where('id', $recordData['subcategory_id'])->exists()) {
+                throw new \Exception("サブカテゴリID {$recordData['subcategory_id']} が存在しません");
+            }
         }
 
-        // サブカテゴリの存在確認
-        if (! EquipmentSubcategory::where('id', $recordData['subcategory_id'])->exists()) {
-            throw new \Exception("サブカテゴリID {$recordData['subcategory_id']} が存在しません");
+        // location_id の確認（NULLでない場合のみ存在チェック）
+        if (!is_null($recordData['location_id'])) {
+            if (! Location::where('id', $recordData['location_id'])->exists()) {
+                throw new \Exception("場所ID {$recordData['location_id']} が存在しません");
+            }
         }
 
-        // 場所の存在確認
-        if (! Location::where('id', $recordData['location_id'])->exists()) {
-            throw new \Exception("場所ID {$recordData['location_id']} が存在しません");
+        // 現在地の存在確認（指定されている場合）
+        if (! empty($recordData['now_location_id']) && ! Location::where('id', $recordData['now_location_id'])->exists()) {
+            throw new \Exception("現在地ID {$recordData['now_location_id']} が存在しません");
         }
 
         // 状態の妥当性チェック
-        $validStatuses = ['available', 'in_use', 'maintenance', 'broken', 'retired'];
+        $validStatuses = ['available', 'in_use', 'repair', 'maintenance', 'broken', 'retired', 'lost'];
         if (! in_array($recordData['status'], $validStatuses)) {
             throw new \Exception("無効な状態です: {$recordData['status']}");
         }

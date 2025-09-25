@@ -127,7 +127,7 @@ class Equipment extends Model
     // スコープ: 必要なリレーションを事前ロード
     public function scopeWithRelations($query)
     {
-        return $query->with(['subcategory.category', 'location']);
+        return $query->with(['subcategory.category', 'location', 'nowLocation']);
     }
 
     // スコープ: 検索用に最適化されたクエリ
@@ -414,13 +414,14 @@ class Equipment extends Model
     public function getAvailableQuantityAsOf(\Carbon\Carbon $asOfDate): int
     {
         $inventory = $this->getInventoryAsOf($asOfDate);
+
         return $inventory['available_quantity'] ?? 0;
     }
 
     /**
      * 在庫アラート判定（不足・過剰在庫チェック）
      */
-    public function checkInventoryAlerts(\Carbon\Carbon $asOfDate = null): array
+    public function checkInventoryAlerts(?\Carbon\Carbon $asOfDate = null): array
     {
         $asOfDate = $asOfDate ?? now();
         $inventory = $this->getInventoryAsOf($asOfDate);
@@ -432,7 +433,7 @@ class Equipment extends Model
             $alerts[] = [
                 'type' => 'low_stock',
                 'message' => "在庫不足: {$inventory['available_quantity']}個 (最小: {$minStockLevel}個)",
-                'severity' => 'warning'
+                'severity' => 'warning',
             ];
         }
 
@@ -442,12 +443,12 @@ class Equipment extends Model
             ->orderBy('moved_at', 'desc')
             ->first();
 
-        if (!$lastUsage || $lastUsage->moved_at->lt(now()->subDays(90))) {
+        if (! $lastUsage || $lastUsage->moved_at->lt(now()->subDays(90))) {
             $days = $lastUsage ? $lastUsage->moved_at->diffInDays(now()) : '不明';
             $alerts[] = [
                 'type' => 'unused',
                 'message' => "長期未使用: {$days}日間未使用",
-                'severity' => 'info'
+                'severity' => 'info',
             ];
         }
 
@@ -457,7 +458,7 @@ class Equipment extends Model
     /**
      * 機材の移動履歴統計を取得
      */
-    public function getMovementStats(\Carbon\Carbon $startDate = null, \Carbon\Carbon $endDate = null): array
+    public function getMovementStats(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
     {
         $startDate = $startDate ?? now()->subYear();
         $endDate = $endDate ?? now();
@@ -474,14 +475,14 @@ class Equipment extends Model
             'repair_count' => $movements->whereIn('movement_type', ['repair_start', 'repair_complete'])->count(),
             'most_frequent_location' => $movements->groupBy('to_location_id')->sortByDesc(function ($group) {
                 return $group->count();
-            })->keys()->first()
+            })->keys()->first(),
         ];
     }
 
     /**
      * 機材の使用パターン分析
      */
-    public function analyzeUsagePattern(\Carbon\Carbon $startDate = null, \Carbon\Carbon $endDate = null): array
+    public function analyzeUsagePattern(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
     {
         $startDate = $startDate ?? now()->subYear();
         $endDate = $endDate ?? now();
@@ -510,7 +511,7 @@ class Equipment extends Model
             'monthly_usage' => $monthlyUsage->toArray(),
             'performance_types' => $performanceTypes->toArray(),
             'average_usage_per_month' => $monthlyUsage->avg(),
-            'peak_usage_month' => $monthlyUsage->keys()->first()
+            'peak_usage_month' => $monthlyUsage->keys()->first(),
         ];
     }
 }

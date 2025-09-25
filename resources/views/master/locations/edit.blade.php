@@ -72,6 +72,42 @@
                             </div>
                         </div>
 
+                        <!-- フィルタ表示設定 -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="text-sm font-medium text-blue-900 mb-3">🔍 フィルタ表示設定</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- 在庫管理フィルタ表示 -->
+                                <div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="is_inventory_visible" id="is_inventory_visible" value="1"
+                                               {{ old('is_inventory_visible', $location->is_inventory_visible) ? 'checked' : '' }}
+                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label for="is_inventory_visible" class="ml-2 block text-sm text-gray-900">
+                                            在庫管理フィルタに表示
+                                        </label>
+                                    </div>
+                                    <p class="mt-1 text-xs text-blue-600">在庫管理画面の倉庫フィルタに表示されます。</p>
+                                </div>
+
+                                <!-- 倉庫間移動フィルタ表示 -->
+                                <div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="is_transfer_visible" id="is_transfer_visible" value="1"
+                                               {{ old('is_transfer_visible', $location->is_transfer_visible) ? 'checked' : '' }}
+                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label for="is_transfer_visible" class="ml-2 block text-sm text-gray-900">
+                                            倉庫間移動フィルタに表示
+                                        </label>
+                                    </div>
+                                    <p class="mt-1 text-xs text-blue-600">倉庫間移動画面のフィルタに表示されます。</p>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-xs text-blue-700">
+                                💡 主要な倉庫のみを表示対象にすることで、フィルタが使いやすくなります。
+                                表示順序は「ソート」項目で制御されます。
+                            </p>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- 場所名 -->
                             <div>

@@ -85,6 +85,7 @@ trait HasCsvOperations
         foreach ($data as $record) {
             $row = $this->mapRecordToCsvRow($record);
             $csvData .= implode(',', array_map(function ($value) {
+                // ダブルクォートをエスケープするのみ（改行は標準CSV形式でダブルクォート内に保持）
                 return '"'.str_replace('"', '""', $value ?? '').'"';
             }, $row))."\n";
         }
@@ -100,23 +101,36 @@ trait HasCsvOperations
         // UTF-8 BOM を削除
         $csvContent = str_replace("\xEF\xBB\xBF", '', $csvContent);
 
-        $lines = explode("\n", $csvContent);
-        $headers = str_getcsv(array_shift($lines));
+        // 一時ファイルを作成してfgetcsvを使用（改行を含むフィールドを適切に処理）
+        $tempFile = tmpfile();
+        fwrite($tempFile, $csvContent);
+        rewind($tempFile);
+
+        // ヘッダーを読み込み
+        $headers = fgetcsv($tempFile);
+        if (!$headers) {
+            fclose($tempFile);
+            throw new \Exception('CSVヘッダーが読み込めません');
+        }
 
         $imported = 0;
         $errors = [];
         $modelClass = $this->getModelClass();
+        $lineNumber = 1; // ヘッダー行の次から開始
 
-        foreach ($lines as $lineNumber => $line) {
-            if (empty(trim($line))) {
+        // データ行を読み込み
+        while (($data = fgetcsv($tempFile)) !== FALSE) {
+            $lineNumber++;
+
+            // 空行をスキップ
+            if (count(array_filter($data, fn($value) => !empty(trim($value)))) === 0) {
                 continue;
             }
 
             try {
-                $data = str_getcsv($line);
                 $recordData = $this->mapCsvRowToRecord($headers, $data);
 
-                if ($this->validateCsvRecord($recordData, $lineNumber + 2)) {
+                if ($this->validateCsvRecord($recordData, $lineNumber)) {
                     $modelClass::updateOrCreate(
                         $this->getUniqueIdentifier($recordData),
                         $recordData
@@ -124,9 +138,12 @@ trait HasCsvOperations
                     $imported++;
                 }
             } catch (\Exception $e) {
-                $errors[] = '行'.($lineNumber + 2).': '.$e->getMessage();
+                $errors[] = '行'.$lineNumber.': '.$e->getMessage();
             }
         }
+
+        // 一時ファイルを閉じる
+        fclose($tempFile);
 
         return [
             'success' => empty($errors),

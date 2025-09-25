@@ -99,6 +99,26 @@
                         </div>
 
                         <div>
+                            <dt class="text-sm font-medium text-gray-500">在庫フィルタ表示</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    {{ $location->is_inventory_visible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    {{ $location->is_inventory_visible ? '表示' : '非表示' }}
+                                </span>
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">移動フィルタ表示</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    {{ $location->is_transfer_visible ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' }}">
+                                    {{ $location->is_transfer_visible ? '表示' : '非表示' }}
+                                </span>
+                            </dd>
+                        </div>
+
+                        <div>
                             <dt class="text-sm font-medium text-gray-500">作成日</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $location->created_at->format('Y-m-d H:i') }}</dd>
                         </div>

@@ -126,7 +126,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">場所</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">基本倉庫</label>
                     <select name="location_id" id="location-select" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">すべて</option>
                         @foreach($locations as $location)
@@ -173,13 +173,13 @@
                                 機材名
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                新音番号
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 数量
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                場所
+                                基本倉庫
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                現在地
                             </th>
                         </tr>
                     </thead>
@@ -205,18 +205,35 @@
                                     @if($equipment->manufacturer)
                                         <div class="text-xs text-gray-400">{{ $equipment->manufacturer }}</div>
                                     @endif
-                                    <div class="text-sm font-medium text-gray-900">
-                                        {{ $equipment->name }}
+                                    <div class="flex items-center">
+                                        <div class="text-sm font-medium text-gray-900 whitespace-pre-line leading-tight py-1 -mt-4">
+                                            {{ $equipment->name }}
+                                        </div>
+                                        @if($equipment->company_number)
+                                            <div class="ml-2 px-2 py-1 border border-gray-300 rounded text-xs text-gray-600 flex-shrink-0 mt-0.5">
+                                                {{ $equipment->company_number }}
+                                            </div>
+                                        @endif
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $equipment->company_number ?: '---' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ $equipment->quantity }}{{ $equipment->unit }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ $equipment->location->name ?? '---' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    @if($equipment->now_location_id)
+                                        @if($equipment->now_location_id !== $equipment->location_id)
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                {{ $equipment->nowLocation->name ?? $equipment->now_location_id }}
+                                            </span>
+                                        @else
+                                            {{ $equipment->nowLocation->name ?? $equipment->now_location_id }}
+                                        @endif
+                                    @else
+                                        <span class="text-gray-400">---</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

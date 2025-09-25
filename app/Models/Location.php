@@ -28,6 +28,8 @@ class Location extends Model
         'address',
         'note',
         'is_active',
+        'is_inventory_visible',
+        'is_transfer_visible',
     ];
 
     protected function casts(): array
@@ -35,6 +37,8 @@ class Location extends Model
         return [
             'sort' => 'integer',
             'is_active' => 'boolean',
+            'is_inventory_visible' => 'boolean',
+            'is_transfer_visible' => 'boolean',
         ];
     }
 
@@ -66,6 +70,24 @@ class Location extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort')->orderBy('name');
+    }
+
+    // スコープ: 在庫フィルタ用
+    public function scopeForInventoryFilter($query)
+    {
+        return $query->active()
+                    ->warehouses()
+                    ->where('is_inventory_visible', true)
+                    ->ordered();
+    }
+
+    // スコープ: 移動フィルタ用
+    public function scopeForTransferFilter($query)
+    {
+        return $query->active()
+                    ->warehouses()
+                    ->where('is_transfer_visible', true)
+                    ->ordered();
     }
 
     // 表示名取得
@@ -121,12 +143,12 @@ class Location extends Model
             'categories' => $snapshots->groupBy('equipment.subcategory.category.name')->map(function ($group) {
                 return [
                     'count' => $group->count(),
-                    'quantity' => $group->sum('quantity')
+                    'quantity' => $group->sum('quantity'),
                 ];
             })->toArray(),
             'status_distribution' => $snapshots->groupBy('status_color')->map(function ($group) {
                 return $group->count();
-            })->toArray()
+            })->toArray(),
         ];
     }
 
@@ -144,7 +166,7 @@ class Location extends Model
             'current_usage' => $currentUsage,
             'usage_percentage' => round($usagePercentage, 1),
             'available_space' => max(0, $maxCapacity - $currentUsage),
-            'status' => $this->getCapacityStatus($usagePercentage)
+            'status' => $this->getCapacityStatus($usagePercentage),
         ];
     }
 
@@ -167,15 +189,15 @@ class Location extends Model
     /**
      * 機材移動履歴（この場所への出入り）
      */
-    public function getMovementHistory(\Carbon\Carbon $startDate = null, \Carbon\Carbon $endDate = null): \Illuminate\Support\Collection
+    public function getMovementHistory(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): \Illuminate\Support\Collection
     {
         $startDate = $startDate ?? now()->subMonth();
         $endDate = $endDate ?? now();
 
         return \App\Models\EquipmentMovement::where(function ($query) {
-                $query->where('from_location_id', $this->id)
-                    ->orWhere('to_location_id', $this->id);
-            })
+            $query->where('from_location_id', $this->id)
+                ->orWhere('to_location_id', $this->id);
+        })
             ->whereBetween('moved_at', [$startDate, $endDate])
             ->with(['equipment', 'fromLocation', 'toLocation', 'user'])
             ->orderBy('moved_at', 'desc')
@@ -185,7 +207,7 @@ class Location extends Model
     /**
      * 倉庫間移動統計
      */
-    public function getTransferStats(\Carbon\Carbon $startDate = null, \Carbon\Carbon $endDate = null): array
+    public function getTransferStats(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
     {
         $startDate = $startDate ?? now()->subMonth();
         $endDate = $endDate ?? now();
@@ -202,14 +224,14 @@ class Location extends Model
             'inbound_count' => $inboundMovements,
             'outbound_count' => $outboundMovements,
             'net_movement' => $inboundMovements - $outboundMovements,
-            'total_activity' => $inboundMovements + $outboundMovements
+            'total_activity' => $inboundMovements + $outboundMovements,
         ];
     }
 
     /**
      * 在庫アラート判定
      */
-    public function checkInventoryAlerts(\Carbon\Carbon $asOfDate = null): array
+    public function checkInventoryAlerts(?\Carbon\Carbon $asOfDate = null): array
     {
         $asOfDate = $asOfDate ?? now();
         $alerts = [];
@@ -220,13 +242,13 @@ class Location extends Model
             $alerts[] = [
                 'type' => 'capacity_full',
                 'message' => "容量超過: {$capacityUsage['usage_percentage']}%使用中",
-                'severity' => 'error'
+                'severity' => 'error',
             ];
         } elseif ($capacityUsage['status'] === 'warning') {
             $alerts[] = [
                 'type' => 'capacity_high',
                 'message' => "容量注意: {$capacityUsage['usage_percentage']}%使用中",
-                'severity' => 'warning'
+                'severity' => 'warning',
             ];
         }
 
@@ -236,7 +258,7 @@ class Location extends Model
             $alerts[] = [
                 'type' => 'no_activity',
                 'message' => '1週間以上機材の移動がありません',
-                'severity' => 'info'
+                'severity' => 'info',
             ];
         }
 

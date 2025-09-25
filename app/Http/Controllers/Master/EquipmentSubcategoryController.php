@@ -86,7 +86,6 @@ class EquipmentSubcategoryController extends Controller
         $validated = $request->validate([
             'category_id' => 'required|exists:equipment_categories,id',
             'name' => 'required|string|max:255',
-            'is_active' => 'sometimes|boolean',
         ], [
             'category_id.required' => 'カテゴリは必須です。',
             'category_id.exists' => '選択されたカテゴリが存在しません。',
@@ -104,7 +103,8 @@ class EquipmentSubcategoryController extends Controller
                 ->withInput();
         }
 
-        $validated['is_active'] = $request->boolean('is_active', false);
+        // is_active フィールドを適切に処理
+        $validated['is_active'] = $request->input('is_active') == '1' ? 1 : 0;
         $equipmentSubcategory->update($validated);
 
         return redirect()->route('equipment-subcategories.index')

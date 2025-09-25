@@ -43,13 +43,15 @@ class InventorySnapshot extends Model
     /**
      * 指定日時点での機材在庫スナップショットを生成
      */
-    public static function generateSnapshot(Carbon $asOfDate): void
+    public static function generateSnapshot(Carbon $asOfDate, bool $skipDelete = false): void
     {
-        DB::transaction(function () use ($asOfDate) {
+        DB::transaction(function () use ($asOfDate, $skipDelete) {
             $dateString = $asOfDate->format('Y-m-d');
 
-            // 既存のスナップショットを削除
-            self::where('snapshot_date', $dateString)->delete();
+            // 既存のスナップショットを削除（スキップオプションがfalseの場合のみ）
+            if (! $skipDelete) {
+                self::where('snapshot_date', $dateString)->delete();
+            }
 
             // 倉庫に保管されている機材のみの在庫状況を計算
             $equipments = Equipment::active()
@@ -103,7 +105,7 @@ class InventorySnapshot extends Model
             ->where('checkout_date', '<=', $asOfDate)
             ->where(function ($query) use ($asOfDate) {
                 $query->whereNull('checkin_date')
-                      ->orWhere('checkin_date', '>', $asOfDate);
+                    ->orWhere('checkin_date', '>', $asOfDate);
             })
             ->exists();
 
@@ -117,9 +119,9 @@ class InventorySnapshot extends Model
             ->where('status', 'in_progress')
             ->exists();
 
-        // 機材の基本保管場所を取得
+        // 機材の現在地を取得
         $equipment = Equipment::findOrFail($equipmentId);
-        $defaultLocationId = $equipment->location_id;
+        $currentLocationId = $equipment->now_location_id;
 
         $quantity = 1;
         if ($isInUse || $isInRepair) {
@@ -131,10 +133,10 @@ class InventorySnapshot extends Model
             'available_quantity' => $quantity,
             'locations' => [
                 [
-                    'location_id' => $defaultLocationId,
+                    'location_id' => $currentLocationId,
                     'quantity' => $quantity,
-                ]
-            ]
+                ],
+            ],
         ];
     }
 
@@ -153,24 +155,24 @@ class InventorySnapshot extends Model
             ->where('checkout_date', '<=', $asOfDate)
             ->where(function ($query) use ($asOfDate) {
                 $query->whereNull('checkin_date')
-                      ->orWhere('checkin_date', '>', $asOfDate);
+                    ->orWhere('checkin_date', '>', $asOfDate);
             })
             ->sum('quantity');
 
         $availableQuantity = max(0, $totalQuantity - $inUseQuantity);
 
-        // 機材の基本保管場所に全て配置
-        $defaultLocationId = $equipment->location_id;
+        // 機材の現在地に全て配置
+        $currentLocationId = $equipment->now_location_id;
 
         return [
             'total_quantity' => $totalQuantity,
             'available_quantity' => $availableQuantity,
             'locations' => [
                 [
-                    'location_id' => $defaultLocationId,
+                    'location_id' => $currentLocationId,
                     'quantity' => $availableQuantity,
-                ]
-            ]
+                ],
+            ],
         ];
     }
 
@@ -183,19 +185,19 @@ class InventorySnapshot extends Model
             ->where('snapshot_date', $date->format('Y-m-d'));
 
         // フィルタリング
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->whereHas('equipment.subcategory', function ($q) use ($filters) {
                 $q->where('category_id', $filters['category_id']);
             });
         }
 
-        if (!empty($filters['location_id'])) {
+        if (! empty($filters['location_id'])) {
             $query->where('location_id', $filters['location_id']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->whereHas('equipment', function ($q) use ($filters) {
-                $q->where('name', 'like', '%' . $filters['search'] . '%');
+                $q->where('name', 'like', '%'.$filters['search'].'%');
             });
         }
 

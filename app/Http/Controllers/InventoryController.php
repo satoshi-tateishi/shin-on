@@ -12,6 +12,7 @@ use App\Models\RepairRecord;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -23,6 +24,17 @@ class InventoryController extends Controller
     public function index(): View
     {
         $today = now();
+
+        // 在庫状況の再計算を毎回実施（エラー時は無視してビュー表示を継続）
+        try {
+            $this->regenerateInventorySnapshots($today);
+        } catch (\Exception $e) {
+            // エラーが発生してもビューの表示は継続
+            \Log::warning('Inventory regeneration failed in index view', [
+                'error' => $e->getMessage(),
+                'user' => auth()->id() ?? 'guest',
+            ]);
+        }
 
         // 基本統計の取得（倉庫保管機材のみ）
         $totalEquipments = Equipment::active()
@@ -51,13 +63,11 @@ class InventoryController extends Controller
                 return $category;
             });
 
-        // 倉庫別統計（倉庫のみに限定）
-        $locationStats = Location::active()
-            ->warehouses() // 倉庫のみに限定
+        // 倉庫別統計（在庫フィルタ表示対象のみ）
+        $locationStats = Location::forInventoryFilter()
             ->withCount(['equipments' => function ($query) {
                 $query->active();
             }])
-            ->ordered()
             ->get()
             ->map(function ($location) {
                 $location->capacity_usage = $location->capacity_usage;
@@ -93,6 +103,14 @@ class InventoryController extends Controller
             ]);
 
             $asOfDate = Carbon::parse($validated['as_of_date']);
+
+            // 過去の日付は許可しない
+            if ($asOfDate->lt(now()->startOfDay())) {
+                return response()->json([
+                    'success' => false,
+                    'error' => '基準日に過去の日付は指定できません。今日以降の日付を指定してください。',
+                ], 400);
+            }
             $filters = array_filter([
                 'location_id' => $validated['location_id'] ?? null,
                 'category_id' => $validated['category_id'] ?? null,
@@ -192,6 +210,14 @@ class InventoryController extends Controller
             ]);
 
             $asOfDate = Carbon::parse($validated['as_of_date']);
+
+            // 過去の日付は許可しない
+            if ($asOfDate->lt(now()->startOfDay())) {
+                return response()->json([
+                    'success' => false,
+                    'error' => '基準日に過去の日付は指定できません。今日以降の日付を指定してください。',
+                ], 400);
+            }
             $this->ensureSnapshotExists($asOfDate);
 
             $snapshots = InventorySnapshot::getSnapshotsByDate($asOfDate);
@@ -248,6 +274,14 @@ class InventoryController extends Controller
             ]);
 
             $asOfDate = Carbon::parse($validated['as_of_date']);
+
+            // 過去の日付は許可しない
+            if ($asOfDate->lt(now()->startOfDay())) {
+                return response()->json([
+                    'success' => false,
+                    'error' => '基準日に過去の日付は指定できません。今日以降の日付を指定してください。',
+                ], 400);
+            }
             $inventoryData = $equipment->getInventoryAsOf($asOfDate);
 
             // 移動履歴（直近30日）
@@ -325,6 +359,14 @@ class InventoryController extends Controller
             ]);
 
             $asOfDate = Carbon::parse($validated['as_of_date']);
+
+            // 過去の日付は許可しない
+            if ($asOfDate->lt(now()->startOfDay())) {
+                return response()->json([
+                    'success' => false,
+                    'error' => '基準日に過去の日付は指定できません。今日以降の日付を指定してください。',
+                ], 400);
+            }
             $inventoryData = $location->getInventoryAsOf($asOfDate);
             $stats = $location->getInventoryStatsAsOf($asOfDate);
             $capacityUsage = $location->capacity_usage;
@@ -374,15 +416,16 @@ class InventoryController extends Controller
 
             $snapshotDate = Carbon::parse($validated['snapshot_date']);
 
-            // 未来の日付は許可しない
-            if ($snapshotDate->isFuture()) {
+            // 過去の日付は許可しない
+            if ($snapshotDate->lt(now()->startOfDay())) {
                 return response()->json([
                     'success' => false,
-                    'error' => '未来の日付のスナップショットは生成できません。',
-                ], 422);
+                    'error' => '基準日に過去の日付は指定できません。今日以降の日付を指定してください。',
+                ], 400);
             }
 
-            InventorySnapshot::generateSnapshot($snapshotDate);
+            // 共通の再計算処理を使用
+            $this->regenerateInventorySnapshots($snapshotDate);
 
             return response()->json([
                 'success' => true,
@@ -392,6 +435,15 @@ class InventoryController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            // 競合エラーの場合は409 Conflictを返す
+            if (str_contains($e->getMessage(), '別のユーザーが在庫再計算を実行中')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 409);
+            }
+
+            // その他のエラーは500 Internal Server Error
             return response()->json([
                 'success' => false,
                 'error' => 'スナップショットの生成に失敗しました: '.$e->getMessage(),
@@ -772,7 +824,7 @@ class InventoryController extends Controller
             }
 
             // 基本倉庫が設定されていない場合はエラー
-            if (!$equipment->location_id) {
+            if (! $equipment->location_id) {
                 return response()->json([
                     'success' => false,
                     'error' => '基本倉庫が設定されていません。',
@@ -812,7 +864,7 @@ class InventoryController extends Controller
         try {
             $warehouses = Location::active()
                 ->warehouses()
-                ->whereNotIn('id', [93, 94, 95, 96]) // 事務所系・青年座の倉庫を除外
+                ->forTransferFilter()
                 ->ordered()
                 ->get(['id', 'name', 'address', 'type'])
                 ->map(function ($location) {
@@ -854,9 +906,9 @@ class InventoryController extends Controller
             $categories = EquipmentCategory::whereHas('subcategories', function ($query) use ($subcategoryIds) {
                 $query->whereIn('id', $subcategoryIds);
             })
-            ->active()
-            ->ordered()
-            ->get(['id', 'name']);
+                ->active()
+                ->ordered()
+                ->get(['id', 'name']);
 
             return response()->json([
                 'success' => true,
@@ -917,31 +969,31 @@ class InventoryController extends Controller
             $query = Equipment::with([
                 'location',
                 'nowLocation',
-                'subcategory.category'
+                'subcategory.category',
             ])
-            ->where('management_type', 'individual') // 個体管理機材のみ
-            ->where('is_discard', false) // 廃棄されていないもののみ
-            ->whereNotIn('location_id', [89, 93, 94, 95, 96]); // 赤堤倉庫(89)とID 93-96の倉庫の機材を除外
+                ->where('management_type', 'individual') // 個体管理機材のみ
+                ->where('is_discard', false) // 廃棄されていないもののみ
+                ->whereNotIn('location_id', [89, 93, 94, 95, 96]); // 赤堤倉庫(89)とID 93-96の倉庫の機材を除外
 
             // フィルタ適用
-            if (!empty($validated['location_id'])) {
+            if (! empty($validated['location_id'])) {
                 $query->where('now_location_id', $validated['location_id']);
             }
 
-            if (!empty($validated['category_id'])) {
+            if (! empty($validated['category_id'])) {
                 $query->whereHas('subcategory.category', function ($q) use ($validated) {
                     $q->where('id', $validated['category_id']);
                 });
             }
 
-            if (!empty($validated['search'])) {
+            if (! empty($validated['search'])) {
                 $query->where(function ($q) use ($validated) {
-                    $q->where('name', 'like', '%' . $validated['search'] . '%')
-                      ->orWhere('company_number', 'like', '%' . $validated['search'] . '%');
+                    $q->where('name', 'like', '%'.$validated['search'].'%')
+                        ->orWhere('company_number', 'like', '%'.$validated['search'].'%');
                 });
             }
 
-            if (!empty($validated['status'])) {
+            if (! empty($validated['status'])) {
                 $query->where('status', $validated['status']);
             }
 
@@ -961,22 +1013,22 @@ class InventoryController extends Controller
                         'id' => $item->location->id,
                         'name' => $item->location->name,
                         'type' => $item->location->type,
-                        'display_name' => $item->location->name
+                        'display_name' => $item->location->name,
                     ],
                     'subcategory' => [
                         'id' => $item->subcategory->id,
                         'name' => $item->subcategory->name,
                         'category' => [
                             'id' => $item->subcategory->category->id,
-                            'name' => $item->subcategory->category->name
-                        ]
-                    ]
+                            'name' => $item->subcategory->category->name,
+                        ],
+                    ],
                 ];
             });
 
             return response()->json([
                 'success' => true,
-                'data' => $equipmentData
+                'data' => $equipmentData,
             ]);
 
         } catch (\Exception $e) {
@@ -987,7 +1039,7 @@ class InventoryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '機材データの取得に失敗しました: ' . $e->getMessage()
+                'error' => '機材データの取得に失敗しました: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1016,6 +1068,7 @@ class InventoryController extends Controller
                         // 個体管理機材のみ対象
                         if ($equipment->management_type !== 'individual') {
                             $errors[] = "機材「{$equipment->name}」: 数量管理機材の倉庫間移動はサポートされていません。";
+
                             continue;
                         }
 
@@ -1025,6 +1078,7 @@ class InventoryController extends Controller
                         // 同じ場所への移動はスキップ
                         if ($currentLocationId == $toLocationId) {
                             $errors[] = "機材「{$equipment->name}」: 同じ場所への移動はできません。";
+
                             continue;
                         }
 
@@ -1070,8 +1124,283 @@ class InventoryController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => '一括移動処理でエラーが発生しました: ' . $e->getMessage(),
+                'error' => '一括移動処理でエラーが発生しました: '.$e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * location_id 90-92の機材取得API（返却先選択用）
+     */
+    public function getEquipmentForReturn(Request $request): JsonResponse
+    {
+        try {
+            $query = Equipment::query()
+                ->where('management_type', 'individual')
+                ->active()
+                ->with([
+                    'location',
+                    'subcategory.category',
+                ]);
+
+            // 特定の機材IDで検索（セッションストレージから来た場合）
+            if ($request->filled('equipment_id')) {
+                $query->where('id', $request->equipment_id)
+                    ->whereIn('location_id', [90, 91, 92]);
+            } else {
+                // 通常のフィルタリング（全体表示の場合）
+                $query->whereIn('location_id', [90, 91, 92]);
+
+                // カテゴリフィルタ
+                if ($request->filled('category_id')) {
+                    $query->whereHas('subcategory.category', function ($q) use ($request) {
+                        $q->where('id', $request->category_id);
+                    });
+                }
+
+                // 検索フィルタ
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('company_number', 'like', "%{$search}%");
+                    });
+                }
+
+                // location_idフィルタ
+                if ($request->filled('location_id')) {
+                    $query->where('location_id', $request->location_id);
+                }
+            }
+
+            $equipments = $query->orderBy('subcategory_id')
+                ->orderBy('sort', 'asc')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $equipments,
+                'count' => $equipments->count(),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '機材データの取得に失敗しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 一括返却実行API（指定された返却先へのnow_location_id更新）
+     */
+    public function bulkReturn(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'returns' => 'required|array|min:1',
+                'returns.*.equipment_id' => 'required|integer|exists:equipments,id',
+                'returns.*.return_location_id' => 'required|integer|exists:locations,id',
+                'returns.*.phase_equipment_id' => 'nullable|integer|exists:phase_equipment,id',
+            ]);
+
+            $returns = $validated['returns'];
+            $results = [];
+            $errors = [];
+
+            DB::transaction(function () use ($returns, &$results, &$errors) {
+                foreach ($returns as $returnData) {
+                    try {
+                        $equipmentId = $returnData['equipment_id'];
+                        $returnLocationId = $returnData['return_location_id'];
+
+                        // 機材取得・バリデーション
+                        $equipment = Equipment::find($equipmentId);
+
+                        if (! $equipment) {
+                            $errors[] = "機材ID {$equipmentId}: 機材が見つかりません";
+
+                            continue;
+                        }
+
+                        if ($equipment->management_type !== 'individual') {
+                            $errors[] = "機材ID {$equipmentId}: 個体管理機材のみ返却可能です";
+
+                            continue;
+                        }
+
+                        if (! in_array($equipment->location_id, [90, 91, 92])) {
+                            $errors[] = "機材ID {$equipmentId}: 基本倉庫ID 90-92の機材のみが対象です";
+
+                            continue;
+                        }
+
+                        // 返却先倉庫の確認
+                        $returnLocation = Location::find($returnLocationId);
+                        if (! $returnLocation || $returnLocation->type !== '倉庫') {
+                            $errors[] = "機材ID {$equipmentId}: 無効な返却先倉庫です";
+
+                            continue;
+                        }
+
+                        // 返却処理実行
+                        $equipment->update(['now_location_id' => $returnLocationId]);
+
+                        // PhaseEquipmentのステータスを「返却済み」に更新
+                        $phaseEquipmentId = $returnData['phase_equipment_id'] ?? null;
+
+                        if ($phaseEquipmentId) {
+                            // 特定のPhaseEquipmentのみ更新
+                            $phaseEquipment = PhaseEquipment::find($phaseEquipmentId);
+
+                            if ($phaseEquipment && $phaseEquipment->equipment_id == $equipmentId && $phaseEquipment->status == 'checked_out') {
+                                $phaseEquipment->update([
+                                    'status' => 'checked_in',
+                                    'checkin_date' => now()->format('Y-m-d'),
+                                    'checkin_user_id' => auth()->id(),
+                                ]);
+
+                                // 移動履歴を作成
+                                EquipmentMovement::createCheckin(
+                                    $equipment->id,
+                                    $phaseEquipment->phase_id,
+                                    $phaseEquipment->quantity,
+                                    auth()->id(),
+                                    $returnLocationId,
+                                    '返却先選択による返却'
+                                );
+                            }
+                        } else {
+                            // 従来の処理：該当機材のすべての出庫中PhaseEquipmentを更新
+                            $phaseEquipments = PhaseEquipment::where('equipment_id', $equipmentId)
+                                ->where('status', 'checked_out')
+                                ->get();
+
+                            foreach ($phaseEquipments as $phaseEquipment) {
+                                $phaseEquipment->update([
+                                    'status' => 'checked_in',
+                                    'checkin_date' => now()->format('Y-m-d'),
+                                    'checkin_user_id' => auth()->id(),
+                                ]);
+
+                                // 移動履歴を作成
+                                EquipmentMovement::createCheckin(
+                                    $equipment->id,
+                                    $phaseEquipment->phase_id,
+                                    $phaseEquipment->quantity,
+                                    auth()->id(),
+                                    $returnLocationId,
+                                    '返却先選択による返却'
+                                );
+                            }
+                        }
+
+                        $results[] = [
+                            'id' => $equipment->id,
+                            'name' => $equipment->name,
+                            'company_number' => $equipment->company_number,
+                            'return_location' => $returnLocation->name,
+                        ];
+                    } catch (\Exception $e) {
+                        $errors[] = "機材ID {$returnData['equipment_id']}: {$e->getMessage()}";
+                    }
+                }
+            });
+
+            // 結果の処理
+            $successCount = count($results);
+            $errorCount = count($errors);
+
+            if ($successCount > 0 && $errorCount === 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$successCount}件の機材返却が完了しました。",
+                    'returns' => $results,
+                ]);
+            } elseif ($successCount > 0 && $errorCount > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$successCount}件の機材返却が完了しました。{$errorCount}件でエラーが発生しました。",
+                    'returns' => $results,
+                    'errors' => $errors,
+                ], 206); // Partial Content
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => '機材返却に失敗しました。',
+                    'errors' => $errors,
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '一括返却処理でエラーが発生しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 在庫スナップショットの日付指定再計算実行
+     * 指定日のデータのみを削除してから新しいスナップショットを生成
+     * 排他制御により同時実行を防止
+     */
+    private function regenerateInventorySnapshots(Carbon $asOfDate): void
+    {
+        $lockKey = 'inventory_snapshot_regeneration';
+        $lockTimeout = 300; // 5分
+
+        $lock = Cache::lock($lockKey, $lockTimeout);
+
+        try {
+            if ($lock->get()) {
+                \Log::info('Inventory snapshot regeneration lock acquired', [
+                    'date' => $asOfDate->format('Y-m-d'),
+                    'user' => auth()->id() ?? 'system',
+                ]);
+
+                // 指定日のスナップショットのみを削除
+                InventorySnapshot::where('snapshot_date', $asOfDate->format('Y-m-d'))->delete();
+
+                // 過去のスナップショット（昨日以前）を削除してストレージ効率化
+                $cutoffDate = now()->subDays(1)->format('Y-m-d');
+                $deletedOldCount = InventorySnapshot::where('snapshot_date', '<=', $cutoffDate)->delete();
+
+                // 新しいスナップショットを生成（既に指定日のデータを削除済みなので削除処理をスキップ）
+                InventorySnapshot::generateSnapshot($asOfDate, true);
+
+                \Log::info('Inventory snapshot regenerated for specific date', [
+                    'action' => 'date_specific_regeneration',
+                    'date' => $asOfDate->format('Y-m-d'),
+                    'timestamp' => now()->toISOString(),
+                    'date_specific_deletion' => true,
+                    'past_data_cleanup' => $deletedOldCount > 0 ? "Deleted {$deletedOldCount} past records (≤{$cutoffDate})" : 'No past data to clean',
+                    'user' => auth()->id() ?? 'system',
+                ]);
+            } else {
+                \Log::warning('Inventory snapshot regeneration skipped - another process is running', [
+                    'date' => $asOfDate->format('Y-m-d'),
+                    'user' => auth()->id() ?? 'system',
+                ]);
+
+                // 別のプロセスが実行中の場合は例外を投げる
+                throw new \Exception('別のユーザーが在庫再計算を実行中です。しばらく待ってから再度お試しください。');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to regenerate inventory snapshots', [
+                'date' => $asOfDate->format('Y-m-d'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user' => auth()->id() ?? 'system',
+            ]);
+
+            // 再スローしてエラーを上位に伝える
+            throw $e;
+        } finally {
+            // ロックを明示的に解放
+            if (isset($lock)) {
+                $lock->release();
+            }
         }
     }
 }
