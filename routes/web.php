@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Auth\LineWorksController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\InventorySnapshotController;
+use App\Http\Controllers\InventoryTransferController;
 use App\Http\Controllers\Master\EquipmentCategoryController;
 use App\Http\Controllers\Master\EquipmentController;
 use App\Http\Controllers\Master\EquipmentSetController;
@@ -13,6 +15,8 @@ use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PhaseEquipmentController;
+use App\Http\Controllers\PhaseEquipmentApiController;
+use App\Http\Controllers\PhaseEquipmentCheckoutController;
 use App\Http\Controllers\RepairRecordController;
 use Illuminate\Support\Facades\Route;
 
@@ -129,22 +133,22 @@ Route::middleware('auth')->group(function () {
     // フェーズ機材使用管理ルート
     Route::prefix('phases/{phase}')->name('phases.')->group(function () {
         // 一括ステータス変更（resourceルートより前に配置）
-        Route::patch('equipment/bulk-checkout', [PhaseEquipmentController::class, 'bulkCheckout'])->name('equipment.bulk-checkout');
-        Route::patch('equipment/bulk-checkout-reserved', [PhaseEquipmentController::class, 'bulkCheckoutReserved'])->name('equipment.bulk-checkout-reserved');
-        Route::patch('equipment/bulk-checkout-checked-in', [PhaseEquipmentController::class, 'bulkCheckoutCheckedIn'])->name('equipment.bulk-checkout-checked-in');
-        Route::patch('equipment/bulk-checkin', [PhaseEquipmentController::class, 'bulkCheckin'])->name('equipment.bulk-checkin');
+        Route::patch('equipment/bulk-checkout', [PhaseEquipmentCheckoutController::class, 'bulkCheckout'])->name('equipment.bulk-checkout');
+        Route::patch('equipment/bulk-checkout-reserved', [PhaseEquipmentCheckoutController::class, 'bulkCheckoutReserved'])->name('equipment.bulk-checkout-reserved');
+        Route::patch('equipment/bulk-checkout-checked-in', [PhaseEquipmentCheckoutController::class, 'bulkCheckoutCheckedIn'])->name('equipment.bulk-checkout-checked-in');
+        Route::patch('equipment/bulk-checkin', [PhaseEquipmentCheckoutController::class, 'bulkCheckin'])->name('equipment.bulk-checkin');
 
         // AJAX API（resourceルートより前に配置）
-        Route::get('available-equipment', [PhaseEquipmentController::class, 'getAvailableEquipment'])->name('available-equipment');
-        Route::get('equipment-set-availability', [PhaseEquipmentController::class, 'checkSetAvailability'])->name('equipment-set-availability');
-        Route::get('equipment/checked-out-equipments', [PhaseEquipmentController::class, 'getCheckedOutEquipments'])->name('equipment.checked-out-equipments');
-        Route::get('equipment/{phaseEquipment}/equipment-info', [PhaseEquipmentController::class, 'getEquipmentInfo'])->name('equipment.equipment-info');
+        Route::get('available-equipment', [PhaseEquipmentApiController::class, 'getAvailableEquipment'])->name('available-equipment');
+        Route::get('equipment-set-availability', [PhaseEquipmentApiController::class, 'checkSetAvailability'])->name('equipment-set-availability');
+        Route::get('equipment/checked-out-equipments', [PhaseEquipmentApiController::class, 'getCheckedOutEquipments'])->name('equipment.checked-out-equipments');
+        Route::get('equipment/{phaseEquipment}/equipment-info', [PhaseEquipmentApiController::class, 'getEquipmentInfo'])->name('equipment.equipment-info');
 
         Route::resource('equipment', PhaseEquipmentController::class)->parameter('equipment', 'phaseEquipment');
 
         // 機材出庫・返却
-        Route::patch('equipment/{phaseEquipment}/checkout', [PhaseEquipmentController::class, 'checkout'])->name('equipment.checkout');
-        Route::patch('equipment/{phaseEquipment}/checkin', [PhaseEquipmentController::class, 'checkin'])->name('equipment.checkin');
+        Route::patch('equipment/{phaseEquipment}/checkout', [PhaseEquipmentCheckoutController::class, 'checkout'])->name('equipment.checkout');
+        Route::patch('equipment/{phaseEquipment}/checkin', [PhaseEquipmentCheckoutController::class, 'checkin'])->name('equipment.checkin');
     });
 
     // 修理管理ルート
@@ -181,29 +185,31 @@ Route::middleware('auth')->group(function () {
         Route::get('api/inventory/stats', [InventoryController::class, 'getInventoryStats'])->name('api.stats');
         Route::get('api/inventory/equipment/{equipment}', [InventoryController::class, 'getEquipmentInventory'])->name('api.equipment');
         Route::get('api/inventory/location/{location}', [InventoryController::class, 'getLocationInventory'])->name('api.location');
-        Route::post('api/inventory/generate-snapshot', [InventoryController::class, 'generateSnapshot'])->name('api.generate-snapshot');
-        Route::get('api/inventory/alerts', [InventoryController::class, 'getInventoryAlerts'])->name('api.alerts');
+        Route::post('api/inventory/generate-snapshot', [InventorySnapshotController::class, 'generateSnapshot'])->name('api.generate-snapshot');
+        Route::get('api/inventory/alerts', [InventorySnapshotController::class, 'getInventoryAlerts'])->name('api.alerts');
+        Route::get('api/inventory/snapshots', [InventorySnapshotController::class, 'getSnapshots'])->name('api.snapshots');
+        Route::delete('api/inventory/snapshot', [InventorySnapshotController::class, 'deleteSnapshot'])->name('api.delete-snapshot');
         Route::get('api/equipment/{equipment}/usage', [InventoryController::class, 'getEquipmentUsage'])->name('api.equipment.usage');
         Route::get('api/equipment/{equipment}/usage-test', [InventoryController::class, 'getEquipmentUsageTest'])->name('api.equipment.usage.test');
 
         // 倉庫間移動機能
-        Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
-        Route::get('api/warehouses', [InventoryController::class, 'getWarehouses'])->name('api.warehouses');
+        Route::post('api/transfer', [InventoryTransferController::class, 'transferEquipment'])->name('api.transfer');
+        Route::get('api/warehouses', [InventoryTransferController::class, 'getWarehouses'])->name('api.warehouses');
     });
 
     // 倉庫間移動専用画面
     Route::prefix('equipment-transfer')->name('equipment-transfer.')->group(function () {
-        Route::get('/', [InventoryController::class, 'transferIndex'])->name('index');
+        Route::get('/', [InventoryTransferController::class, 'transferIndex'])->name('index');
         Route::get('/return-select', function () {
             return view('equipment-transfer.return-select');
         })->name('return-select');
-        Route::get('api/equipment', [InventoryController::class, 'getTransferableEquipment'])->name('api.equipment');
-        Route::get('api/equipment-for-return', [InventoryController::class, 'getEquipmentForReturn'])->name('api.equipment-for-return');
-        Route::get('api/categories', [InventoryController::class, 'getTransferableCategories'])->name('api.categories');
-        Route::post('api/transfer', [InventoryController::class, 'transferEquipment'])->name('api.transfer');
-        Route::post('api/bulk-transfer', [InventoryController::class, 'bulkTransferEquipment'])->name('api.bulk-transfer');
-        Route::post('api/bulk-return', [InventoryController::class, 'bulkReturn'])->name('api.bulk-return');
-        Route::post('api/return/{equipment}', [InventoryController::class, 'returnEquipmentToBase'])->name('api.return');
+        Route::get('api/equipment', [InventoryTransferController::class, 'getTransferableEquipment'])->name('api.equipment');
+        Route::get('api/equipment-for-return', [InventoryTransferController::class, 'getEquipmentForReturn'])->name('api.equipment-for-return');
+        Route::get('api/categories', [InventoryTransferController::class, 'getTransferableCategories'])->name('api.categories');
+        Route::post('api/transfer', [InventoryTransferController::class, 'transferEquipment'])->name('api.transfer');
+        Route::post('api/bulk-transfer', [InventoryTransferController::class, 'bulkTransferEquipment'])->name('api.bulk-transfer');
+        Route::post('api/bulk-return', [InventoryTransferController::class, 'bulkReturn'])->name('api.bulk-return');
+        Route::post('api/return/{equipment}', [InventoryTransferController::class, 'returnEquipmentToBase'])->name('api.return');
     });
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）

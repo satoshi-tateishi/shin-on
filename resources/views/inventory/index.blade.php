@@ -130,30 +130,10 @@
                 </div>
             </div>
 
-            <!-- Actions -->
+            <!-- Summary -->
             <div class="flex justify-between items-center mb-6">
                 <div class="text-sm text-gray-500">
-                    表示件数: <span x-text="meta.from || 0"></span>-<span x-text="meta.to || 0"></span> / <span x-text="meta.total || 0"></span>件
-                </div>
-
-                <div class="flex items-center space-x-2">
-                    <button
-                        @click="prevPage()"
-                        :disabled="meta.current_page <= 1"
-                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        前へ
-                    </button>
-                    <span class="px-3 py-2 text-sm text-gray-700">
-                        <span x-text="meta.current_page || 1"></span> / <span x-text="meta.last_page || 1"></span>
-                    </span>
-                    <button
-                        @click="nextPage()"
-                        :disabled="meta.current_page >= meta.last_page"
-                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        次へ
-                    </button>
+                    表示件数: <span x-text="inventoryData.length"></span>件
                 </div>
             </div>
 
@@ -178,42 +158,28 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <template x-for="item in inventoryData" :key="item.id">
-                            <tr class="hover:bg-gray-50 cursor-pointer" @click="viewEquipmentUsage(item.id)">
+                            <tr class="hover:bg-gray-50 cursor-pointer" @click="viewEquipmentUsage(item.equipment_id)">
                                 <!-- カテゴリ -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs text-gray-400" x-text="item.category_name"></div>
-                                    <div class="text-xs text-gray-400" x-text="item.subcategory_name"></div>
+                                    <div class="text-xs text-gray-400" x-text="item.equipment?.subcategory?.category?.name || '未設定'"></div>
+                                    <div class="text-xs text-gray-400" x-text="item.equipment?.subcategory?.name || '未設定'"></div>
                                 </td>
 
                                 <!-- 機材名 -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center justify-between">
-                                        <div class="text-sm font-medium text-gray-900" x-text="item.equipment_name"></div>
-                                        <!-- 個体管理機材のみ移動ボタン表示 -->
-                                        <button
-                                            x-show="item.is_individual && item.available_quantity > 0"
-                                            @click="openTransferModal(item)"
-                                            class="ml-2 inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-cyan-700 bg-cyan-100 hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
-                                            title="倉庫間移動"
-                                        >
-                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                                            </svg>
-                                            移動
-                                        </button>
-                                    </div>
+                                    <div class="text-sm font-medium text-gray-900" x-text="item.equipment?.name || '機材名不明'"></div>
                                 </td>
 
                                 <!-- 在庫数 -->
                                 <td class="px-2 py-4 whitespace-nowrap text-center border-l border-gray-200">
                                     <div class="text-sm font-medium text-gray-900">
-                                        <span x-text="item.available_quantity"></span>
+                                        <span x-text="item.quantity || 0"></span>
                                     </div>
                                 </td>
 
                                 <!-- 新音番号 -->
                                 <td class="px-6 py-4 border-l border-gray-200">
-                                    <div class="text-sm text-gray-900 break-words" x-text="item.company_numbers"></div>
+                                    <div class="text-sm text-gray-900 break-words" x-text="item.equipment?.company_number || '-'"></div>
                                 </td>
                             </tr>
                         </template>
@@ -308,14 +274,6 @@
             </div>
         </div>
 
-        <!-- 倉庫間移動用場所選択モーダル -->
-        <x-location-selector-modal
-            id="transfer-modal"
-            title="移動先倉庫選択"
-            placeholder="移動先倉庫を選択してください..."
-            confirm-text="移動実行"
-            :required="true"
-        />
     </div>
 @endsection
 
@@ -336,9 +294,7 @@
                 filters: {
                     category_id: '',
                     location_id: 90, // デフォルトをすみだ倉庫に設定（数値型）
-                    search: '',
-                    page: 1,
-                    per_page: 100
+                    search: ''
                 },
                 showUsageModal: false,
                 selectedEquipment: null,
@@ -378,21 +334,25 @@
                     try {
                         const params = new URLSearchParams({
                             as_of_date: this.asOfDate,
-                            page: this.filters.page,
-                            per_page: this.filters.per_page,
                             ...Object.fromEntries(
-                                Object.entries(this.filters).filter(([key, value]) =>
-                                    value !== '' && key !== 'page' && key !== 'per_page'
-                                )
+                                Object.entries(this.filters).filter(([key, value]) => value !== '')
                             )
                         });
 
+                        console.log('🔍 API Request URL:', `/inventory/api/inventory?${params}`);
+                        console.log('🔍 Request params:', params.toString());
                         const response = await fetch(`/inventory/api/inventory?${params}`);
+                        console.log('🔍 Response status:', response.status);
                         const data = await response.json();
+                        console.log('🔍 Response data:', data);
 
                         if (data.success) {
                             this.inventoryData = data.data || [];
-                            this.meta = data.meta || {};
+                            console.log('✅ Data assigned to inventoryData:', this.inventoryData);
+                            if (this.inventoryData.length > 0) {
+                                console.log('✅ First item detailed:', this.inventoryData[0]);
+                                console.log('✅ Equipment object:', this.inventoryData[0].equipment);
+                            }
                         } else {
                             throw new Error(data.error || '在庫データの取得に失敗しました');
                         }
@@ -482,19 +442,6 @@
                     window.open(`/master/equipments/${equipmentId}`, '_blank');
                 },
 
-                nextPage() {
-                    if (this.meta.current_page < this.meta.last_page) {
-                        this.filters.page = this.meta.current_page + 1;
-                        this.loadInventoryData();
-                    }
-                },
-
-                prevPage() {
-                    if (this.meta.current_page > 1) {
-                        this.filters.page = this.meta.current_page - 1;
-                        this.loadInventoryData();
-                    }
-                },
 
                 formatDate(dateString) {
                     const date = new Date(dateString);
@@ -506,65 +453,6 @@
                     });
                 },
 
-                // 倉庫間移動モーダルを開く
-                openTransferModal(equipment) {
-                    const modalEvent = new CustomEvent('open-transfer-modal', {
-                        detail: {
-                            onConfirm: (location) => {
-                                this.transferEquipment(equipment, location);
-                            }
-                        }
-                    });
-                    window.dispatchEvent(modalEvent);
-                },
-
-                // 倉庫間移動実行
-                async transferEquipment(equipment, toLocation) {
-                    if (!toLocation || !equipment) {
-                        return;
-                    }
-
-                    this.loading = true;
-
-                    try {
-                        const response = await fetch('/inventory/api/transfer', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: JSON.stringify({
-                                equipment_id: equipment.equipment_id,
-                                to_location_id: toLocation.id,
-                                note: `在庫管理からの移動`
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (data.success) {
-                            // 成功メッセージを表示
-                            this.showSuccessMessage(`${equipment.equipment_name}を${toLocation.name}に移動しました`);
-
-                            // データを再読み込み
-                            await this.loadInventoryData();
-                            await this.loadInventoryStats();
-                        } else {
-                            throw new Error(data.error || '倉庫間移動に失敗しました');
-                        }
-                    } catch (error) {
-                        console.error('Transfer error:', error);
-                        this.error = error.message;
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                // 成功メッセージ表示（簡易実装）
-                showSuccessMessage(message) {
-                    // 一時的にアラートで表示（後でトーストなどに変更可能）
-                    alert(message);
-                }
             }
         }
     </script>

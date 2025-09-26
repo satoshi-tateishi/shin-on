@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('phase_id')->constrained('phases')->onDelete('cascade')->comment('フェーズID');
             $table->foreignId('equipment_id')->constrained('equipments')->onDelete('cascade')->comment('機材ID');
             $table->integer('quantity')->default(1)->comment('使用数量');
-            $table->date('checkout_date')->nullable()->comment('貸出日');
+            $table->datetime('checkout_date')->nullable()->comment('出庫日');
             $table->date('checkin_date')->nullable()->comment('返却日');
             $table->foreignId('checkout_user_id')->nullable()->constrained('users')->onDelete('set null')->comment('貸出者ID');
             $table->foreignId('checkin_user_id')->nullable()->constrained('users')->onDelete('set null')->comment('返却者ID');

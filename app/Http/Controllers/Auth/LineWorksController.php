@@ -119,8 +119,6 @@ class LineWorksController extends Controller
                 'name' => $lineWorksUser->getName(),
                 'email' => $lineWorksUser->getEmail(),
                 'avatar' => $lineWorksUser->getAvatar(),
-                'token' => substr($lineWorksUser->token ?? 'null', 0, 20).'...',
-                'refreshToken' => substr($lineWorksUser->refreshToken ?? 'null', 0, 20).'...',
                 'raw_data' => json_encode($lineWorksUser->getRaw()),
             ]);
 
@@ -136,8 +134,6 @@ class LineWorksController extends Controller
                 \Log::info("Updating existing user: {$user->id}");
                 $user->update([
                     'lineworks_id' => $lineWorksUser->getId(),
-                    'lineworks_token' => $lineWorksUser->token,
-                    'lineworks_refresh_token' => $lineWorksUser->refreshToken,
                     'name' => $lineWorksUser->getName() ?: $user->name,
                     'email' => $lineWorksUser->getEmail() ?: $user->email,
                     'icon' => $lineWorksUser->getAvatar(),
@@ -149,10 +145,7 @@ class LineWorksController extends Controller
                     'name' => $lineWorksUser->getName(),
                     'email' => $lineWorksUser->getEmail(),
                     'lineworks_id' => $lineWorksUser->getId(),
-                    'lineworks_token' => $lineWorksUser->token,
-                    'lineworks_refresh_token' => $lineWorksUser->refreshToken,
                     'icon' => $lineWorksUser->getAvatar(),
-                    'password' => Hash::make(uniqid()), // ランダムパスワード
                     'is_active' => true,
                 ]);
             }

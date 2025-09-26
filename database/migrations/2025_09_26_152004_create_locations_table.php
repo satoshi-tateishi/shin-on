@@ -30,12 +30,16 @@ return new class extends Migration
             $table->text('address')->nullable()->comment('住所');
             $table->text('note')->nullable()->comment('備考');
             $table->boolean('is_active')->default(true)->comment('有効フラグ');
+            $table->boolean('is_inventory_visible')->default(true)->comment('在庫管理フィルタに表示するか');
+            $table->boolean('is_transfer_visible')->default(true)->comment('倉庫間移動フィルタに表示するか');
             $table->timestamps();
 
             $table->index('type');
             $table->index('sort');
             $table->index('name');
             $table->index('is_active');
+            $table->index(['is_inventory_visible', 'is_active'], 'locations_inventory_visible_active_index');
+            $table->index(['is_transfer_visible', 'is_active'], 'locations_transfer_visible_active_index');
         });
     }
 

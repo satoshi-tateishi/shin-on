@@ -25,14 +25,14 @@ class ProductionController extends Controller
         }
 
         $productions = $query->get();
-        $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', 'その他'];
+        $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', '公益社団法人', 'その他'];
 
         return view('master.productions.index', compact('productions', 'types'));
     }
 
     public function create(): View
     {
-        $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', 'その他'];
+        $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', '公益社団法人', 'その他'];
 
         return view('master.productions.create', compact('types'));
     }
@@ -40,7 +40,7 @@ class ProductionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'type' => 'required|in:株式会社,有限会社,合同会社,財団法人,公益財団法人,その他',
+            'type' => 'required|in:株式会社,有限会社,合同会社,財団法人,公益財団法人,公益社団法人,その他',
             'name' => 'required|string|max:255',
             'postal_code' => 'nullable|string|max:8',
             'address' => 'nullable|string',
@@ -64,7 +64,7 @@ class ProductionController extends Controller
 
     public function edit(Production $production): View
     {
-        $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', 'その他'];
+        $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', '公益社団法人', 'その他'];
 
         return view('master.productions.edit', compact('production', 'types'));
     }
@@ -72,7 +72,7 @@ class ProductionController extends Controller
     public function update(Request $request, Production $production): RedirectResponse
     {
         $validated = $request->validate([
-            'type' => 'required|in:株式会社,有限会社,合同会社,財団法人,公益財団法人,その他',
+            'type' => 'required|in:株式会社,有限会社,合同会社,財団法人,公益財団法人,公益社団法人,その他',
             'name' => 'required|string|max:255',
             'postal_code' => 'nullable|string|max:8',
             'address' => 'nullable|string',

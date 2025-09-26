@@ -6,19 +6,31 @@ use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentMovement;
 use App\Models\EquipmentSet;
-use App\Models\Location;
 use App\Models\Phase;
 use App\Models\PhaseEquipment;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
+/**
+ * PhaseEquipmentController - CRUD Operations Only
+ *
+ * This controller handles the basic CRUD operations for phase equipment management.
+ * It provides functionality to create, read, update, and delete equipment assignments
+ * to phases, including validation for equipment conflicts and quantity management.
+ */
 class PhaseEquipmentController extends Controller
 {
     /**
      * Display a listing of equipment for the phase.
+     *
+     * Retrieves all phase equipment records with related data including equipment details,
+     * category information, and user data for checkout/checkin operations. Also provides
+     * statistical information about equipment usage status.
+     *
+     * @param Phase $phase The phase to display equipment for
+     * @return View The index view with phase equipment data and statistics
      */
     public function index(Phase $phase): View
     {
@@ -43,6 +55,12 @@ class PhaseEquipmentController extends Controller
 
     /**
      * Show the form for adding equipment to phase.
+     *
+     * Displays the form for creating new phase equipment assignments. Loads all necessary
+     * data including equipment categories, subcategories, and equipment sets for selection.
+     *
+     * @param Phase $phase The phase to add equipment to
+     * @return View The create form view with category and equipment set data
      */
     public function create(Phase $phase): View
     {
@@ -62,6 +80,14 @@ class PhaseEquipmentController extends Controller
 
     /**
      * Store a newly created phase equipment usage.
+     *
+     * Handles both single equipment assignment and bulk equipment assignment operations.
+     * Validates equipment availability, handles conflict checking for individual equipment,
+     * and manages quantity constraints for quantity-managed equipment.
+     *
+     * @param Request $request The HTTP request containing equipment data
+     * @param Phase $phase The phase to assign equipment to
+     * @return RedirectResponse Redirect response with success or error messages
      */
     public function store(Request $request, Phase $phase): RedirectResponse
     {
@@ -148,6 +174,13 @@ class PhaseEquipmentController extends Controller
 
     /**
      * Display the specified phase equipment.
+     *
+     * Shows detailed information about a specific phase equipment assignment including
+     * equipment details, movement history, and other usage records for the same equipment.
+     *
+     * @param Phase $phase The phase containing the equipment
+     * @param PhaseEquipment $phaseEquipment The specific phase equipment record
+     * @return View The detail view with equipment information and related data
      */
     public function show(Phase $phase, PhaseEquipment $phaseEquipment): View
     {
@@ -179,6 +212,13 @@ class PhaseEquipmentController extends Controller
 
     /**
      * Show the form for editing the specified phase equipment.
+     *
+     * Displays the edit form for a phase equipment assignment. Calculates available
+     * quantities for quantity-managed equipment and identifies potential conflicts.
+     *
+     * @param Phase $phase The phase containing the equipment
+     * @param PhaseEquipment $phaseEquipment The phase equipment record to edit
+     * @return View The edit form view with current data and availability information
      */
     public function edit(Phase $phase, PhaseEquipment $phaseEquipment): View
     {
@@ -238,6 +278,14 @@ class PhaseEquipmentController extends Controller
 
     /**
      * Update the specified phase equipment.
+     *
+     * Updates a phase equipment record with new quantity and note values.
+     * Validates quantity constraints for quantity-managed equipment.
+     *
+     * @param Request $request The HTTP request containing update data
+     * @param Phase $phase The phase containing the equipment
+     * @param PhaseEquipment $phaseEquipment The phase equipment record to update
+     * @return RedirectResponse Redirect response with success or error messages
      */
     public function update(Request $request, Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
     {
@@ -273,6 +321,13 @@ class PhaseEquipmentController extends Controller
 
     /**
      * Remove the specified phase equipment.
+     *
+     * Deletes a phase equipment record, effectively removing the equipment
+     * assignment from the phase.
+     *
+     * @param Phase $phase The phase containing the equipment
+     * @param PhaseEquipment $phaseEquipment The phase equipment record to delete
+     * @return RedirectResponse Redirect response with success message
      */
     public function destroy(Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
     {
@@ -284,255 +339,15 @@ class PhaseEquipmentController extends Controller
     }
 
     /**
-     * Checkout equipment (change status to checked_out)
-     */
-    public function checkout(Request $request, Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
-    {
-        if (! $phaseEquipment->canCheckout()) {
-            return back()->withErrors([
-                'error' => 'この機材は出庫できません。',
-            ]);
-        }
-
-        $validated = $request->validate([
-            'checkout_date' => 'required|date',
-            'from_location_id' => 'nullable|exists:locations,id',
-            'note' => 'nullable|string|max:1000',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            // PhaseEquipment レコードを更新
-            $phaseEquipment->update([
-                'status' => 'checked_out',
-                'checkout_date' => $validated['checkout_date'],
-                'checkout_user_id' => auth()->id(),
-                'note' => $validated['note'] ?? $phaseEquipment->note,
-            ]);
-
-            // EquipmentMovement レコードを作成
-            EquipmentMovement::createCheckout(
-                $phaseEquipment->equipment_id,
-                $phase->id,
-                $phaseEquipment->quantity,
-                auth()->id(),
-                $validated['from_location_id'] ?? null,
-                $validated['note'] ?? null
-            );
-
-            DB::commit();
-
-            return back()->with('success', '機材を出庫しました。');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            return back()->withErrors([
-                'error' => '出庫処理に失敗しました。',
-            ]);
-        }
-    }
-
-    /**
-     * Checkin equipment (change status to checked_in)
-     */
-    public function checkin(Request $request, Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
-    {
-        if (! $phaseEquipment->canCheckin()) {
-            return back()->withErrors([
-                'error' => 'この機材は返却できません。',
-            ]);
-        }
-
-        $equipment = $phaseEquipment->equipment;
-
-        // location_id=90-92の機材は返却先選択が必要
-        $requiresLocationSelection = in_array($equipment->location_id, [90, 91, 92]);
-
-        $validationRules = [
-            'checkin_date' => 'required|date',
-            'note' => 'nullable|string|max:1000',
-        ];
-
-        if ($requiresLocationSelection) {
-            $validationRules['to_location_id'] = 'required|exists:locations,id';
-        } else {
-            $validationRules['to_location_id'] = 'nullable|exists:locations,id';
-        }
-
-        $validated = $request->validate($validationRules);
-
-        // location_id=90-92で返却先が選択されていない場合のエラー
-        if ($requiresLocationSelection && empty($validated['to_location_id'])) {
-            return back()->withErrors([
-                'to_location_id' => 'この機材は返却先倉庫の選択が必要です。',
-            ])->withInput();
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // PhaseEquipment レコードを更新
-            $phaseEquipment->update([
-                'status' => 'checked_in',
-                'checkin_date' => $validated['checkin_date'],
-                'checkin_user_id' => auth()->id(),
-                'note' => $validated['note'] ?? $phaseEquipment->note,
-            ]);
-
-            // location_id=90-92の機材の場合、機材の場所を更新
-            $toLocationId = $validated['to_location_id'] ?? null;
-            if ($requiresLocationSelection && $toLocationId) {
-                $equipment->update(['location_id' => $toLocationId]);
-            }
-
-            // EquipmentMovement レコードを作成
-            EquipmentMovement::createCheckin(
-                $phaseEquipment->equipment_id,
-                $phase->id,
-                $phaseEquipment->quantity,
-                auth()->id(),
-                $toLocationId,
-                $validated['note'] ?? null
-            );
-
-            DB::commit();
-
-            $message = '機材を返却しました。';
-            if ($requiresLocationSelection && $toLocationId) {
-                $locationName = Location::find($toLocationId)?->name;
-                $message .= "（返却先: {$locationName}）";
-            }
-
-            return back()->with('success', $message);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            return back()->withErrors([
-                'error' => '返却処理に失敗しました。',
-            ]);
-        }
-    }
-
-    /**
-     * Get available equipment for phase (AJAX)
-     */
-    public function getAvailableEquipment(Request $request, Phase $phase): JsonResponse
-    {
-        $categoryId = $request->get('category_id');
-        $subcategoryId = $request->get('subcategory_id');
-        $search = $request->get('search');
-
-        $query = Equipment::with('subcategory.category')
-            ->where('status', 'available');
-
-        if ($categoryId) {
-            $query->whereHas('subcategory', function ($q) use ($categoryId) {
-                $q->where('category_id', $categoryId);
-            });
-        }
-
-        if ($subcategoryId) {
-            $query->where('subcategory_id', $subcategoryId);
-        }
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('company_number', 'like', "%{$search}%")
-                    ->orWhere('model_number', 'like', "%{$search}%");
-            });
-        }
-
-        $equipments = $query->orderBy('sort')->get()->map(function ($equipment) use ($phase) {
-            $hasConflict = PhaseEquipment::hasEquipmentConflict(
-                $equipment->id,
-                $phase->start_date,
-                $phase->end_date
-            );
-
-            $availableQuantity = 0;
-            if ($equipment->management_type === 'quantity') {
-                $availableQuantity = PhaseEquipment::getAvailableQuantity(
-                    $equipment->id,
-                    $phase->start_date,
-                    $phase->end_date
-                );
-            }
-
-            return [
-                'id' => $equipment->id,
-                'name' => $equipment->name,
-                'company_number' => $equipment->company_number,
-                'model_number' => $equipment->model_number,
-                'management_type' => $equipment->management_type,
-                'quantity' => $equipment->quantity,
-                'available_quantity' => $availableQuantity,
-                'has_conflict' => $hasConflict,
-                'category' => $equipment->subcategory->category->name,
-                'subcategory' => $equipment->subcategory->name,
-            ];
-        });
-
-        return response()->json($equipments);
-    }
-
-    /**
-     * Check equipment set availability (AJAX)
-     */
-    public function checkSetAvailability(Request $request, Phase $phase): JsonResponse
-    {
-        $setId = $request->get('set_id');
-        $equipmentSet = EquipmentSet::with('equipmentItems.equipment')->findOrFail($setId);
-
-        $availability = [];
-        $allAvailable = true;
-
-        foreach ($equipmentSet->equipmentItems as $item) {
-            $equipment = $item->equipment;
-            $hasConflict = PhaseEquipment::hasEquipmentConflict(
-                $equipment->id,
-                $phase->start_date,
-                $phase->end_date
-            );
-
-            $availableQuantity = 0;
-            if ($equipment->management_type === 'quantity' && ! $hasConflict) {
-                $availableQuantity = PhaseEquipment::getAvailableQuantity(
-                    $equipment->id,
-                    $phase->start_date,
-                    $phase->end_date
-                );
-            }
-
-            $isAvailable = ! $hasConflict && ($equipment->management_type === 'individual' || $availableQuantity >= $item->quantity);
-
-            if (! $isAvailable) {
-                $allAvailable = false;
-            }
-
-            $availability[] = [
-                'equipment_id' => $equipment->id,
-                'equipment_name' => $equipment->name,
-                'required_quantity' => $item->quantity,
-                'available_quantity' => $availableQuantity,
-                'has_conflict' => $hasConflict,
-                'is_available' => $isAvailable,
-            ];
-        }
-
-        return response()->json([
-            'set_id' => $setId,
-            'set_name' => $equipmentSet->name,
-            'all_available' => $allAvailable,
-            'items' => $availability,
-        ]);
-    }
-
-    /**
-     * Store multiple equipment at once (bulk operation)
+     * Store multiple equipment at once (bulk operation).
+     *
+     * Private helper method that handles bulk equipment assignment to a phase.
+     * Validates each equipment item individually and creates records in a transaction.
+     * Handles both individual and quantity-managed equipment with appropriate validation.
+     *
+     * @param Request $request The HTTP request containing bulk equipment data
+     * @param Phase $phase The phase to assign equipment to
+     * @return RedirectResponse Redirect response with results summary
      */
     private function storeBulkEquipment(Request $request, Phase $phase): RedirectResponse
     {
@@ -643,297 +458,6 @@ class PhaseEquipmentController extends Controller
             DB::rollback();
 
             return back()->withErrors(['error' => '機材追加中にエラーが発生しました: '.$e->getMessage()]);
-        }
-    }
-
-    /**
-     * Bulk checkout reserved equipment in the phase
-     */
-    public function bulkCheckout(Phase $phase): RedirectResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            $targetEquipments = $phase->phaseEquipments()
-                ->whereIn('status', ['reserved', 'checked_in'])
-                ->get();
-
-            if ($targetEquipments->isEmpty()) {
-                return back()->withErrors(['error' => '予約済みまたは返却済みの機材がありません。']);
-            }
-
-            $updatedCount = 0;
-            $today = now()->format('Y-m-d');
-
-            foreach ($targetEquipments as $phaseEquipment) {
-                $phaseEquipment->update([
-                    'status' => 'checked_out',
-                    'checkout_date' => $today,
-                    'checkout_user_id' => auth()->id(),
-                ]);
-
-                EquipmentMovement::createCheckout(
-                    $phaseEquipment->equipment_id,
-                    $phase->id,
-                    $phaseEquipment->quantity,
-                    auth()->id(),
-                    null,
-                    '一括出庫'
-                );
-
-                $updatedCount++;
-            }
-
-            DB::commit();
-
-            return back()->with('success', "予約済み・返却済み機材 {$updatedCount}件を一括で出庫中に変更しました。");
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
-        }
-    }
-
-    /**
-     * Bulk checkout reserved equipment only
-     */
-    public function bulkCheckoutReserved(Phase $phase): RedirectResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            $targetEquipments = $phase->phaseEquipments()
-                ->where('status', 'reserved')
-                ->get();
-
-            if ($targetEquipments->isEmpty()) {
-                return back()->withErrors(['error' => '予約済みの機材がありません。']);
-            }
-
-            $updatedCount = 0;
-            $today = now()->format('Y-m-d');
-
-            foreach ($targetEquipments as $phaseEquipment) {
-                $phaseEquipment->update([
-                    'status' => 'checked_out',
-                    'checkout_date' => $today,
-                    'checkout_user_id' => auth()->id(),
-                ]);
-
-                EquipmentMovement::createCheckout(
-                    $phaseEquipment->equipment_id,
-                    $phase->id,
-                    $phaseEquipment->quantity,
-                    auth()->id(),
-                    null,
-                    '一括出庫（予約済み）'
-                );
-
-                $updatedCount++;
-            }
-
-            DB::commit();
-
-            return back()->with('success', "予約済み機材 {$updatedCount}件を一括で出庫中に変更しました。");
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
-        }
-    }
-
-    /**
-     * Bulk checkout checked-in equipment only
-     */
-    public function bulkCheckoutCheckedIn(Phase $phase): RedirectResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            $targetEquipments = $phase->phaseEquipments()
-                ->where('status', 'checked_in')
-                ->get();
-
-            if ($targetEquipments->isEmpty()) {
-                return back()->withErrors(['error' => '返却済みの機材がありません。']);
-            }
-
-            $updatedCount = 0;
-            $today = now()->format('Y-m-d');
-
-            foreach ($targetEquipments as $phaseEquipment) {
-                $phaseEquipment->update([
-                    'status' => 'checked_out',
-                    'checkout_date' => $today,
-                    'checkout_user_id' => auth()->id(),
-                ]);
-
-                EquipmentMovement::createCheckout(
-                    $phaseEquipment->equipment_id,
-                    $phase->id,
-                    $phaseEquipment->quantity,
-                    auth()->id(),
-                    null,
-                    '一括出庫（返却済み）'
-                );
-
-                $updatedCount++;
-            }
-
-            DB::commit();
-
-            return back()->with('success', "返却済み機材 {$updatedCount}件を一括で出庫中に変更しました。");
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            return back()->withErrors(['error' => '一括出庫処理に失敗しました。']);
-        }
-    }
-
-    /**
-     * Bulk checkin checked out equipment in the phase
-     */
-    public function bulkCheckin(Phase $phase, Request $request)
-    {
-        try {
-            DB::beginTransaction();
-
-            // JSONリクエストの場合は特定の機材IDのみ処理
-            if ($request->isJson() && $request->has('equipment_ids')) {
-                $equipmentIds = $request->input('equipment_ids');
-                $checkedOutEquipments = $phase->phaseEquipments()
-                    ->where('status', 'checked_out')
-                    ->whereIn('id', $equipmentIds)
-                    ->get();
-            } else {
-                // 従来の処理（全出庫中機材を処理）
-                $checkedOutEquipments = $phase->phaseEquipments()
-                    ->where('status', 'checked_out')
-                    ->get();
-            }
-
-            if ($checkedOutEquipments->isEmpty()) {
-                if ($request->isJson()) {
-                    return response()->json(['success' => false, 'message' => '対象の機材がありません。'], 404);
-                }
-
-                return back()->withErrors(['error' => '出庫中の機材がありません。']);
-            }
-
-            $updatedCount = 0;
-            $today = now()->format('Y-m-d');
-
-            foreach ($checkedOutEquipments as $phaseEquipment) {
-                $phaseEquipment->update([
-                    'status' => 'checked_in',
-                    'checkin_date' => $today,
-                    'checkin_user_id' => auth()->id(),
-                ]);
-
-                EquipmentMovement::createCheckin(
-                    $phaseEquipment->equipment_id,
-                    $phase->id,
-                    $phaseEquipment->quantity,
-                    auth()->id(),
-                    null,
-                    '一括返却'
-                );
-
-                $updatedCount++;
-            }
-
-            DB::commit();
-
-            if ($request->isJson()) {
-                return response()->json(['success' => true, 'updated_count' => $updatedCount]);
-            }
-
-            return back()->with('success', "出庫中機材 {$updatedCount}件を一括で返却済みに変更しました。");
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            if ($request->isJson()) {
-                return response()->json(['success' => false, 'message' => '一括返却処理に失敗しました。'], 500);
-            }
-
-            return back()->withErrors(['error' => '一括返却処理に失敗しました。']);
-        }
-    }
-
-    /**
-     * 機材情報取得API（返却時のlocation_idチェック用）
-     */
-    public function getEquipmentInfo(Phase $phase, PhaseEquipment $phaseEquipment): JsonResponse
-    {
-        try {
-            $equipment = $phaseEquipment->equipment;
-
-            return response()->json([
-                'success' => true,
-                'equipment' => [
-                    'id' => $equipment->id,
-                    'name' => $equipment->name,
-                    'company_number' => $equipment->company_number,
-                    'location_id' => $equipment->location_id,
-                    'management_type' => $equipment->management_type,
-                    'location_name' => $equipment->location->name ?? null,
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '機材情報の取得に失敗しました: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * 出庫中機材一覧取得API（一括返却用のlocation_idチェック用）
-     */
-    public function getCheckedOutEquipments(Phase $phase): JsonResponse
-    {
-        try {
-            \Log::info('getCheckedOutEquipments called for phase: '.$phase->id);
-
-            $checkedOutEquipments = $phase->phaseEquipments()
-                ->where('status', 'checked_out')
-                ->with(['equipment.location'])
-                ->get();
-
-            \Log::info('Found checked out equipments: '.$checkedOutEquipments->count());
-
-            return response()->json([
-                'success' => true,
-                'equipments' => $checkedOutEquipments->map(function ($phaseEquipment) {
-                    return [
-                        'id' => $phaseEquipment->id,
-                        'phase_id' => $phaseEquipment->phase_id,
-                        'quantity' => $phaseEquipment->quantity,
-                        'equipment' => [
-                            'id' => $phaseEquipment->equipment->id,
-                            'name' => $phaseEquipment->equipment->name,
-                            'company_number' => $phaseEquipment->equipment->company_number,
-                            'location_id' => $phaseEquipment->equipment->location_id,
-                            'management_type' => $phaseEquipment->equipment->management_type,
-                            'location_name' => $phaseEquipment->equipment->location->name ?? null,
-                        ],
-                    ];
-                }),
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error in getCheckedOutEquipments: '.$e->getMessage());
-            \Log::error('Stack trace: '.$e->getTraceAsString());
-
-            return response()->json([
-                'success' => false,
-                'error' => '出庫中機材の取得に失敗しました: '.$e->getMessage(),
-            ], 500);
         }
     }
 }

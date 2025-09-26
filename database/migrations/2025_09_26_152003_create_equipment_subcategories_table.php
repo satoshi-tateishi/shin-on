@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('equipment_sets', function (Blueprint $table) {
+        Schema::create('equipment_subcategories', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('category_id')->constrained('equipment_categories')->onDelete('cascade')->comment('カテゴリID');
             $table->integer('sort')->default(0)->comment('ソート順');
-            $table->string('name')->comment('セット名');
-            $table->text('description')->nullable()->comment('説明');
+            $table->string('name')->comment('サブカテゴリ名');
             $table->boolean('is_active')->default(true)->comment('有効フラグ');
             $table->timestamps();
 
+            $table->index('category_id');
             $table->index('sort');
             $table->index('is_active');
         });
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('equipment_sets');
+        Schema::dropIfExists('equipment_subcategories');
     }
 };

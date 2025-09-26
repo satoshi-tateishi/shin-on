@@ -151,6 +151,7 @@
         @php
             $phaseEquipments = $phase->phaseEquipments()
                 ->with(['equipment.subcategory.category'])
+                ->whereIn('phase_equipment.status', ['reserved', 'checked_out']) // 返却済み(checked_in)を除外
                 ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
                 ->orderBy('equipments.sort')
                 ->select('phase_equipment.*')
@@ -170,7 +171,9 @@
                 ];
             })->take(10);
 
-            $equipmentCount = $phase->phaseEquipments ? $phase->phaseEquipments->count() : 0;
+            $equipmentCount = $phase->phaseEquipments()
+                ->whereIn('phase_equipment.status', ['reserved', 'checked_out'])
+                ->count();
         @endphp
 
         @if($equipmentCount > 0)

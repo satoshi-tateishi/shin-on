@@ -6,30 +6,33 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class InventorySnapshot extends Model
 {
     protected $fillable = [
         'snapshot_date',
-        'equipment_id',
+        'equipment_name',
+        'company_numbers',
+        'category_name',
+        'subcategory_name',
+        'sample_equipment_id',
         'location_id',
         'quantity',
-        'total_quantity',
     ];
 
     protected $casts = [
         'snapshot_date' => 'date',
         'quantity' => 'integer',
-        'total_quantity' => 'integer',
     ];
 
     /**
-     * 機材とのリレーション
+     * サンプル機材とのリレーション（参考用）
      */
     public function equipment(): BelongsTo
     {
-        return $this->belongsTo(Equipment::class);
+        return $this->belongsTo(Equipment::class, 'sample_equipment_id');
     }
 
     /**
@@ -41,42 +44,124 @@ class InventorySnapshot extends Model
     }
 
     /**
-     * 指定日時点での機材在庫スナップショットを生成
+     * 指定日時点での機材在庫スナップショットを生成（排他制御付き）
      */
     public static function generateSnapshot(Carbon $asOfDate, bool $skipDelete = false): void
     {
-        DB::transaction(function () use ($asOfDate, $skipDelete) {
-            $dateString = $asOfDate->format('Y-m-d');
+        $lockKey = 'inventory_regeneration_' . $asOfDate->format('Y-m-d');
 
-            // 既存のスナップショットを削除（スキップオプションがfalseの場合のみ）
-            if (! $skipDelete) {
-                self::where('snapshot_date', $dateString)->delete();
-            }
+        // 排他制御でロック取得（最大5分間）
+        $lockAcquired = Cache::lock($lockKey, 300)->get(function () use ($asOfDate, $skipDelete) {
+            DB::transaction(function () use ($asOfDate, $skipDelete) {
+                $dateString = $asOfDate->format('Y-m-d');
 
-            // 倉庫に保管されている機材のみの在庫状況を計算
-            $equipments = Equipment::active()
-                ->whereHas('location', function ($query) {
-                    $query->where('type', '倉庫');
-                })
-                ->get();
+                // 既存のスナップショットを削除（スキップオプションがfalseの場合のみ）
+                if (! $skipDelete) {
+                    self::where('snapshot_date', $dateString)->delete();
+                }
 
-            foreach ($equipments as $equipment) {
-                $inventoryData = self::calculateInventoryAsOf($equipment->id, $asOfDate);
+                // 機材名 + 場所でグループ化した在庫情報を生成
+                $groupedInventory = self::calculateGroupedInventoryAsOf($asOfDate);
+                $snapshots = [];
 
-                // 場所毎の在庫スナップショットを作成
-                foreach ($inventoryData['locations'] as $locationData) {
-                    if ($locationData['quantity'] > 0) {
-                        self::create([
-                            'snapshot_date' => $dateString,
-                            'equipment_id' => $equipment->id,
-                            'location_id' => $locationData['location_id'],
-                            'quantity' => $locationData['quantity'],
-                            'total_quantity' => $inventoryData['total_quantity'],
-                        ]);
+                foreach ($groupedInventory as $group) {
+                    $snapshots[] = [
+                        'snapshot_date' => $dateString,
+                        'equipment_name' => $group['equipment_name'],
+                        'company_numbers' => $group['company_numbers'],
+                        'category_name' => $group['category_name'],
+                        'subcategory_name' => $group['subcategory_name'],
+                        'sample_equipment_id' => $group['sample_equipment_id'],
+                        'location_id' => $group['location_id'],
+                        'quantity' => $group['quantity'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+
+                    // 一定数たまったらバッチ挿入
+                    if (count($snapshots) >= 1000) {
+                        self::insert($snapshots);
+                        $snapshots = [];
                     }
                 }
-            }
+
+                // 残りのスナップショットを挿入
+                if (!empty($snapshots)) {
+                    self::insert($snapshots);
+                }
+            });
         });
+
+        if (!$lockAcquired) {
+            throw new \Exception('別のユーザーが在庫再計算を実行中です。しばらくしてから再度お試しください。');
+        }
+    }
+
+    /**
+     * 指定日時点での機材をグループ化した在庫情報を計算
+     */
+    public static function calculateGroupedInventoryAsOf(Carbon $asOfDate): array
+    {
+        $results = DB::select("
+            SELECT
+                e.name as equipment_name,
+                GROUP_CONCAT(DISTINCT e.company_number ORDER BY e.company_number SEPARATOR ', ') as company_numbers,
+                ec.name as category_name,
+                es.name as subcategory_name,
+                e.now_location_id as location_id,
+                MIN(e.id) as sample_equipment_id,
+                CASE
+                    WHEN e.management_type = 'individual' THEN
+                        COUNT(e.id) - COALESCE(usage.in_use_count, 0) - COALESCE(repairs.repair_count, 0)
+                    ELSE
+                        COALESCE(SUM(e.quantity), 0) - COALESCE(SUM(usage.in_use_quantity), 0)
+                END as quantity
+            FROM equipments e
+            LEFT JOIN equipment_subcategories es ON e.subcategory_id = es.id
+            LEFT JOIN equipment_categories ec ON es.category_id = ec.id
+            LEFT JOIN (
+                SELECT
+                    equipment_id,
+                    COUNT(*) as in_use_count,
+                    COALESCE(SUM(quantity), 0) as in_use_quantity
+                FROM phase_equipment
+                WHERE status = 'checked_out'
+                AND checkout_date <= ?
+                AND (checkin_date IS NULL OR checkin_date > ?)
+                GROUP BY equipment_id
+            ) usage ON e.id = usage.equipment_id
+            LEFT JOIN (
+                SELECT
+                    equipment_id,
+                    COUNT(*) as repair_count
+                FROM repair_records
+                WHERE status = 'in_progress'
+                AND failure_occurred_at <= ?
+                AND (completed_at IS NULL OR completed_at > ?)
+                GROUP BY equipment_id
+            ) repairs ON e.id = repairs.equipment_id
+            WHERE e.is_active = 1
+            GROUP BY e.name, e.now_location_id, ec.name, es.name
+            HAVING quantity > 0
+            ORDER BY e.name, e.now_location_id
+        ", [
+            $asOfDate->format('Y-m-d H:i:s'),
+            $asOfDate->format('Y-m-d H:i:s'),
+            $asOfDate->format('Y-m-d H:i:s'),
+            $asOfDate->format('Y-m-d H:i:s'),
+        ]);
+
+        return array_map(function ($row) {
+            return [
+                'equipment_name' => $row->equipment_name,
+                'company_numbers' => $row->company_numbers,
+                'category_name' => $row->category_name,
+                'subcategory_name' => $row->subcategory_name,
+                'sample_equipment_id' => $row->sample_equipment_id,
+                'location_id' => $row->location_id,
+                'quantity' => (int)$row->quantity,
+            ];
+        }, $results);
     }
 
     /**

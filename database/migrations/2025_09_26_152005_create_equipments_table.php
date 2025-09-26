@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('equipments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('subcategory_id')->constrained('equipment_subcategories')->onDelete('restrict')->comment('中分類ID');
+            $table->foreignId('subcategory_id')->constrained('equipment_subcategories')->onDelete('restrict')->comment('サブカテゴリID');
             $table->integer('sort')->default(0)->comment('ソート順');
             $table->string('manufacturer')->nullable()->comment('メーカー名');
             $table->string('name')->comment('機材名');
-            $table->string('company_number', 50)->nullable()->unique()->comment('新音番号');
+            $table->string('company_number', 50)->nullable()->comment('新音番号');
             $table->enum('management_type', ['individual', 'quantity'])->default('individual')->comment('管理方式');
             $table->integer('quantity')->default(1)->comment('在庫数量');
             $table->enum('unit', ['台', '個', '本', '箱', 'ケース', 'ラック', 'セット'])->default('台')->comment('単位');
@@ -29,7 +29,9 @@ return new class extends Migration
             $table->decimal('price', 12, 2)->nullable()->comment('価格');
             $table->enum('status', ['available', 'in_use', 'repair', 'maintenance', 'retired', 'lost'])->default('available')->comment('状態');
             $table->foreignId('location_id')->nullable()->constrained('locations')->onDelete('set null')->comment('基本倉庫ID');
+            $table->foreignId('now_location_id')->nullable()->constrained('locations')->onDelete('set null')->comment('現在地ID');
             $table->boolean('is_discard')->default(false)->comment('廃棄フラグ');
+            $table->boolean('is_schedule_visible')->default(true)->comment('スケジュール表に表示する対象機材かどうか');
             $table->date('discard_at')->nullable()->comment('廃棄日');
             $table->text('notes')->nullable()->comment('備考');
             $table->timestamps();
@@ -40,6 +42,7 @@ return new class extends Migration
             $table->index('manufacturer');
             $table->index('name');
             $table->index('location_id');
+            $table->index('now_location_id');
             $table->index('is_discard');
         });
     }

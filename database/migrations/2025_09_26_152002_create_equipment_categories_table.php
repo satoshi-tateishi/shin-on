@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('equipment_categories', function (Blueprint $table) {
             $table->id();
             $table->integer('sort')->default(0)->comment('ソート順');
-            $table->string('name')->comment('大分類名');
+            $table->string('name')->comment('カテゴリ名');
+            $table->boolean('is_active')->default(true)->comment('有効フラグ');
             $table->timestamps();
 
             $table->index('sort');
+            $table->index('is_active');
         });
     }
 

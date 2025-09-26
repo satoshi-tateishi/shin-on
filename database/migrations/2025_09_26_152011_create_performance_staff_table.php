@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('performance_id')->constrained()->onDelete('cascade')->comment('公演ID');
             $table->foreignId('user_id')->constrained()->onDelete('cascade')->comment('ユーザーID');
             $table->foreignId('position_id')->constrained()->onDelete('restrict')->comment('ポジションID');
-            $table->foreignId('production_id')->nullable()->constrained()->onDelete('set null')->comment('プロダクションID');
             $table->text('note')->nullable()->comment('備考');
             $table->timestamps();
 
@@ -27,7 +26,6 @@ return new class extends Migration
             $table->index('performance_id', 'idx_performance_id');
             $table->index('user_id', 'idx_user_id');
             $table->index('position_id', 'idx_position_id');
-            $table->index('production_id', 'idx_production_id');
         });
     }
 

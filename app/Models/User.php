@@ -24,8 +24,6 @@ class User extends Authenticatable
         'furigana',
         'email',
         'lineworks_id',
-        'lineworks_token',
-        'lineworks_refresh_token',
         'icon',
         'mobile_phone',
         'is_active',
@@ -52,9 +50,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'remember_token',
-        'lineworks_token',
-        'lineworks_refresh_token',
+        // 削除されたカラムのため空
     ];
 
     /**
