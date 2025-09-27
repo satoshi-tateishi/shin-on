@@ -88,31 +88,34 @@ class RepairRecordController extends Controller
     }
 
     /**
-     * Show the form for creating a new repair record.
+     * 修理記録作成フォームの表示
+     *
+     * パフォーマンス最適化により、初期ページロードでは最小限のデータのみ取得。
+     * サブカテゴリと機材データは、ユーザーの選択に応じてAPIで動的取得する。
+     *
+     * @param Request $request equipment_id パラメータで特定機材を事前選択可能
+     * @return View
      */
     public function create(Request $request): View
     {
+        // URLパラメータで特定機材が指定されている場合は事前取得
         $equipment = null;
         if ($request->filled('equipment_id')) {
             $equipment = Equipment::with('subcategory.category')->find($request->equipment_id);
         }
 
-        $equipments = Equipment::with('subcategory.category')
-            ->active()
-            ->join('equipment_subcategories', 'equipments.subcategory_id', '=', 'equipment_subcategories.id')
-            ->join('equipment_categories', 'equipment_subcategories.category_id', '=', 'equipment_categories.id')
-            ->orderBy('equipment_categories.sort')
-            ->orderBy('equipment_subcategories.sort')
-            ->orderBy('equipments.sort')
-            ->select('equipments.*')
-            ->get();
+        // 初期ページロードでは機材カテゴリのみ取得（通信量削減のため）
+        // サブカテゴリ: /api/subcategories/by-category で動的取得
+        // 機材データ: /api/equipments/by-subcategory で動的取得
+        $categories = EquipmentCategory::active()->ordered()->get();
 
+        // 修理担当者一覧を取得
         $staffUsers = User::where('is_staff', true)
             ->orderBy('sort')
             ->orderBy('name')
             ->get();
 
-        return view('repair-records.create', compact('equipment', 'equipments', 'staffUsers'));
+        return view('repair-records.create', compact('equipment', 'categories', 'staffUsers'));
     }
 
     /**
@@ -327,11 +330,13 @@ class RepairRecordController extends Controller
 
             DB::transaction(function () use ($repairRecord, $validated) {
                 $oldStatus = $repairRecord->status;
+                $newStatus = $validated['status'] ?? $oldStatus;
+
                 $repairRecord->update($validated);
 
                 // ステータス変更時の機材ステータス更新
-                if ($oldStatus !== $validated['status']) {
-                    $this->updateEquipmentStatus($repairRecord->equipment, $validated['status']);
+                if ($oldStatus !== $newStatus) {
+                    $this->updateEquipmentStatus($repairRecord->equipment, $newStatus);
                 }
             });
 
@@ -493,20 +498,17 @@ class RepairRecordController extends Controller
 
     /**
      * Update equipment status based on repair status.
-     * NOTE: 機材ステータスは手動操作（start/complete/cancel）で変更するため、
-     *       このメソッドは現在使用されていません。
+     * 修理記録のステータス変更時に機材ステータスを連動して更新します。
      */
     private function updateEquipmentStatus(Equipment $equipment, string $repairStatus): void
     {
-        // 機材ステータスは各ワークフローメソッド（start/complete/cancel）で
-        // 明示的に管理するため、このメソッドは使用しない
+        $equipmentStatus = match ($repairStatus) {
+            'in_progress' => 'repair',
+            'reported', 'completed', 'cancelled' => 'available',
+            default => $equipment->status,
+        };
 
-        // 従来のロジック（参考用）:
-        // $equipmentStatus = match ($repairStatus) {
-        //     'in_progress' => 'repair',
-        //     'completed', 'cancelled' => 'available',
-        //     default => $equipment->status,
-        // };
+        $equipment->update(['status' => $equipmentStatus]);
     }
 
     /**

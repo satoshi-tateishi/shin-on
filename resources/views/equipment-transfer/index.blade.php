@@ -23,14 +23,19 @@
 
 @section('content')
     <div class="p-6" x-data="transferManager()">
-        <!-- フィルター -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+        {{-- ====================================== --}}
+        {{-- フィルターセクション --}}
+        {{-- ====================================== --}}
+        <section class="mb-6 bg-gray-50 p-4 rounded-lg" aria-label="機材検索フィルタ">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- 現在地フィルタ -->
+                <!-- 現在の保管場所フィルタ -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">現在の保管場所</label>
-                    <select x-model="filters.location_id" @change="onLocationChange($event)"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        現在の保管場所
+                    </label>
+                    <select x-model="filters.location_id"
+                            @change="onLocationChange($event)"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <template x-for="location in locations" :key="location.id">
                             <option :value="location.id" x-text="location.name"></option>
                         </template>
@@ -39,9 +44,12 @@
 
                 <!-- カテゴリフィルタ -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-                    <select x-model="filters.category_id" @change="loadEquipmentData()"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        カテゴリ
+                    </label>
+                    <select x-model="filters.category_id"
+                            @change="loadEquipmentData()"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">すべてのカテゴリ</option>
                         <template x-for="category in categories" :key="category.id">
                             <option :value="category.id" x-text="category.name"></option>
@@ -49,36 +57,64 @@
                     </select>
                 </div>
 
-                <!-- 検索 -->
+                <!-- 機材名検索 -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">機材名検索</label>
-                    <input type="text" x-model="filters.search" @input.debounce.500ms="loadEquipmentData()"
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        機材名検索
+                    </label>
+                    <input type="text"
+                           x-model="filters.search"
+                           @input.debounce.500ms="loadEquipmentData()"
                            placeholder="機材名を入力..."
-                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
-
             </div>
-        </div>
+        </section>
 
-        <!-- ローディング -->
-        <div x-show="loading" class="bg-white shadow-sm rounded-lg p-8 text-center">
+        {{-- ====================================== --}}
+        {{-- 状態表示セクション --}}
+        {{-- ====================================== --}}
+        <!-- ローディング状態 -->
+        <section x-show="loading"
+                 class="bg-white shadow-sm rounded-lg p-8 text-center"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 aria-live="polite">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p class="text-gray-600">データを読み込み中...</p>
-        </div>
+        </section>
 
         <!-- エラー表示 -->
-        <div x-show="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div class="flex">
-                <div class="ml-3">
+        <section x-show="error"
+                 class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 role="alert"
+                 aria-live="assertive">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+                <div>
                     <h3 class="text-sm font-medium text-red-800">エラーが発生しました</h3>
                     <div class="mt-2 text-sm text-red-700" x-text="error"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 機材一覧テーブル -->
-        <div x-show="!loading && !error" class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
+        {{-- ====================================== --}}
+        {{-- 機材一覧セクション --}}
+        {{-- ====================================== --}}
+        <section x-show="!loading && !error"
+                 class="bg-white shadow rounded-lg"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform translate-y-4"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 aria-label="移動可能機材一覧">
+            <!-- テーブルヘッダー -->
+            <header class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">
                         移動可能機材一覧
@@ -87,60 +123,85 @@
                         </span>
                     </h2>
                 </div>
-            </div>
+            </header>
 
-            <!-- テーブル -->
+            <!-- 機材一覧テーブル -->
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200" role="table">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 機材名
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 基本倉庫
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 現在地
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 移動先選択
                             </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <template x-for="equipment in equipmentData" :key="equipment.id">
-                            <tr class="hover:bg-gray-50"
-                                :class="getTransferDestination(equipment.id) ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''">
-                                <!-- 機材名 -->
-                                <td class="px-6 py-4">
-                                    <div>
+                            <tr class="hover:bg-gray-50 transition-colors duration-200"
+                                :class="getTransferDestination(equipment.id) ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''"
+                                role="row">
+                                <!-- 機材名セル -->
+                                <td class="px-6 py-4" role="gridcell">
+                                    <div class="space-y-1">
+                                        <!-- カテゴリ情報 -->
                                         <div class="text-xs text-gray-500">
-                                            <span x-text="equipment.subcategory.category.name"></span> > <span x-text="equipment.subcategory.name"></span>
+                                            <span x-text="equipment.subcategory.category.name"></span>
+                                            <span class="mx-1">></span>
+                                            <span x-text="equipment.subcategory.name"></span>
                                         </div>
-                                        <div x-show="equipment.manufacturer" class="text-xs text-gray-400" x-text="equipment.manufacturer"></div>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <div class="text-sm font-medium text-gray-900" x-text="equipment.name"></div>
-                                            <div x-show="equipment.company_number" class="border border-gray-300 px-2 py-1 rounded text-xs text-gray-700 bg-gray-50" x-text="equipment.company_number"></div>
+
+                                        <!-- メーカー情報 -->
+                                        <div x-show="equipment.manufacturer"
+                                             class="text-xs text-gray-400"
+                                             x-text="equipment.manufacturer">
+                                        </div>
+
+                                        <!-- 機材名と管理番号 -->
+                                        <div class="flex items-center gap-2">
+                                            <div class="text-sm font-medium text-gray-900"
+                                                 x-text="equipment.name">
+                                            </div>
+                                            <div x-show="equipment.company_number"
+                                                 class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200"
+                                                 x-text="equipment.company_number">
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
 
-                                <!-- 基本倉庫 -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900" x-text="equipment.location.name"></div>
+                                <!-- 基本倉庫セル -->
+                                <td class="px-6 py-4 whitespace-nowrap" role="gridcell">
+                                    <div class="text-sm font-medium text-gray-900"
+                                         x-text="equipment.location.name">
+                                    </div>
                                 </td>
 
-                                <!-- 現在地 -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900" x-text="locations.find(loc => loc.id === equipment.now_location_id)?.name || '不明'"></div>
+                                <!-- 現在地セル -->
+                                <td class="px-6 py-4 whitespace-nowrap" role="gridcell">
+                                    <div class="text-sm font-medium text-gray-900"
+                                         x-text="locations.find(loc => loc.id === equipment.now_location_id)?.name || '不明'">
+                                    </div>
                                 </td>
 
-                                <!-- 移動先選択 -->
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- 移動先選択セル -->
+                                <td class="px-6 py-4 whitespace-nowrap" role="gridcell">
                                     <select :value="getTransferDestination(equipment.id)"
                                             @change="updateTransferDestination(equipment.id, $event.target.value)"
-                                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                                            :aria-label="`${equipment.name}の移動先を選択`"
+                                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
                                         <option value="">移動先を選択...</option>
                                         <template x-for="location in getAvailableDestinations(equipment)" :key="location.id">
                                             <option :value="location.id" x-text="location.name"></option>
@@ -150,58 +211,99 @@
                             </tr>
                         </template>
 
-                        <!-- データなし -->
-                        <tr x-show="equipmentData.length === 0">
-                            <td colspan="4" class="px-6 py-12 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">移動可能な機材がありません</h3>
-                                <p class="mt-1 text-sm text-gray-500">検索条件を変更してください。</p>
+                        <!-- データなし状態 -->
+                        <tr x-show="equipmentData.length === 0" role="row">
+                            <td colspan="4" class="px-6 py-12 text-center" role="gridcell">
+                                <div class="flex flex-col items-center space-y-3">
+                                    <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
+                                    </svg>
+                                    <div class="text-center">
+                                        <h3 class="text-sm font-medium text-gray-900">移動可能な機材がありません</h3>
+                                        <p class="mt-1 text-sm text-gray-500">検索条件を変更してください。</p>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
 
+        {{-- ====================================== --}}
+        {{-- モーダルセクション --}}
+        {{-- ====================================== --}}
         <!-- 一括移動確認モーダル -->
-        <div x-show="showBulkModal" x-transition.opacity class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="showBulkModal = false">
-            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
+        <div x-show="showBulkModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+             @click="showBulkModal = false"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="bulk-transfer-title">
+            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white"
+                 @click.stop
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100">
                 <div class="mt-3">
-                    <!-- ヘッダー -->
-                    <div class="flex items-center justify-between pb-3 border-b">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">倉庫間移動の確認</h3>
-                        <button @click="showBulkModal = false" class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- モーダルヘッダー -->
+                    <header class="flex items-center justify-between pb-3 border-b">
+                        <h3 id="bulk-transfer-title" class="text-lg leading-6 font-medium text-gray-900">
+                            倉庫間移動の確認
+                        </h3>
+                        <button @click="showBulkModal = false"
+                                class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                                aria-label="モーダルを閉じる">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
-                    </div>
+                    </header>
 
-                    <!-- 移動予定一覧 -->
+                    <!-- 移動予定機材一覧 -->
                     <div class="py-4">
-                        <p class="text-sm text-gray-600 mb-4">以下の機材を移動します。よろしいですか？</p>
+                        <p class="text-sm text-gray-600 mb-4">
+                            以下の機材を移動します。よろしいですか？
+                        </p>
 
                         <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-md">
-                            <table class="min-w-full">
+                            <table class="min-w-full" role="table">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            機材
+                                        </th>
+                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            移動先
+                                        </th>
+                                    </tr>
+                                </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <template x-for="transfer in pendingTransfers" :key="transfer.equipmentId">
-                                        <tr>
-                                            <td class="px-4 py-2 text-sm">
+                                        <tr role="row">
+                                            <td class="px-4 py-2" role="gridcell">
                                                 <div class="flex items-center gap-2">
-                                                    <span x-text="transfer.equipmentName"></span>
+                                                    <span class="font-medium" x-text="transfer.equipmentName"></span>
                                                     <span x-show="transfer.companyNumber !== '-'"
-                                                          class="border border-gray-300 px-2 py-1 rounded text-xs text-gray-700 bg-gray-50"
-                                                          x-text="transfer.companyNumber"></span>
+                                                          class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200"
+                                                          x-text="transfer.companyNumber">
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td class="px-4 py-2 text-sm text-gray-700">
-                                                <div class="flex items-center gap-2">
-                                                    <span x-text="transfer.currentLocationName"></span>
-                                                    <span class="text-blue-500 font-bold">→</span>
-                                                    <span x-text="transfer.toLocationName"></span>
+                                            <td class="px-4 py-2" role="gridcell">
+                                                <div class="flex items-center gap-2 text-sm">
+                                                    <span class="text-gray-600" x-text="transfer.currentLocationName"></span>
+                                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                    <span class="font-medium text-blue-600" x-text="transfer.toLocationName"></span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -211,18 +313,29 @@
                         </div>
                     </div>
 
-                    <!-- フッター -->
-                    <div class="flex space-x-3 pt-4 border-t">
+                    <!-- モーダルフッター -->
+                    <footer class="flex space-x-3 pt-4 border-t">
                         <button @click="showBulkModal = false"
-                                class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                type="button"
+                                class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                             キャンセル
                         </button>
-                        <button @click="executeBulkTransfer()" :disabled="isBulkTransferring"
-                                class="flex-1 px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            <span x-show="!isBulkTransferring">実行</span>
-                            <span x-show="isBulkTransferring">処理中...</span>
+                        <button @click="executeBulkTransfer()"
+                                :disabled="isBulkTransferring"
+                                type="button"
+                                class="flex-1 px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200">
+                            <span x-show="!isBulkTransferring" class="flex items-center justify-center">
+                                実行
+                            </span>
+                            <span x-show="isBulkTransferring" class="flex items-center justify-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                処理中...
+                            </span>
                         </button>
-                    </div>
+                    </footer>
                 </div>
             </div>
         </div>
@@ -285,20 +398,32 @@
         </div>
     </div>
 
-<!-- フローティングボタン（バッジ付き） - Tailwind CSS v4 -->
-<button id="floatingButton"
-        class="fixed bottom-4 right-4 w-30 h-14 bg-gray-400 text-white rounded-full shadow-lg hover:shadow-xl font-bold cursor-pointer transition-all duration-200 flex items-center justify-center z-50 opacity-70"
-        onclick="if(window.transferManagerData && window.transferManagerData.openBulkTransferModal) { window.transferManagerData.openBulkTransferModal(); } else { alert('移動データが選択されていません'); }">
-    移動実行
-    <!-- バッジ -->
-    <span id="transferBadge"
-          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-white min-w-6 h-6 flex items-center justify-center"
-          style="display: none;">0</span>
-</button>
+{{-- ====================================== --}}
+{{-- フローティングアクションボタン --}}
+{{-- ====================================== --}}
+<div class="fixed bottom-4 right-4 z-50">
+    <button id="floatingButton"
+            type="button"
+            onclick="handleFloatingButtonClick()"
+            aria-label="選択した機材を一括移動する"
+            class="relative w-30 h-14 bg-gray-400 text-white rounded-full shadow-lg hover:shadow-xl font-bold cursor-pointer transition-all duration-200 flex items-center justify-center opacity-70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <span class="text-sm font-medium">移動実行</span>
+
+        <!-- バッジ -->
+        <span id="transferBadge"
+              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-white min-w-6 h-6 items-center justify-center"
+              style="display: none;"
+              aria-hidden="true">
+            0
+        </span>
+    </button>
+</div>
 
 @push('scripts')
 <script>
-// API設定
+/**
+ * 倉庫間移動画面 - API設定
+ */
 const API_CONFIG = {
     warehouses: '/inventory/api/warehouses',
     categories: '/equipment-transfer/api/categories',
@@ -307,45 +432,77 @@ const API_CONFIG = {
     bulkTransfer: '/equipment-transfer/api/bulk-transfer'
 };
 
-// バッジ更新用の関数（Tailwind CSS v4対応）
+/**
+ * 倉庫間移動画面 - 定数
+ */
+const CONSTANTS = {
+    SUMIDA_WAREHOUSE_ID: 92,
+    BATCH_UPDATE_INTERVAL: 500,
+    DEBOUNCE_DELAY: 500
+};
+
+/**
+ * フローティングボタンのクリックハンドラ
+ */
+function handleFloatingButtonClick() {
+    if (window.transferManagerData && window.transferManagerData.openBulkTransferModal) {
+        window.transferManagerData.openBulkTransferModal();
+    } else {
+        alert('移動データが選択されていません');
+    }
+}
+
+/**
+ * フローティングボタンのバッジ更新
+ * @description 移動予定機材数に応じてボタンの表示を更新
+ */
 function updateFloatingButton() {
     const button = document.getElementById('floatingButton');
     const badge = document.getElementById('transferBadge');
 
-    if (window.transferManagerData) {
-        const pendingCount = window.transferManagerData.pendingTransferCount || 0;
-        const hasPending = window.transferManagerData.hasPendingTransfers || false;
+    if (!window.transferManagerData || !button || !badge) return;
 
-        // ボタンの状態更新
-        if (hasPending) {
-            // アクティブ状態: 青背景、透明度100%
-            button.className = 'fixed bottom-4 right-4 w-30 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl font-bold cursor-pointer transition-all duration-200 flex items-center justify-center z-50';
-        } else {
-            // 非アクティブ状態: グレー背景、透明度70%
-            button.className = 'fixed bottom-4 right-4 w-30 h-14 bg-gray-400 text-white rounded-full shadow-lg hover:shadow-xl font-bold cursor-pointer transition-all duration-200 flex items-center justify-center z-50 opacity-70';
-        }
+    const { pendingTransferCount = 0, hasPendingTransfers = false } = window.transferManagerData;
 
-        // バッジの表示・更新
-        if (hasPending && pendingCount > 0) {
-            badge.style.display = 'flex';
-            badge.textContent = pendingCount;
-        } else {
-            badge.style.display = 'none';
-        }
+    // ボタンスタイルの更新
+    const baseClasses = 'relative w-30 h-14 text-white rounded-full shadow-lg hover:shadow-xl font-bold cursor-pointer transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500';
+    const activeClasses = `${baseClasses} bg-blue-600`;
+    const inactiveClasses = `${baseClasses} bg-gray-400 opacity-70`;
+
+    button.className = hasPendingTransfers ? activeClasses : inactiveClasses;
+    button.disabled = !hasPendingTransfers;
+
+    // バッジの表示・更新
+    if (hasPendingTransfers && pendingTransferCount > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = pendingTransferCount;
+        badge.setAttribute('aria-label', `${pendingTransferCount}件の機材が移動対象です`);
+    } else {
+        badge.style.display = 'none';
+        badge.removeAttribute('aria-label');
     }
 }
 
-// 定期的にバッジを更新
-setInterval(updateFloatingButton, 500);
+// 定期的なバッジ更新の開始
+setInterval(updateFloatingButton, CONSTANTS.BATCH_UPDATE_INTERVAL);
 
+/**
+ * 倉庫間移動管理コンポーネント
+ * @description Alpine.jsで実装した倉庫間移動機能のメインコンポーネント
+ */
 function transferManager() {
     return {
-        // データ
+        // ===========================================
+        // データストア
+        // ===========================================
         equipmentData: [],
         locations: [],
         categories: [],
+        transferData: {},
 
-        // UI状態
+        // ===========================================
+        // UI状態管理
+        // ===========================================
         loading: false,
         error: null,
         showModal: false,
@@ -353,24 +510,30 @@ function transferManager() {
         isBulkTransferring: false,
         initialized: false,
 
-        // モーダル用データ
+        // ===========================================
+        // モーダルデータ
+        // ===========================================
         selectedEquipment: null,
         selectedToLocation: '',
         transferNote: '',
 
-        // 一括移動用データ
-        transferData: {},
-
-        // フィルター
+        // ===========================================
+        // フィルター設定
+        // ===========================================
         filters: {
             location_id: '',
             category_id: '',
             search: ''
         },
 
-        // 初期化
+        // ===========================================
+        // 初期化メソッド
+        // ===========================================
+        /**
+         * コンポーネントの初期化
+         */
         async init() {
-            // グローバル参照を設定
+            // グローバル参照を設定（フローティングボタン用）
             window.transferManagerData = this;
 
             try {
@@ -379,45 +542,59 @@ function transferManager() {
                 await this.loadEquipmentData();
                 this.initialized = true;
             } catch (error) {
-                console.error('Initialization failed:', error);
-                this.error = error.message;
+                console.error('倉庫間移動コンポーネントの初期化に失敗:', error);
+                this.error = error.message || '初期化エラーが発生しました';
                 this.initialized = true;
             }
         },
 
-        // 計算プロパティ
+        // ===========================================
+        // 計算プロパティ（Computed Properties）
+        // ===========================================
+        /**
+         * 移動予定機材があるか判定
+         */
         get hasPendingTransfers() {
             return this.pendingTransferCount > 0;
         },
 
+        /**
+         * 移動予定機材の数を取得
+         */
         get pendingTransferCount() {
-            return Object.keys(this.transferData).filter(equipmentId =>
-                this.transferData[equipmentId] && this.transferData[equipmentId].toLocationId
-            ).length;
+            return Object.values(this.transferData)
+                .filter(data => data && data.toLocationId)
+                .length;
         },
 
+        /**
+         * 移動予定機材の詳細情報を取得
+         */
         get pendingTransfers() {
             return Object.entries(this.transferData)
                 .filter(([equipmentId, data]) => data && data.toLocationId)
                 .map(([equipmentId, data]) => {
                     const equipment = this.equipmentData.find(eq => eq.id == equipmentId);
                     const toLocation = this.locations.find(loc => loc.id == data.toLocationId);
-                    const currentLocation = this.locations.find(loc => loc.id === equipment.now_location_id);
+                    const currentLocation = this.locations.find(loc => loc.id === equipment?.now_location_id);
 
                     return {
                         equipmentId: equipmentId,
-                        equipmentName: equipment.name,
-                        companyNumber: equipment.company_number || '-',
+                        equipmentName: equipment?.name || '不明',
+                        companyNumber: equipment?.company_number || '-',
                         currentLocationName: currentLocation?.name || '不明',
                         toLocationName: toLocation?.name || '不明'
                     };
                 });
         },
 
+        /**
+         * 選択された機材の移動可能先を取得
+         */
         get availableDestinations() {
             if (!this.selectedEquipment) return [];
             return this.locations.filter(location =>
-                location.id !== this.selectedEquipment.location.id
+                location.id !== this.selectedEquipment.location?.id
             );
         },
 
@@ -473,11 +650,13 @@ function transferManager() {
             }
         },
 
-        // 初期設定メソッド
+        /**
+         * デフォルトの保管場所を設定
+         */
         setDefaultLocation() {
-            const sumidaWarehouse = this.locations.find(loc => loc.id === 90);
+            const sumidaWarehouse = this.locations.find(loc => loc.id === CONSTANTS.SUMIDA_WAREHOUSE_ID);
             if (sumidaWarehouse) {
-                this.filters.location_id = 90;
+                this.filters.location_id = CONSTANTS.SUMIDA_WAREHOUSE_ID;
             } else if (this.locations.length > 0) {
                 this.filters.location_id = this.locations[0].id;
             }

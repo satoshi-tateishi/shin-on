@@ -12,40 +12,20 @@
         <p class="mt-1 text-sm text-gray-600">機材の修理・メンテナンス記録管理</p>
     </div>
 
-    @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-        <div class="flex space-x-3">
-            <a href="{{ route('repair-records.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                修理報告
-            </a>
-        </div>
-    @endif
+    <div class="flex space-x-3">
+        <a href="{{ route('repair-records.create') }}"
+           class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            修理報告
+        </a>
+    </div>
 @endsection
 
 @section('content')
 <!-- 統計サマリー -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">総修理件数</dt>
-                        <dd class="text-lg font-medium text-gray-900">{{ $stats['total'] }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="p-5">
             <div class="flex items-center">
@@ -77,24 +57,6 @@
                     <dl>
                         <dt class="text-sm font-medium text-gray-500 truncate">修理中</dt>
                         <dd class="text-lg font-medium text-blue-600">{{ $stats['in_progress'] }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">完了</dt>
-                        <dd class="text-lg font-medium text-green-600">{{ $stats['completed'] }}</dd>
                     </dl>
                 </div>
             </div>
@@ -203,22 +165,13 @@
                     @foreach($repairRecords as $record)
                         <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='{{ route('repair-records.show', $record) }}';">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                            <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm text-gray-500">{{ $record->equipment->subcategory->category->name }}　{{ $record->equipment->subcategory->name }}</div>
-                                        <div class="text-sm font-medium text-gray-900 flex items-center">
-                                            {{ $record->equipment->name }}
-                                            @if($record->equipment->company_number)
-                                                <span class="ml-2 px-2 py-1 text-xs border border-gray-300 rounded bg-gray-50">{{ $record->equipment->company_number }}</span>
-                                            @endif
-                                        </div>
+                                <div>
+                                    <div class="text-sm text-gray-500">{{ $record->equipment->subcategory->category->name }} > {{ $record->equipment->subcategory->name }}</div>
+                                    <div class="text-sm font-medium text-gray-900 flex items-center">
+                                        {{ $record->equipment->name }}
+                                        @if($record->equipment->company_number)
+                                            <span class="ml-2 px-2 py-1 text-xs border border-gray-300 rounded bg-gray-50">{{ $record->equipment->company_number }}</span>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -255,14 +208,12 @@
             </svg>
             <h3 class="mt-2 text-sm font-medium text-gray-900">修理記録がありません</h3>
             <p class="mt-1 text-sm text-gray-500">新しい修理記録を作成してください。</p>
-            @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                <div class="mt-6">
-                    <a href="{{ route('repair-records.create') }}"
-                       class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
-                        修理報告
-                    </a>
-                </div>
-            @endif
+            <div class="mt-6">
+                <a href="{{ route('repair-records.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
+                    修理報告
+                </a>
+            </div>
         </div>
     @endif
 </div>

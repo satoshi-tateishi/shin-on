@@ -29,20 +29,32 @@ class PhaseEquipmentController extends Controller
      * category information, and user data for checkout/checkin operations. Also provides
      * statistical information about equipment usage status.
      *
+     * @param Request $request The HTTP request containing filter parameters
      * @param Phase $phase The phase to display equipment for
      * @return View The index view with phase equipment data and statistics
      */
-    public function index(Phase $phase): View
+    public function index(Request $request, Phase $phase): View
     {
-        // フェーズの機材使用記録を取得
-        $phaseEquipments = $phase->phaseEquipments()
+        // フェーズの機材使用記録を取得（フィルタリング対応）
+        $query = $phase->phaseEquipments()
             ->with(['equipment.subcategory.category', 'checkoutUser', 'checkinUser'])
-            ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
+            ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id');
+
+        // ステータスフィルタリングを適用
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('phase_equipment.status', $request->status);
+        }
+
+        $phaseEquipments = $query
             ->orderBy('equipments.sort')
             ->orderByDesc('phase_equipment.created_at')
             ->select('phase_equipment.*')
             ->paginate(20);
 
+        // ページネーションリンクにURLパラメータを維持
+        $phaseEquipments->appends($request->query());
+
+        // 統計情報（常に全体の統計を表示）
         $equipmentStats = [
             'total' => PhaseEquipment::forPhase($phase->id)->count(),
             'reserved' => PhaseEquipment::forPhase($phase->id)->reserved()->count(),

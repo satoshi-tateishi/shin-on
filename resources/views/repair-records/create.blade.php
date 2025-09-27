@@ -41,35 +41,41 @@
                     </div>
                 @endif
 
-                <!-- 機材選択 -->
-                <div>
-                    <label for="equipment_id" class="block text-sm font-medium text-gray-700">機材 <span class="text-red-500">*</span></label>
-                    <select name="equipment_id" id="equipment_id" required
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('equipment_id') border-red-300 @enderror">
-                        <option value="">機材を選択してください</option>
-                        @php
-                            $groupedEquipments = $equipments->groupBy('subcategory.category.name')->map(function($categoryGroup) {
-                                return $categoryGroup->groupBy('subcategory.name');
-                            });
-                        @endphp
-                        @foreach($groupedEquipments as $categoryName => $subcategoryGroups)
-                            <optgroup label="{{ $categoryName }}">
-                                @foreach($subcategoryGroups as $subcategoryName => $equipmentGroup)
-                                    <optgroup label="　{{ $subcategoryName }}">
-                                        @foreach($equipmentGroup as $equipment)
-                                            <option value="{{ $equipment->id }}"
-                                                    {{ old('equipment_id') == $equipment->id ? 'selected' : '' }}>
-                                                　　{{ $equipment->name }}{{ $equipment->company_number ? ' [ ' . $equipment->company_number . ' ]' : '' }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </optgroup>
-                        @endforeach
+                <!-- 段階的機材選択（カテゴリ → サブカテゴリ → 機材） -->
+                <!-- パフォーマンス最適化：必要なデータのみ動的取得 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- ステップ1: カテゴリ選択（初期ページロードで取得済み） -->
+                    <div>
+                        <label for="category_filter" class="block text-sm font-medium text-gray-700">カテゴリ</label>
+                        <select name="category_filter" id="category_filter"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                            <option value="">カテゴリを選択してください</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->name }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- ステップ2: サブカテゴリ選択（API: /api/subcategories/by-category で動的取得） -->
+                    <div>
+                        <label for="subcategory_filter" class="block text-sm font-medium text-gray-700">サブカテゴリ</label>
+                        <select name="subcategory_filter" id="subcategory_filter" disabled
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500">
+                            <option value="">カテゴリを先に選択してください</option>
+                        </select>
+                    </div>
+
+                    <!-- ステップ3: 機材選択（API: /api/equipments/by-subcategory で動的取得） -->
+                    <div>
+                        <label for="equipment_id" class="block text-sm font-medium text-gray-700">機材 <span class="text-red-500">*</span></label>
+                    <select name="equipment_id" id="equipment_id" required disabled
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500 @error('equipment_id') border-red-300 @enderror">
+                        <option value="">サブカテゴリを先に選択してください</option>
                     </select>
                     @error('equipment_id')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
+                    </div>
                 </div>
 
                 <!-- 将来予約警告エリア -->
@@ -96,32 +102,38 @@
                     </div>
                 </div>
 
-                <!-- 担当者選択 -->
-                <div>
-                    <label for="staff_user_id" class="block text-sm font-medium text-gray-700">担当者 <span class="text-red-500">*</span></label>
-                    <select name="staff_user_id" id="staff_user_id" required
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('staff_user_id') border-red-300 @enderror">
-                        <option value="">担当者を選択してください</option>
-                        @foreach($staffUsers as $staffUser)
-                            <option value="{{ $staffUser->id }}"
-                                    {{ old('staff_user_id') == $staffUser->id ? 'selected' : '' }}>
-                                {{ $staffUser->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('staff_user_id')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                <!-- 担当者選択と故障発生日（サブカテゴリと位置揃え） -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- 担当者選択 -->
+                    <div class="md:max-w-48">
+                        <label for="staff_user_id" class="block text-sm font-medium text-gray-700">担当者 <span class="text-red-500">*</span></label>
+                        <select name="staff_user_id" id="staff_user_id" required
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('staff_user_id') border-red-300 @enderror">
+                            <option value="">担当者を選択してください</option>
+                            @foreach($staffUsers as $staffUser)
+                                <option value="{{ $staffUser->id }}"
+                                        {{ old('staff_user_id') == $staffUser->id ? 'selected' : '' }}>
+                                    {{ $staffUser->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('staff_user_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                <!-- 故障発生日 -->
-                <div>
-                    <label for="failure_occurred_at" class="block text-sm font-medium text-gray-700">故障発生日</label>
-                    <input type="date" name="failure_occurred_at" id="failure_occurred_at" value="{{ old('failure_occurred_at') }}"
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('failure_occurred_at') border-red-300 @enderror">
-                    @error('failure_occurred_at')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                    <!-- 故障発生日（サブカテゴリの位置に配置） -->
+                    <div class="md:max-w-48">
+                        <label for="failure_occurred_at" class="block text-sm font-medium text-gray-700">故障発生日</label>
+                        <input type="date" name="failure_occurred_at" id="failure_occurred_at" value="{{ old('failure_occurred_at') }}"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('failure_occurred_at') border-red-300 @enderror">
+                        @error('failure_occurred_at')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- 3列目は空スペース（位置揃えのため） -->
+                    <div></div>
                 </div>
 
                 <!-- 公演名 -->
@@ -215,171 +227,5 @@
 @endsection
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const photosInput = document.getElementById('photos');
-    const previewContainer = document.getElementById('image-preview');
-    const warningContainer = document.getElementById('file-limit-warning');
-    let allFiles = []; // 累積でファイルを保存する配列
-    const MAX_FILES = 2; // 最大ファイル数
-
-    photosInput.addEventListener('change', function(e) {
-        console.log('ファイル選択イベント発生'); // デバッグ用
-
-        const newFiles = Array.from(e.target.files);
-        console.log('新しく選択されたファイル数:', newFiles.length); // デバッグ用
-
-        if (newFiles.length === 0) {
-            return;
-        }
-
-        // 警告を非表示にする
-        warningContainer.classList.add('hidden');
-
-        // 新しいファイルを既存のファイル配列に追加（制限内のみ）
-        newFiles.forEach(file => {
-            if (file.type.startsWith('image/')) {
-                if (allFiles.length < MAX_FILES) {
-                    allFiles.push(file);
-                } else {
-                    // 制限に達した場合は警告を表示
-                    warningContainer.classList.remove('hidden');
-                    console.log('ファイル数制限に達しました'); // デバッグ用
-                }
-            }
-        });
-
-        console.log('総ファイル数:', allFiles.length); // デバッグ用
-
-        // 全てのプレビューを再生成
-        updatePreviews();
-        updateFileInput();
-    });
-
-    function updatePreviews() {
-        // プレビューエリアをクリア
-        previewContainer.innerHTML = '';
-
-        if (allFiles.length === 0) {
-            previewContainer.classList.add('hidden');
-            return;
-        }
-
-        // プレビューエリアを表示
-        previewContainer.classList.remove('hidden');
-
-        allFiles.forEach((file, index) => {
-            console.log('ファイル処理中:', file.name, 'タイプ:', file.type); // デバッグ用
-
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                console.log('ファイル読み込み完了:', file.name); // デバッグ用
-
-                const previewDiv = document.createElement('div');
-                previewDiv.className = 'relative group mb-2';
-
-                previewDiv.innerHTML = `
-                    <div class="w-full h-40 bg-gray-100 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center">
-                        <img src="${e.target.result}"
-                             alt="プレビュー ${index + 1}"
-                             class="max-w-full max-h-full object-contain"
-                             onload="console.log('画像表示成功: ${file.name}')"
-                             onerror="console.error('画像表示エラー: ${file.name}')">
-                    </div>
-                    <div class="absolute top-2 right-2">
-                        <button type="button"
-                                class="remove-image bg-red-500 hover:bg-red-600 text-white rounded-full p-1 text-xs"
-                                data-index="${index}"
-                                title="画像を削除">
-                            ×
-                        </button>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1 truncate">${file.name}</p>
-                `;
-
-                previewContainer.appendChild(previewDiv);
-            };
-
-            reader.onerror = function() {
-                console.error('ファイル読み込みエラー:', file.name); // デバッグ用
-            };
-
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function updateFileInput() {
-        // DataTransferを使用してFileInputを更新
-        const dt = new DataTransfer();
-        allFiles.forEach(file => {
-            dt.items.add(file);
-        });
-        photosInput.files = dt.files;
-    }
-
-    // 画像削除機能
-    previewContainer.addEventListener('click', function(e) {
-        const removeBtn = e.target.closest('.remove-image');
-        if (removeBtn) {
-            const index = parseInt(removeBtn.dataset.index);
-            console.log('画像削除:', index); // デバッグ用
-
-            // 配列から該当ファイルを削除
-            allFiles.splice(index, 1);
-
-            // 警告を非表示にする（削除によって制限以下になった場合）
-            if (allFiles.length < MAX_FILES) {
-                warningContainer.classList.add('hidden');
-            }
-
-            // プレビューとFileInputを更新
-            updatePreviews();
-            updateFileInput();
-        }
-    });
-
-    // 機材選択時の将来予約チェック
-    const equipmentSelect = document.getElementById('equipment_id');
-    const warningDiv = document.getElementById('future-reservations-warning');
-    const reservationsList = document.getElementById('reservations-list');
-
-    equipmentSelect.addEventListener('change', function() {
-        const equipmentId = this.value;
-
-        if (!equipmentId) {
-            warningDiv.classList.add('hidden');
-            return;
-        }
-
-        // 将来予約をチェック
-        fetch(`/api/equipment/${equipmentId}/future-reservations`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.reservations && data.reservations.length > 0) {
-                    // 予約一覧を表示
-                    let reservationsHtml = '<ul class="text-xs space-y-1">';
-                    data.reservations.forEach(reservation => {
-                        reservationsHtml += `
-                            <li class="flex justify-between">
-                                <span>${reservation.phase_name} (${reservation.performance_title || '公演名不明'})</span>
-                                <span class="font-mono">${reservation.start_date} ～ ${reservation.end_date}</span>
-                            </li>
-                        `;
-                    });
-                    reservationsHtml += '</ul>';
-
-                    reservationsList.innerHTML = reservationsHtml;
-                    warningDiv.classList.remove('hidden');
-                } else {
-                    warningDiv.classList.add('hidden');
-                }
-            })
-            .catch(error => {
-                console.error('将来予約チェックエラー:', error);
-                warningDiv.classList.add('hidden');
-            });
-    });
-});
-</script>
+<script src="{{ asset('js/repair-record-form.js') }}"></script>
 @endpush

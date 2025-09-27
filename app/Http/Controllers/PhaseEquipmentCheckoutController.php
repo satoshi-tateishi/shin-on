@@ -86,7 +86,7 @@ class PhaseEquipmentCheckoutController extends Controller
      *
      * This method handles the checkin process for individual equipment items.
      * It includes special handling for equipment requiring location selection
-     * (location_id 90-92) and updates the equipment's physical location.
+     * (location_id 92-94) and updates the equipment's physical location.
      *
      * @param Request $request The HTTP request containing checkin data
      * @param Phase $phase The phase the equipment belongs to
@@ -103,8 +103,8 @@ class PhaseEquipmentCheckoutController extends Controller
 
         $equipment = $phaseEquipment->equipment;
 
-        // location_id=90-92の機材は返却先選択が必要
-        $requiresLocationSelection = in_array($equipment->location_id, [90, 91, 92]);
+        // location_id=92-94の機材は返却先選択が必要
+        $requiresLocationSelection = in_array($equipment->location_id, [92, 93, 94]);
 
         $validationRules = [
             'checkin_date' => 'required|date',
@@ -119,7 +119,7 @@ class PhaseEquipmentCheckoutController extends Controller
 
         $validated = $request->validate($validationRules);
 
-        // location_id=90-92で返却先が選択されていない場合のエラー
+        // location_id=92-94で返却先が選択されていない場合のエラー
         if ($requiresLocationSelection && empty($validated['to_location_id'])) {
             return back()->withErrors([
                 'to_location_id' => 'この機材は返却先倉庫の選択が必要です。',
@@ -137,7 +137,7 @@ class PhaseEquipmentCheckoutController extends Controller
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
 
-            // location_id=90-92の機材の場合、機材の場所を更新
+            // location_id=92-94の機材の場合、機材の場所を更新
             $toLocationId = $validated['to_location_id'] ?? null;
             if ($requiresLocationSelection && $toLocationId) {
                 $equipment->update(['location_id' => $toLocationId]);

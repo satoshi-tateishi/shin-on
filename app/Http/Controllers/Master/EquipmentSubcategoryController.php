@@ -236,4 +236,61 @@ class EquipmentSubcategoryController extends Controller
     {
         return ['name', 'sort', 'created_at', 'updated_at', 'equipments_count'];
     }
+
+    /**
+     * カテゴリ別サブカテゴリ取得（API用）
+     *
+     * 修理記録作成フォームでの段階的サブカテゴリ選択に使用。
+     * 通信量削減のため、カテゴリ選択時に該当サブカテゴリのみ動的取得。
+     *
+     * @param Request $request
+     *   - category: カテゴリ名（必須）
+     * @return JsonResponse
+     *   - success: boolean
+     *   - subcategories: array サブカテゴリ一覧（sort順）
+     *     - id: サブカテゴリID
+     *     - name: サブカテゴリ名
+     *     - sort: ソート順
+     */
+    public function getSubcategoriesByCategory(Request $request)
+    {
+        try {
+            $category = $request->input('category');
+
+            // パラメータバリデーション
+            if (empty($category)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'カテゴリを指定してください',
+                ], 400);
+            }
+
+            // 指定されたカテゴリに属するアクティブなサブカテゴリを取得
+            $subcategories = EquipmentSubcategory::with('category')
+                ->whereHas('category', function ($query) use ($category) {
+                    $query->where('name', $category);
+                })
+                ->active()  // アクティブなもののみ
+                ->orderBy('sort')  // ソート値は重複しないため、これのみでOK
+                ->get()
+                ->map(function ($subcategory) {
+                    return [
+                        'id' => $subcategory->id,
+                        'name' => $subcategory->name,
+                        'sort' => $subcategory->sort ?? 999999,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'subcategories' => $subcategories,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

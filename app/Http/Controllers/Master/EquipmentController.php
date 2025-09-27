@@ -490,4 +490,67 @@ class EquipmentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * カテゴリ・サブカテゴリによる機材フィルタリング（API用）
+     *
+     * 修理記録作成フォームでの段階的機材選択に使用。
+     * パフォーマンス最適化のため、必要最小限のデータのみ返却。
+     *
+     * @param Request $request
+     *   - category: カテゴリ名（必須）
+     *   - subcategory: サブカテゴリ名（必須）
+     * @return JsonResponse
+     *   - success: boolean
+     *   - equipments: array 機材一覧（sort順）
+     *     - id: 機材ID
+     *     - name: 機材名
+     *     - company_number: 会社管理番号
+     *     - sort: ソート順
+     */
+    public function getEquipmentsBySubcategory(Request $request)
+    {
+        try {
+            $category = $request->input('category');
+            $subcategory = $request->input('subcategory');
+
+            // パラメータバリデーション
+            if (empty($category) || empty($subcategory)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'カテゴリとサブカテゴリの両方を指定してください',
+                ], 400);
+            }
+
+            // 指定されたカテゴリ・サブカテゴリに属する機材を取得
+            $equipments = Equipment::with(['subcategory.category'])
+                ->whereHas('subcategory.category', function ($query) use ($category) {
+                    $query->where('name', $category);
+                })
+                ->whereHas('subcategory', function ($query) use ($subcategory) {
+                    $query->where('name', $subcategory);
+                })
+                ->orderBy('sort')  // ソート値は重複しないため、これのみでOK
+                ->get()
+                ->map(function ($equipment) {
+                    return [
+                        'id' => $equipment->id,
+                        'name' => $equipment->name,
+                        'company_number' => $equipment->company_number,
+                        'sort' => $equipment->sort ?? 999999,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'equipments' => $equipments,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

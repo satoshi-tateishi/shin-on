@@ -36,53 +36,99 @@
                 <!-- 削除対象写真のインデックスを記録する隠しフィールド -->
                 <input type="hidden" name="removed_photos" id="removed_photos" value="">
 
-                <!-- 機材選択 -->
-                <div>
-                    <label for="equipment_id" class="block text-sm font-medium text-gray-700">機材 <span class="text-red-500">*</span></label>
-                    <select name="equipment_id" id="equipment_id" required
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('equipment_id') border-red-300 @enderror">
-                        <option value="">機材を選択してください</option>
-                        @php
-                            $groupedEquipments = $equipments->groupBy('subcategory.category.name')->map(function($categoryGroup) {
-                                return $categoryGroup->groupBy('subcategory.name');
-                            });
-                        @endphp
-                        @foreach($groupedEquipments as $categoryName => $subcategoryGroups)
-                            <optgroup label="{{ $categoryName }}">
-                                @foreach($subcategoryGroups as $subcategoryName => $equipmentGroup)
-                                    <optgroup label="　{{ $subcategoryName }}">
-                                        @foreach($equipmentGroup as $equipment)
-                                            <option value="{{ $equipment->id }}"
-                                                    {{ (old('equipment_id', $repairRecord->equipment_id) == $equipment->id) ? 'selected' : '' }}>
-                                                　　{{ $equipment->name }}{{ $equipment->company_number ? ' [ ' . $equipment->company_number . ' ]' : '' }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
+                <!-- 段階的機材選択（カテゴリ → サブカテゴリ → 機材） -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- ステップ1: カテゴリ選択 -->
+                    <div>
+                        <label for="category_filter" class="block text-sm font-medium text-gray-700">カテゴリ</label>
+                        <select name="category_filter" id="category_filter"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                            <option value="">カテゴリを選択してください</option>
+                            @php
+                                $categories = $equipments->pluck('subcategory.category')->unique('id');
+                                $selectedEquipment = $equipments->where('id', old('equipment_id', $repairRecord->equipment_id))->first();
+                                $selectedCategoryName = $selectedEquipment ? $selectedEquipment->subcategory->category->name : '';
+                            @endphp
+                            @foreach($categories as $category)
+                                <option value="{{ $category->name }}" {{ $selectedCategoryName === $category->name ? 'selected' : '' }}>{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- ステップ2: サブカテゴリ選択 -->
+                    <div>
+                        <label for="subcategory_filter" class="block text-sm font-medium text-gray-700">サブカテゴリ</label>
+                        <select name="subcategory_filter" id="subcategory_filter" {{ !$selectedCategoryName ? 'disabled' : '' }}
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm {{ !$selectedCategoryName ? 'disabled:bg-gray-100 disabled:text-gray-500' : '' }}">
+                            <option value="">{{ $selectedCategoryName ? 'サブカテゴリを選択してください' : 'カテゴリを先に選択してください' }}</option>
+                            @if($selectedCategoryName)
+                                @php
+                                    $subcategories = $equipments->where('subcategory.category.name', $selectedCategoryName)->pluck('subcategory')->unique('id');
+                                    $selectedSubcategoryName = $selectedEquipment ? $selectedEquipment->subcategory->name : '';
+                                @endphp
+                                @foreach($subcategories as $subcategory)
+                                    <option value="{{ $subcategory->name }}" {{ $selectedSubcategoryName === $subcategory->name ? 'selected' : '' }}>{{ $subcategory->name }}</option>
                                 @endforeach
-                            </optgroup>
-                        @endforeach
-                    </select>
-                    @error('equipment_id')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                            @endif
+                        </select>
+                    </div>
+
+                    <!-- ステップ3: 機材選択 -->
+                    <div>
+                        <label for="equipment_id" class="block text-sm font-medium text-gray-700">機材 <span class="text-red-500">*</span></label>
+                        <select name="equipment_id" id="equipment_id" required {{ !$selectedEquipment ? 'disabled' : '' }}
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm {{ !$selectedEquipment ? 'disabled:bg-gray-100 disabled:text-gray-500' : '' }} @error('equipment_id') border-red-300 @enderror">
+                            <option value="">{{ $selectedEquipment ? '機材を選択してください' : 'サブカテゴリを先に選択してください' }}</option>
+                            @if($selectedEquipment)
+                                @php
+                                    $equipmentOptions = $equipments->where('subcategory.name', $selectedEquipment->subcategory->name);
+                                @endphp
+                                @foreach($equipmentOptions as $equipment)
+                                    <option value="{{ $equipment->id }}" {{ old('equipment_id', $repairRecord->equipment_id) == $equipment->id ? 'selected' : '' }}>
+                                        {{ $equipment->name }}{{ $equipment->company_number ? ' [ ' . $equipment->company_number . ' ]' : '' }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('equipment_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
-                <!-- 担当者 -->
-                <div>
-                    <label for="staff_user_id" class="block text-sm font-medium text-gray-700">担当者 <span class="text-red-500">*</span></label>
-                    <select name="staff_user_id" id="staff_user_id" required
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('staff_user_id') border-red-300 @enderror">
-                        <option value="">担当者を選択してください</option>
-                        @foreach($staffUsers as $staffUser)
-                            <option value="{{ $staffUser->id }}"
-                                    {{ old('staff_user_id', $repairRecord->staff_user_id) == $staffUser->id ? 'selected' : '' }}>
-                                {{ $staffUser->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('staff_user_id')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                <!-- 担当者選択と故障発生日（サブカテゴリと位置揃え） -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- 担当者選択 -->
+                    <div class="md:max-w-48">
+                        <label for="staff_user_id" class="block text-sm font-medium text-gray-700">担当者 <span class="text-red-500">*</span></label>
+                        <select name="staff_user_id" id="staff_user_id" required
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('staff_user_id') border-red-300 @enderror">
+                            <option value="">担当者を選択してください</option>
+                            @foreach($staffUsers as $staffUser)
+                                <option value="{{ $staffUser->id }}"
+                                        {{ old('staff_user_id', $repairRecord->staff_user_id) == $staffUser->id ? 'selected' : '' }}>
+                                    {{ $staffUser->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('staff_user_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- 故障発生日（サブカテゴリの位置に配置） -->
+                    <div class="md:max-w-48">
+                        <label for="failure_occurred_at" class="block text-sm font-medium text-gray-700">故障発生日</label>
+                        <input type="date" name="failure_occurred_at" id="failure_occurred_at"
+                               value="{{ old('failure_occurred_at', $repairRecord->failure_occurred_at?->format('Y-m-d')) }}"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('failure_occurred_at') border-red-300 @enderror">
+                        @error('failure_occurred_at')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- 3列目は空スペース（位置揃えのため） -->
+                    <div></div>
                 </div>
 
                 <!-- ステータス -->
@@ -96,17 +142,6 @@
                         <option value="cancelled" {{ old('status', $repairRecord->status) === 'cancelled' ? 'selected' : '' }}>キャンセル</option>
                     </select>
                     @error('status')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- 故障発生日 -->
-                <div>
-                    <label for="failure_occurred_at" class="block text-sm font-medium text-gray-700">故障発生日</label>
-                    <input type="date" name="failure_occurred_at" id="failure_occurred_at"
-                           value="{{ old('failure_occurred_at', $repairRecord->failure_occurred_at?->format('Y-m-d')) }}"
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('failure_occurred_at') border-red-300 @enderror">
-                    @error('failure_occurred_at')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -135,11 +170,11 @@
                     @enderror
                 </div>
 
-
                 <!-- 問題内容 -->
                 <div>
                     <label for="problem_description" class="block text-sm font-medium text-gray-700">問題内容 <span class="text-red-500">*</span></label>
                     <textarea name="problem_description" id="problem_description" rows="4" required
+                              placeholder="発生した問題・不具合の詳細を記載してください"
                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('problem_description') border-red-300 @enderror">{{ old('problem_description', $repairRecord->problem_description) }}</textarea>
                     @error('problem_description')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -147,11 +182,9 @@
                 </div>
 
                 <!-- 故障箇所写真 -->
-                <div class="border-t pt-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">故障箇所写真</h3>
+                <div>
+                    <label for="photos" class="block text-sm font-medium text-gray-700">故障箇所写真</label>
 
-
-                    <!-- 既存の写真表示 -->
                     @php
                         $photos = [];
                         if ($repairRecord->photos && is_array($repairRecord->photos)) {
@@ -167,7 +200,7 @@
                     @if(count($photos) > 0)
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">現在の写真</label>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
                                 @foreach($photos as $index => $photoPath)
                                     @if(is_string($photoPath) && !empty(trim($photoPath)))
                                         <div class="relative" data-photo-index="{{ $index }}">
@@ -191,35 +224,31 @@
                         </div>
                     @endif
 
-                    <!-- 新しい写真のアップロード -->
                     @if(!$photos || count($photos) < 2)
-                        <div>
-                            <label for="photos" class="block text-sm font-medium text-gray-700">写真を追加</label>
-                            <input type="file" name="photos[]" id="photos" multiple accept="image/*"
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('photos') border-red-300 @enderror">
-                            @error('photos')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            @error('photos.*')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-sm text-gray-500">
-                                @php
-                                    $currentCount = $photos ? count($photos) : 0;
-                                    $remainingSlots = 2 - $currentCount;
-                                @endphp
-                                あと{{ $remainingSlots }}枚まで追加できます（最大10MB/枚）
-                            </p>
+                        <input type="file" name="photos[]" id="photos" multiple accept="image/*"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('photos') border-red-300 @enderror">
+                        @error('photos')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('photos.*')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500">
+                            @php
+                                $currentCount = $photos ? count($photos) : 0;
+                                $remainingSlots = 2 - $currentCount;
+                            @endphp
+                            あと{{ $remainingSlots }}枚まで追加できます（最大10MB/枚）
+                        </p>
 
-                            <!-- 警告メッセージエリア -->
-                            <div id="file-limit-warning" class="mt-2 p-3 bg-yellow-100 border border-yellow-300 text-yellow-700 rounded-md hidden">
-                                <p class="text-sm">⚠️ 最大2枚までしかアップロードできません。追加したい場合は、既存の画像を削除してから選択してください。</p>
-                            </div>
+                        <!-- 警告メッセージエリア -->
+                        <div id="file-limit-warning" class="mt-2 p-3 bg-yellow-100 border border-yellow-300 text-yellow-700 rounded-md hidden">
+                            <p class="text-sm">⚠️ 最大2枚までしかアップロードできません。追加したい場合は、既存の画像を削除してから選択してください。</p>
+                        </div>
 
-                            <!-- 新しい写真のプレビューエリア -->
-                            <div id="new-photo-preview" class="mt-3 grid grid-cols-2 gap-4 hidden">
-                                <!-- プレビュー画像がここに動的に追加される -->
-                            </div>
+                        <!-- 画像プレビューエリア -->
+                        <div id="image-preview" class="mt-3 grid grid-cols-2 md:grid-cols-2 gap-4 hidden">
+                            <!-- プレビュー画像がここに動的に追加される -->
                         </div>
                     @endif
                 </div>
@@ -229,7 +258,7 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">修理詳細情報</h3>
                     <div class="space-y-6">
 
-                    <div>
+                    <div class="md:max-w-48">
                         <label for="repair_company" class="block text-sm font-medium text-gray-700">修理業者</label>
                         <input type="text" name="repair_company" id="repair_company" value="{{ old('repair_company', $repairRecord->repair_company) }}"
                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('repair_company') border-red-300 @enderror">
@@ -238,7 +267,7 @@
                         @enderror
                     </div>
 
-                    <div>
+                    <div class="md:max-w-48">
                         <label for="repaired_by" class="block text-sm font-medium text-gray-700">社内修理担当者</label>
                         <input type="text" name="repaired_by" id="repaired_by" value="{{ old('repaired_by', $repairRecord->repaired_by) }}"
                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('repaired_by') border-red-300 @enderror">
@@ -247,7 +276,7 @@
                         @enderror
                     </div>
 
-                    <div>
+                    <div class="md:max-w-48">
                         <label for="started_at" class="block text-sm font-medium text-gray-700">修理開始日</label>
                         <input type="date" name="started_at" id="started_at"
                                value="{{ old('started_at', $repairRecord->started_at?->format('Y-m-d')) }}"
@@ -257,7 +286,7 @@
                         @enderror
                     </div>
 
-                    <div>
+                    <div class="md:max-w-48">
                         <label for="completed_at" class="block text-sm font-medium text-gray-700">修理完了日</label>
                         <input type="date" name="completed_at" id="completed_at"
                                value="{{ old('completed_at', $repairRecord->completed_at?->format('Y-m-d')) }}"
@@ -277,7 +306,7 @@
                     </div>
 
 
-                    <div>
+                    <div class="md:max-w-48">
                         <label for="repair_cost" class="block text-sm font-medium text-gray-700">修理費用(税別)</label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -294,7 +323,7 @@
                         @enderror
                     </div>
 
-                    <div>
+                    <div class="md:max-w-48">
                         <label for="warranty_until" class="block text-sm font-medium text-gray-700">修理保証期限</label>
                         <input type="date" name="warranty_until" id="warranty_until"
                                value="{{ old('warranty_until', $repairRecord->warranty_until?->format('Y-m-d')) }}"
@@ -310,6 +339,7 @@
                 <div>
                     <label for="note" class="block text-sm font-medium text-gray-700">備考</label>
                     <textarea name="note" id="note" rows="3"
+                              placeholder="その他の特記事項があれば記載してください"
                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm @error('note') border-red-300 @enderror">{{ old('note', $repairRecord->note) }}</textarea>
                     @error('note')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -338,125 +368,8 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/repair-record-form.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const photosInput = document.getElementById('photos');
-    const previewContainer = document.getElementById('new-photo-preview');
-    const warningContainer = document.getElementById('file-limit-warning');
-    let newFiles = []; // 新規追加ファイルを管理する配列
-
-    // 既存の写真数を取得
-    const existingPhotosCount = {{ $photos ? count($photos) : 0 }};
-    const MAX_FILES = 2;
-
-    if (photosInput && previewContainer) {
-        photosInput.addEventListener('change', function(e) {
-            const selectedFiles = Array.from(e.target.files);
-
-            if (selectedFiles.length === 0) {
-                return;
-            }
-
-            // 警告を非表示にする
-            warningContainer.classList.add('hidden');
-
-            // 新しいファイルを既存のファイル配列に追加（制限内のみ）
-            selectedFiles.forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    const totalCount = existingPhotosCount + newFiles.length;
-                    if (totalCount < MAX_FILES) {
-                        newFiles.push(file);
-                    } else {
-                        // 制限に達した場合は警告を表示
-                        warningContainer.classList.remove('hidden');
-                    }
-                }
-            });
-
-            // プレビューを更新
-            updateNewPhotoPreviews();
-            updateFileInput();
-        });
-    }
-
-    function updateNewPhotoPreviews() {
-        // プレビューエリアをクリア
-        previewContainer.innerHTML = '';
-
-        if (newFiles.length === 0) {
-            previewContainer.classList.add('hidden');
-            return;
-        }
-
-        // プレビューエリアを表示
-        previewContainer.classList.remove('hidden');
-
-        newFiles.forEach((file, index) => {
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const previewDiv = document.createElement('div');
-                previewDiv.className = 'relative group mb-2';
-
-                previewDiv.innerHTML = `
-                    <div class="w-full h-40 bg-gray-100 rounded-lg border border-gray-300 overflow-hidden flex items-center justify-center">
-                        <img src="${e.target.result}"
-                             alt="プレビュー ${index + 1}"
-                             class="max-w-full max-h-full object-contain">
-                    </div>
-                    <div class="absolute top-2 right-2">
-                        <button type="button"
-                                class="remove-new-image bg-red-500 hover:bg-red-600 text-white rounded-full p-1 text-xs"
-                                data-index="${index}"
-                                title="画像を削除">
-                            ×
-                        </button>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1 truncate">${file.name}</p>
-                `;
-
-                previewContainer.appendChild(previewDiv);
-            };
-
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function updateFileInput() {
-        // DataTransferを使用してFileInputを更新
-        const dt = new DataTransfer();
-        newFiles.forEach(file => {
-            dt.items.add(file);
-        });
-        if (photosInput) {
-            photosInput.files = dt.files;
-        }
-    }
-
-    // 新規画像削除機能
-    if (previewContainer) {
-        previewContainer.addEventListener('click', function(e) {
-            const removeBtn = e.target.closest('.remove-new-image');
-            if (removeBtn) {
-                const index = parseInt(removeBtn.dataset.index);
-
-                // 配列から該当ファイルを削除
-                newFiles.splice(index, 1);
-
-                // 警告を非表示にする（削除によって制限以下になった場合）
-                const totalCount = existingPhotosCount + newFiles.length;
-                if (totalCount < MAX_FILES) {
-                    warningContainer.classList.add('hidden');
-                }
-
-                // プレビューとFileInputを更新
-                updateNewPhotoPreviews();
-                updateFileInput();
-            }
-        });
-    }
-});
-
 // 既存写真の削除機能
 function removeExistingPhoto(index) {
     if (!confirm('この写真を削除しますか？')) {
@@ -530,6 +443,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 repairCostHidden.value = numValue;
             }
         });
+    }
+
+    // 段階的機材選択機能（編集時の初期値設定対応）
+    const categorySelect = document.getElementById('category_filter');
+    const subcategorySelect = document.getElementById('subcategory_filter');
+    const equipmentSelect = document.getElementById('equipment_id');
+
+    if (categorySelect && subcategorySelect && equipmentSelect) {
+        // 初期化時に既存値があれば段階的選択を有効化
+        @if($selectedEquipment)
+            // 既に選択済みの機材がある場合は、カテゴリとサブカテゴリも有効化
+            subcategorySelect.disabled = false;
+            subcategorySelect.classList.remove('disabled:bg-gray-100', 'disabled:text-gray-500');
+            equipmentSelect.disabled = false;
+            equipmentSelect.classList.remove('disabled:bg-gray-100', 'disabled:text-gray-500');
+        @endif
     }
 });
 </script>

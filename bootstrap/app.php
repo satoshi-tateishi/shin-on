@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // セキュリティヘッダーミドルウェアをグローバルに適用
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // カスタムミドルウェアのエイリアス登録
+        $middleware->alias([
+            'performance.access' => \App\Http\Middleware\CheckPerformanceAccess::class,
+        ]);
     })
     ->withSchedule(function ($schedule) {
         // 毎日午前6時に機材ステータスを自動更新

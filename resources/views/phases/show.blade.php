@@ -21,7 +21,9 @@
             </svg>
             戻る
         </a>
-        @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'editor' ||
+            auth()->user()->role === 'admin' ||
+            $performance->staff->contains('user_id', auth()->id()))
             <a href="{{ route('phases.edit', $phase) }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +139,9 @@
     <div class="px-4 py-5 sm:p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg leading-6 font-medium text-gray-900">使用機材</h3>
-            @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+            @if(auth()->user()->role === 'editor' ||
+                auth()->user()->role === 'admin' ||
+                $performance->staff->contains('user_id', auth()->id()))
                 <a href="{{ route('phases.equipment.index', $phase) }}"
                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,19 +252,8 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">機材使用が登録されていません</h3>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">使用機材が登録されていません</h3>
                 <p class="mt-1 text-sm text-gray-500">このフェーズで使用する機材を登録しましょう。</p>
-                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                    <div class="mt-6">
-                        <a href="{{ route('phases.equipment.index', $phase) }}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                            </svg>
-                            使用機材 管理
-                        </a>
-                    </div>
-                @endif
             </div>
         @endif
     </div>

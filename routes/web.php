@@ -38,10 +38,19 @@ Route::prefix('auth/lineworks')->group(function () {
 // 認証が必要なルート
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
-        return view('dashboard', ['companyLogo' => null]);
+        $companyLogo = \App\Models\CompanyLogo::getActiveLogo();
+        return view('dashboard', ['companyLogo' => $companyLogo?->file_path]);
     })->name('dashboard');
 
     Route::post('/logout', [LineWorksController::class, 'logout'])->name('logout');
+
+    // 管理者機能ルート
+    Route::prefix('admin')->name('admin.')->group(function () {
+        // 会社ロゴ管理
+        Route::get('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'index'])->name('company-logo.index');
+        Route::post('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'store'])->name('company-logo.store');
+        Route::delete('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'destroy'])->name('company-logo.destroy');
+    });
 
     // マスタ管理ルート
     Route::prefix('master')->name('master.')->group(function () {
@@ -127,11 +136,13 @@ Route::middleware('auth')->group(function () {
     });
 
     // 公演・フェーズ管理ルート
-    Route::resource('performances', PerformanceController::class);
-    Route::resource('performances.phases', PhaseController::class)->shallow();
+    Route::resource('performances', PerformanceController::class)->middleware(['performance.access'])->except(['index', 'show']);
+    Route::resource('performances', PerformanceController::class)->only(['index', 'show']);
+    Route::resource('performances.phases', PhaseController::class)->shallow()->middleware(['performance.access'])->except(['index', 'show']);
+    Route::get('phases/{phase}', [PhaseController::class, 'show'])->name('phases.show');
 
     // フェーズ機材使用管理ルート
-    Route::prefix('phases/{phase}')->name('phases.')->group(function () {
+    Route::prefix('phases/{phase}')->name('phases.')->middleware(['performance.access'])->group(function () {
         // 一括ステータス変更（resourceルートより前に配置）
         Route::patch('equipment/bulk-checkout', [PhaseEquipmentCheckoutController::class, 'bulkCheckout'])->name('equipment.bulk-checkout');
         Route::patch('equipment/bulk-checkout-reserved', [PhaseEquipmentCheckoutController::class, 'bulkCheckoutReserved'])->name('equipment.bulk-checkout-reserved');
@@ -169,6 +180,12 @@ Route::middleware('auth')->group(function () {
     // 機材将来予約チェックAPI
     Route::get('api/equipment/{equipment}/future-reservations', [\App\Http\Controllers\Master\EquipmentController::class, 'getFutureReservations'])->name('api.equipment.future-reservations');
 
+    // 機材フィルタリングAPI
+    Route::get('api/equipments/by-subcategory', [\App\Http\Controllers\Master\EquipmentController::class, 'getEquipmentsBySubcategory'])->name('api.equipments.by-subcategory');
+
+    // サブカテゴリ取得API
+    Route::get('api/subcategories/by-category', [\App\Http\Controllers\Master\EquipmentSubcategoryController::class, 'getSubcategoriesByCategory'])->name('api.subcategories.by-category');
+
     // スケジュール表ルート
     Route::get('schedule', function () {
         return view('schedule.index');
@@ -182,19 +199,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::get('api/inventory', [InventoryController::class, 'getInventory'])->name('api.inventory');
-        Route::get('api/inventory/stats', [InventoryController::class, 'getInventoryStats'])->name('api.stats');
-        Route::get('api/inventory/equipment/{equipment}', [InventoryController::class, 'getEquipmentInventory'])->name('api.equipment');
-        Route::get('api/inventory/location/{location}', [InventoryController::class, 'getLocationInventory'])->name('api.location');
-        Route::post('api/inventory/generate-snapshot', [InventorySnapshotController::class, 'generateSnapshot'])->name('api.generate-snapshot');
-        Route::get('api/inventory/alerts', [InventorySnapshotController::class, 'getInventoryAlerts'])->name('api.alerts');
-        Route::get('api/inventory/snapshots', [InventorySnapshotController::class, 'getSnapshots'])->name('api.snapshots');
-        Route::delete('api/inventory/snapshot', [InventorySnapshotController::class, 'deleteSnapshot'])->name('api.delete-snapshot');
-        Route::get('api/equipment/{equipment}/usage', [InventoryController::class, 'getEquipmentUsage'])->name('api.equipment.usage');
-        Route::get('api/equipment/{equipment}/usage-test', [InventoryController::class, 'getEquipmentUsageTest'])->name('api.equipment.usage.test');
-
-        // 倉庫間移動機能
-        Route::post('api/transfer', [InventoryTransferController::class, 'transferEquipment'])->name('api.transfer');
-        Route::get('api/warehouses', [InventoryTransferController::class, 'getWarehouses'])->name('api.warehouses');
+        Route::get('api/warehouses', [InventoryController::class, 'getWarehouses'])->name('api.warehouses');
     });
 
     // 倉庫間移動専用画面

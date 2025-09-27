@@ -173,7 +173,7 @@ class PhaseEquipment extends Model
      */
     public function canCheckout(): bool
     {
-        return $this->status === 'reserved';
+        return in_array($this->status, ['reserved', 'checked_in']);
     }
 
     /**

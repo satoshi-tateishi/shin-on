@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class InventorySnapshot extends Model
@@ -44,57 +43,48 @@ class InventorySnapshot extends Model
     }
 
     /**
-     * 指定日時点での機材在庫スナップショットを生成（排他制御付き）
+     * 指定日時点での機材在庫スナップショットを生成
      */
     public static function generateSnapshot(Carbon $asOfDate, bool $skipDelete = false): void
     {
-        $lockKey = 'inventory_regeneration_' . $asOfDate->format('Y-m-d');
+        DB::transaction(function () use ($asOfDate, $skipDelete) {
+            $dateString = $asOfDate->format('Y-m-d');
 
-        // 排他制御でロック取得（最大5分間）
-        $lockAcquired = Cache::lock($lockKey, 300)->get(function () use ($asOfDate, $skipDelete) {
-            DB::transaction(function () use ($asOfDate, $skipDelete) {
-                $dateString = $asOfDate->format('Y-m-d');
+            // 既存のスナップショットを削除（スキップオプションがfalseの場合のみ）
+            if (! $skipDelete) {
+                self::where('snapshot_date', $dateString)->delete();
+            }
 
-                // 既存のスナップショットを削除（スキップオプションがfalseの場合のみ）
-                if (! $skipDelete) {
-                    self::where('snapshot_date', $dateString)->delete();
-                }
+            // 機材名 + 場所でグループ化した在庫情報を生成
+            $groupedInventory = self::calculateGroupedInventoryAsOf($asOfDate);
+            $snapshots = [];
 
-                // 機材名 + 場所でグループ化した在庫情報を生成
-                $groupedInventory = self::calculateGroupedInventoryAsOf($asOfDate);
-                $snapshots = [];
+            foreach ($groupedInventory as $group) {
+                $snapshots[] = [
+                    'snapshot_date' => $dateString,
+                    'equipment_name' => $group['equipment_name'],
+                    'company_numbers' => $group['company_numbers'],
+                    'category_name' => $group['category_name'],
+                    'subcategory_name' => $group['subcategory_name'],
+                    'sample_equipment_id' => $group['sample_equipment_id'],
+                    'location_id' => $group['location_id'],
+                    'quantity' => $group['quantity'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
 
-                foreach ($groupedInventory as $group) {
-                    $snapshots[] = [
-                        'snapshot_date' => $dateString,
-                        'equipment_name' => $group['equipment_name'],
-                        'company_numbers' => $group['company_numbers'],
-                        'category_name' => $group['category_name'],
-                        'subcategory_name' => $group['subcategory_name'],
-                        'sample_equipment_id' => $group['sample_equipment_id'],
-                        'location_id' => $group['location_id'],
-                        'quantity' => $group['quantity'],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-
-                    // 一定数たまったらバッチ挿入
-                    if (count($snapshots) >= 1000) {
-                        self::insert($snapshots);
-                        $snapshots = [];
-                    }
-                }
-
-                // 残りのスナップショットを挿入
-                if (!empty($snapshots)) {
+                // 一定数たまったらバッチ挿入
+                if (count($snapshots) >= 1000) {
                     self::insert($snapshots);
+                    $snapshots = [];
                 }
-            });
-        });
+            }
 
-        if (!$lockAcquired) {
-            throw new \Exception('別のユーザーが在庫再計算を実行中です。しばらくしてから再度お試しください。');
-        }
+            // 残りのスナップショットを挿入
+            if (!empty($snapshots)) {
+                self::insert($snapshots);
+            }
+        });
     }
 
     /**
@@ -102,6 +92,8 @@ class InventorySnapshot extends Model
      */
     public static function calculateGroupedInventoryAsOf(Carbon $asOfDate): array
     {
+        $dateString = $asOfDate->format('Y-m-d H:i:s');
+
         $results = DB::select("
             SELECT
                 e.name as equipment_name,
@@ -145,10 +137,10 @@ class InventorySnapshot extends Model
             HAVING quantity > 0
             ORDER BY e.name, e.now_location_id
         ", [
-            $asOfDate->format('Y-m-d H:i:s'),
-            $asOfDate->format('Y-m-d H:i:s'),
-            $asOfDate->format('Y-m-d H:i:s'),
-            $asOfDate->format('Y-m-d H:i:s'),
+            $dateString,
+            $dateString,
+            $dateString,
+            $dateString,
         ]);
 
         return array_map(function ($row) {
@@ -183,23 +175,25 @@ class InventorySnapshot extends Model
      */
     private static function calculateIndividualInventory(int $equipmentId, Carbon $asOfDate): array
     {
+        $dateString = $asOfDate->format('Y-m-d H:i:s');
+
         // 基準日時点での機材状態を確認
         $isInUse = DB::table('phase_equipment')
             ->where('equipment_id', $equipmentId)
             ->where('status', 'checked_out')
-            ->where('checkout_date', '<=', $asOfDate)
-            ->where(function ($query) use ($asOfDate) {
+            ->where('checkout_date', '<=', $dateString)
+            ->where(function ($query) use ($dateString) {
                 $query->whereNull('checkin_date')
-                    ->orWhere('checkin_date', '>', $asOfDate);
+                    ->orWhere('checkin_date', '>', $dateString);
             })
             ->exists();
 
         $isInRepair = DB::table('repair_records')
             ->where('equipment_id', $equipmentId)
-            ->where('failure_occurred_at', '<=', $asOfDate)
-            ->where(function ($query) use ($asOfDate) {
+            ->where('failure_occurred_at', '<=', $dateString)
+            ->where(function ($query) use ($dateString) {
                 $query->whereNull('completed_at')
-                    ->orWhere('completed_at', '>', $asOfDate);
+                    ->orWhere('completed_at', '>', $dateString);
             })
             ->where('status', 'in_progress')
             ->exists();
@@ -232,15 +226,16 @@ class InventorySnapshot extends Model
     {
         $equipment = Equipment::findOrFail($equipmentId);
         $totalQuantity = $equipment->quantity ?? 0;
+        $dateString = $asOfDate->format('Y-m-d H:i:s');
 
         // 基準日時点での使用中数量を計算
         $inUseQuantity = DB::table('phase_equipment')
             ->where('equipment_id', $equipmentId)
             ->where('status', 'checked_out')
-            ->where('checkout_date', '<=', $asOfDate)
-            ->where(function ($query) use ($asOfDate) {
+            ->where('checkout_date', '<=', $dateString)
+            ->where(function ($query) use ($dateString) {
                 $query->whereNull('checkin_date')
-                    ->orWhere('checkin_date', '>', $asOfDate);
+                    ->orWhere('checkin_date', '>', $dateString);
             })
             ->sum('quantity');
 

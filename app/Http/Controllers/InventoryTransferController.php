@@ -98,7 +98,12 @@ class InventoryTransferController extends Controller
      * 移動可能機材一覧API
      *
      * 倉庫間移動が可能な機材の一覧を取得します。
-     * 個体管理機材のみが対象で、各種フィルターをサポートします。
+     * 以下の条件を満たす機材のみが表示されます：
+     * - 個体管理機材（management_type = 'individual'）
+     * - 廃棄されていない機材（is_discard = false）
+     * - location_id が 92-94 の機材
+     * - 現在使用中でない機材（phase_equipment.status != 'checked_out'）
+     * - 現在修理中でない機材（repair_records.status != 'in_progress'）
      *
      * @param Request $request リクエストデータ
      * @return JsonResponse JSON応答
@@ -120,7 +125,21 @@ class InventoryTransferController extends Controller
             ])
                 ->where('management_type', 'individual') // 個体管理機材のみ
                 ->where('is_discard', false) // 廃棄されていないもののみ
-                ->whereNotIn('location_id', [89, 93, 94, 95, 96]); // 赤堤倉庫(89)とID 93-96の倉庫の機材を除外
+                ->whereIn('location_id', [92, 93, 94]) // location_idが92-94の機材のみ表示対象
+                // 使用中の機材を除外
+                ->whereNotExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('phase_equipment')
+                        ->whereColumn('phase_equipment.equipment_id', 'equipments.id')
+                        ->where('phase_equipment.status', 'checked_out');
+                })
+                // 修理中の機材を除外
+                ->whereNotExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('repair_records')
+                        ->whereColumn('repair_records.equipment_id', 'equipments.id')
+                        ->where('repair_records.status', 'in_progress');
+                });
 
             // フィルタ適用
             if (! empty($validated['location_id'])) {
@@ -347,10 +366,10 @@ class InventoryTransferController extends Controller
     }
 
     /**
-     * location_id 90-92の機材取得API（返却先選択用）
+     * location_id 92-94の機材取得API（返却先選択用）
      *
      * 返却処理対象となる機材の一覧を取得します。
-     * location_id が90-92の個体管理機材が対象です。
+     * location_id が92-94の個体管理機材が対象です。
      *
      * @param Request $request リクエストデータ
      * @return JsonResponse JSON応答
@@ -369,10 +388,10 @@ class InventoryTransferController extends Controller
             // 特定の機材IDで検索（セッションストレージから来た場合）
             if ($request->filled('equipment_id')) {
                 $query->where('id', $request->equipment_id)
-                    ->whereIn('location_id', [90, 91, 92]);
+                    ->whereIn('location_id', [92, 93, 94]);
             } else {
                 // 通常のフィルタリング（全体表示の場合）
-                $query->whereIn('location_id', [90, 91, 92]);
+                $query->whereIn('location_id', [92, 93, 94]);
 
                 // カテゴリフィルタ
                 if ($request->filled('category_id')) {
@@ -457,8 +476,8 @@ class InventoryTransferController extends Controller
                             continue;
                         }
 
-                        if (! in_array($equipment->location_id, [90, 91, 92])) {
-                            $errors[] = "機材ID {$equipmentId}: 基本倉庫ID 90-92の機材のみが対象です";
+                        if (! in_array($equipment->location_id, [92, 93, 94])) {
+                            $errors[] = "機材ID {$equipmentId}: 基本倉庫ID 92-94の機材のみが対象です";
                             continue;
                         }
 
@@ -606,7 +625,7 @@ class InventoryTransferController extends Controller
     /**
      * 倉庫間移動対象機材のカテゴリ一覧取得
      *
-     * location_id が90-92の個体管理機材が属するカテゴリの一覧を取得します。
+     * location_id が92-94の個体管理機材が属するカテゴリの一覧を取得します。
      * フィルター用として使用されます。
      *
      * @return JsonResponse JSON応答
@@ -614,8 +633,8 @@ class InventoryTransferController extends Controller
     public function getTransferableCategories(): JsonResponse
     {
         try {
-            // location_id が 90-92 の機材の subcategory_id を取得
-            $subcategoryIds = Equipment::whereIn('location_id', [90, 91, 92])
+            // location_id が 92-94 の機材の subcategory_id を取得
+            $subcategoryIds = Equipment::whereIn('location_id', [92, 93, 94])
                 ->where('management_type', 'individual')
                 ->where('is_discard', false)
                 ->distinct()

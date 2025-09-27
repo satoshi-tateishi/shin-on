@@ -1,6 +1,16 @@
 <x-guest-layout>
     <div class="text-center">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ config('app.name', 'shin-on dB') }}</h1>
+        @php
+            $companyLogo = \App\Models\CompanyLogo::getActiveLogo();
+        @endphp
+
+        @if($companyLogo)
+            <div class="mb-2">
+                <img src="{{ asset('storage/' . $companyLogo->file_path) }}"
+                     alt="会社ロゴ"
+                     class="h-19 w-auto mx-auto object-contain">
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded-md mb-4">

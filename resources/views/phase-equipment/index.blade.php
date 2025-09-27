@@ -27,7 +27,9 @@
             </svg>
             フェーズ詳細に戻る
         </a>
-        @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'editor' ||
+            auth()->user()->role === 'admin' ||
+            $phase->performance->staff->contains('user_id', auth()->id()))
             <a href="{{ route('phases.equipment.create', $phase) }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +45,9 @@
 <!-- 統計サマリー -->
 <div class="mb-6">
     <!-- 一括ステータス変更ボタン -->
-    @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+    @if(auth()->user()->role === 'editor' ||
+        auth()->user()->role === 'admin' ||
+        $phase->performance->staff->contains('user_id', auth()->id()))
         <div class="bg-white shadow rounded-lg p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">一括ステータス変更</h3>
             <div class="flex flex-wrap gap-4">
@@ -62,21 +66,6 @@
                     </form>
                 @endif
 
-                @if($equipmentStats['checked_in'] > 0)
-                    <form method="POST" action="{{ route('phases.equipment.bulk-checkout-checked-in', $phase) }}" class="inline">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit"
-                                onclick="return confirm('返却済み{{ $equipmentStats['checked_in'] }}件の機材を一括で出庫中に変更しますか？')"
-                                class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-orange-700">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                            返却済み → 出庫中 ({{ $equipmentStats['checked_in'] }}件)
-                        </button>
-                    </form>
-                @endif
-
                 @if($equipmentStats['checked_out'] > 0)
                     <button type="button"
                             onclick="handleBulkReturn({{ $phase->id }}, {{ $equipmentStats['checked_out'] }})"
@@ -91,26 +80,11 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">総機材数</dt>
-                        <dd class="text-lg font-medium text-gray-900">{{ $equipmentStats['total'] }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <!-- 予約済みカード -->
+    <a href="{{ route('phases.equipment.index', [$phase, 'status' => 'reserved']) }}"
+       class="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow {{ request('status') === 'reserved' ? 'ring-2 ring-blue-500' : '' }}">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -126,9 +100,11 @@
                 </div>
             </div>
         </div>
-    </div>
+    </a>
 
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <!-- 出庫中カード -->
+    <a href="{{ route('phases.equipment.index', [$phase, 'status' => 'checked_out']) }}"
+       class="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow {{ request('status') === 'checked_out' ? 'ring-2 ring-orange-500' : '' }}">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -144,9 +120,11 @@
                 </div>
             </div>
         </div>
-    </div>
+    </a>
 
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <!-- 返却済みカード -->
+    <a href="{{ route('phases.equipment.index', [$phase, 'status' => 'checked_in']) }}"
+       class="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow {{ request('status') === 'checked_in' ? 'ring-2 ring-green-500' : '' }}">
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -162,8 +140,32 @@
                 </div>
             </div>
         </div>
+    </a>
+
     </div>
 
+    <!-- フィルター状態の表示 -->
+    @if(request('status'))
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg flex justify-between items-center">
+            <span class="text-sm text-blue-800">
+                フィルター中:
+                @switch(request('status'))
+                    @case('reserved')
+                        予約済み
+                        @break
+                    @case('checked_out')
+                        出庫中
+                        @break
+                    @case('checked_in')
+                        返却済み
+                        @break
+                    @default
+                        {{ request('status') }}
+                @endswitch
+            </span>
+            <a href="{{ route('phases.equipment.index', $phase) }}" class="text-sm text-blue-600 hover:text-blue-800 underline">フィルターを解除</a>
+        </div>
+    @endif
 </div>
 
 <!-- 機材一覧 -->
@@ -202,7 +204,7 @@
                             data-equipment-location="{{ $phaseEquipment->equipment->location_id }}"
                         >
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $phaseEquipment->equipment->subcategory->category->name }}</div>
+                                <div class="text-sm text-gray-500">{{ $phaseEquipment->equipment->subcategory->category->name }}</div>
                                 <div class="text-sm text-gray-500">{{ $phaseEquipment->equipment->subcategory->name }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -228,7 +230,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center" onclick="event.stopPropagation()">
                                 <div class="text-sm text-gray-900">{{ $phaseEquipment->quantity }}</div>
-                                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+                                @if(auth()->user()->role === 'editor' ||
+                                    auth()->user()->role === 'admin' ||
+                                    $phase->performance->staff->contains('user_id', auth()->id()))
                                     @if($phaseEquipment->equipment->management_type === 'quantity')
                                         <a href="{{ route('phases.equipment.edit', [$phase, $phaseEquipment]) }}"
                                            class="text-xs text-indigo-600 hover:text-indigo-900" onclick="event.stopPropagation()">数量変更</a>
@@ -256,8 +260,10 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" onclick="event.stopPropagation()">
                                 <div class="flex space-x-2">
-                                    @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                                        @if($phaseEquipment->canCheckout())
+                                    @if(auth()->user()->role === 'editor' ||
+                                        auth()->user()->role === 'admin' ||
+                                        $phase->performance->staff->contains('user_id', auth()->id()))
+                                        @if($phaseEquipment->canCheckout() || $phaseEquipment->status === 'checked_in')
                                             <button onclick="event.stopPropagation(); openCheckoutModal({{ $phaseEquipment->id }})"
                                                     class="text-orange-600 hover:text-orange-900">出庫</button>
                                         @endif
@@ -294,19 +300,7 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">機材が登録されていません</h3>
-                <p class="mt-1 text-sm text-gray-500">このフェーズで使用する機材を追加してください。</p>
-                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                    <div class="mt-6">
-                        <a href="{{ route('phases.equipment.create', $phase) }}"
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            機材追加
-                        </a>
-                    </div>
-                @endif
+                <h3 class="mt-2 text-sm font-medium text-gray-900">該当機材なし</h3>
             </div>
         @endif
     </div>
@@ -356,7 +350,7 @@
                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
 
-                <!-- 返却先選択（location_id=90-92の機材のみ表示） -->
+                <!-- 返却先選択（location_id=92-94の機材のみ表示） -->
                 <div id="locationSelectDiv" class="mb-4 hidden">
                     <label for="to_location_id" class="block text-sm font-medium text-gray-700">返却先倉庫 <span class="text-red-500">*</span></label>
                     <div class="mt-1 flex">
@@ -416,10 +410,10 @@ async function openCheckinModal(phaseEquipmentId) {
     document.getElementById('selectedLocationText').textContent = '返却先倉庫を選択してください...';
     document.getElementById('locationError').classList.add('hidden');
 
-    // 機材情報を取得してlocation_id=90-92かチェック
+    // 機材情報を取得してlocation_id=92-94かチェック
     try {
         const equipmentData = await getEquipmentData(phaseEquipmentId);
-        const requiresLocationSelection = equipmentData && (equipmentData.location_id >= 90 && equipmentData.location_id <= 92);
+        const requiresLocationSelection = equipmentData && (equipmentData.location_id >= 92 && equipmentData.location_id <= 94);
 
         const locationSelectDiv = document.getElementById('locationSelectDiv');
         if (requiresLocationSelection) {
@@ -469,8 +463,8 @@ async function handleEquipmentReturn(phaseEquipmentId, phaseId) {
         const data = await response.json();
         const equipment = data.equipment;
 
-        // location_id が 90-92 の場合は返却先選択画面へ遷移
-        if (equipment.location_id >= 90 && equipment.location_id <= 92) {
+        // location_id が 92-94 の場合は返却先選択画面へ遷移
+        if (equipment.location_id >= 92 && equipment.location_id <= 94) {
             // 機材情報をセッションストレージに保存
             sessionStorage.setItem('returnEquipmentData', JSON.stringify({
                 phaseEquipmentId: phaseEquipmentId,
@@ -486,7 +480,7 @@ async function handleEquipmentReturn(phaseEquipmentId, phaseId) {
             return;
         }
 
-        // 通常の返却処理（location_id が 90-92 以外）
+        // 通常の返却処理（location_id が 92-94 以外）
         // 既存のモーダルを開く
         openCheckinModal(phaseEquipmentId);
 
@@ -496,7 +490,7 @@ async function handleEquipmentReturn(phaseEquipmentId, phaseId) {
     }
 }
 
-// 一括返却処理（90-92の機材チェック含む）
+// 一括返却処理（92-94の機材チェック含む）
 async function handleBulkReturn(phaseId, equipmentCount) {
     if (!confirm(`出庫中の機材 ${equipmentCount}件を一括で返却済みに変更しますか？`)) {
         return;
@@ -506,15 +500,15 @@ async function handleBulkReturn(phaseId, equipmentCount) {
         // 出庫中のPhaseEquipmentと機材情報を取得
         const checkedOutEquipments = await getCheckedOutEquipments(phaseId);
 
-        // location_id 90-92の機材と通常機材を分類
+        // location_id 92-94の機材と通常機材を分類
         const requiresLocationSelection = checkedOutEquipments.filter(item =>
-            item.equipment.location_id >= 90 && item.equipment.location_id <= 92
+            item.equipment.location_id >= 92 && item.equipment.location_id <= 94
         );
         const normalEquipments = checkedOutEquipments.filter(item =>
-            item.equipment.location_id < 90 || item.equipment.location_id > 92
+            item.equipment.location_id < 92 || item.equipment.location_id > 94
         );
 
-        // まず通常機材（90-92以外）を自動返却
+        // まず通常機材（92-94以外）を自動返却
         if (normalEquipments.length > 0) {
             const normalEquipmentIds = normalEquipments.map(item => item.id);
 
@@ -536,7 +530,7 @@ async function handleBulkReturn(phaseId, equipmentCount) {
             }
         }
 
-        // 90-92の機材がある場合は返却先選択画面に遷移
+        // 92-94の機材がある場合は返却先選択画面に遷移
         if (requiresLocationSelection.length > 0) {
             const bulkReturnData = requiresLocationSelection.map(item => ({
                 phaseEquipmentId: item.id,
@@ -547,7 +541,7 @@ async function handleBulkReturn(phaseId, equipmentCount) {
                 locationId: item.equipment.location_id
             }));
 
-            // 90-92機材のみを返却先選択画面に送る
+            // 92-94機材のみを返却先選択画面に送る
             sessionStorage.setItem('bulkReturnData', JSON.stringify(bulkReturnData));
 
             // 返却先選択画面へ遷移
@@ -555,7 +549,7 @@ async function handleBulkReturn(phaseId, equipmentCount) {
             return;
         }
 
-        // 90-92機材がなく、通常機材のみの場合はページをリロード
+        // 92-94機材がなく、通常機材のみの場合はページをリロード
         if (normalEquipments.length > 0 && requiresLocationSelection.length === 0) {
             window.location.reload();
             return;
@@ -626,7 +620,7 @@ document.getElementById('checkinForm').addEventListener('submit', function(e) {
     const locationSelectDiv = document.getElementById('locationSelectDiv');
     const toLocationId = document.getElementById('to_location_id').value;
 
-    // location_id=90-92の機材で返却先が選択されていない場合
+    // location_id=92-94の機材で返却先が選択されていない場合
     if (!locationSelectDiv.classList.contains('hidden') && !toLocationId) {
         e.preventDefault();
         document.getElementById('locationError').classList.remove('hidden');

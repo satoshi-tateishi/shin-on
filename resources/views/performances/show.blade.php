@@ -13,7 +13,9 @@
     </div>
 
     <div class="flex space-x-3">
-        @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'editor' ||
+            auth()->user()->role === 'admin' ||
+            $performance->staff->contains('user_id', auth()->id()))
             <a href="{{ route('performances.edit', $performance) }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,7 +174,9 @@
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">フェーズ一覧</h3>
-                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+                @if(auth()->user()->role === 'editor' ||
+                    auth()->user()->role === 'admin' ||
+                    $performance->staff->contains('user_id', auth()->id()))
                     <a href="{{ route('performances.phases.create', $performance) }}"
                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +195,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">期間</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">場所</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">機材使用</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -236,19 +239,6 @@
                                         {{ $phase->phase_status_label }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    @php
-                                        $equipmentCount = $phase->phaseEquipment ? $phase->phaseEquipment->count() : 0;
-                                    @endphp
-                                    @if($equipmentCount > 0)
-                                        <a href="{{ route('performances.phases.equipment.index', [$performance, $phase]) }}"
-                                           class="text-blue-600 hover:text-blue-900">
-                                            {{ $equipmentCount }}件
-                                        </a>
-                                    @else
-                                        <span class="text-gray-400">未設定</span>
-                                    @endif
-                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -265,7 +255,9 @@
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900">フェーズが登録されていません</h3>
                 <p class="mt-1 text-sm text-gray-500">まずは最初のフェーズを作成しましょう。</p>
-                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
+                @if(auth()->user()->role === 'editor' ||
+                    auth()->user()->role === 'admin' ||
+                    $performance->staff->contains('user_id', auth()->id()))
                     <div class="mt-6">
                         <a href="{{ route('performances.phases.create', $performance) }}"
                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">

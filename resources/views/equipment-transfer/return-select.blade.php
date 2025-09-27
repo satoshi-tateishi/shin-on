@@ -18,7 +18,7 @@
 @section('header')
     <div>
         <h1 class="text-3xl font-bold text-gray-900">返却先選択</h1>
-        <p class="mt-2 text-gray-600">基本倉庫が未設定（90-92）の機材の返却先を選択してください</p>
+        <p class="mt-2 text-gray-600">基本倉庫が未設定（92-94）の機材の返却先を選択してください</p>
 
         <!-- 返却対象機材情報表示 -->
         <div x-show="returnEquipmentData" class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -177,7 +177,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
                                 </svg>
                                 <h3 class="mt-2 text-sm font-medium text-gray-900">対象機材がありません</h3>
-                                <p class="mt-1 text-sm text-gray-500">基本倉庫ID 90-92の機材が見つかりません。</p>
+                                <p class="mt-1 text-sm text-gray-500">基本倉庫ID 92-94の機材が見つかりません。</p>
                             </td>
                         </tr>
                     </tbody>
@@ -319,7 +319,7 @@ function returnSelectManager() {
 
         // フィルター
         filters: {
-            location_id: '', // 90-92の範囲
+            location_id: '', // 92-94の範囲
             category_id: '',
             search: ''
         },
@@ -414,12 +414,12 @@ function returnSelectManager() {
             this.error = null;
 
             try {
-                // location_id 90-92の条件を追加
+                // location_id 92-94の条件を追加
                 const params = new URLSearchParams({
                     ...Object.fromEntries(
                         Object.entries(this.filters).filter(([key, value]) => value !== '')
                     ),
-                    location_ids: '90,91,92' // 強制的に90-92のみ
+                    location_ids: '92,93,94' // 強制的に92-94のみ
                 });
 
                 const response = await fetch(`${API_CONFIG.equipment}?${params}`);
@@ -487,9 +487,9 @@ function returnSelectManager() {
                     throw new Error('一括返却データが不正です');
                 }
 
-                // 90-92の機材のみ抽出
+                // 92-94の機材のみ抽出
                 const filteredEquipments = this.bulkReturnData.filter(item =>
-                    item.locationId >= 90 && item.locationId <= 92
+                    item.locationId >= 92 && item.locationId <= 94
                 );
 
                 // 機材データとして設定
