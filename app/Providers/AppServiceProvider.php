@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Http\ViewComposers\EquipmentViewComposer;
+use App\Http\ViewComposers\PerformanceViewComposer;
 use App\Socialite\LineWorksProvider;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -27,5 +30,16 @@ class AppServiceProvider extends ServiceProvider
 
             return Socialite::buildProvider(LineWorksProvider::class, $config);
         });
+
+        // View Composers
+        View::composer([
+            'performances.*',
+            'phases.*'
+        ], PerformanceViewComposer::class);
+
+        View::composer([
+            'phase-equipment.*',
+            'equipment-transfer.*'
+        ], EquipmentViewComposer::class);
     }
 }

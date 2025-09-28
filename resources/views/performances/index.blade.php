@@ -42,13 +42,11 @@
                     <select name="performance_type" id="performance_type"
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="">全て</option>
-                        <option value="演劇" {{ request('performance_type') === '演劇' ? 'selected' : '' }}>演劇</option>
-                        <option value="ミュージカル" {{ request('performance_type') === 'ミュージカル' ? 'selected' : '' }}>ミュージカル</option>
-                        <option value="リーディング" {{ request('performance_type') === 'リーディング' ? 'selected' : '' }}>リーディング</option>
-                        <option value="ダンス" {{ request('performance_type') === 'ダンス' ? 'selected' : '' }}>ダンス</option>
-                        <option value="コンサート" {{ request('performance_type') === 'コンサート' ? 'selected' : '' }}>コンサート</option>
-                        <option value="イベント" {{ request('performance_type') === 'イベント' ? 'selected' : '' }}>イベント</option>
-                        <option value="その他" {{ request('performance_type') === 'その他' ? 'selected' : '' }}>その他</option>
+                        @foreach($performanceTypes as $type)
+                            <option value="{{ $type['value'] }}" {{ request('performance_type') === $type['value'] ? 'selected' : '' }}>
+                                {{ $type['label'] }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -57,11 +55,11 @@
                     <select name="status" id="status"
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="">全て</option>
-                        <option value="planning" {{ request('status') === 'planning' ? 'selected' : '' }}>企画中</option>
-                        <option value="preparation" {{ request('status') === 'preparation' ? 'selected' : '' }}>準備中</option>
-                        <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>進行中</option>
-                        <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>完了</option>
-                        <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>キャンセル</option>
+                        @foreach($performanceStatuses as $status)
+                            <option value="{{ $status['value'] }}" {{ request('status') === $status['value'] ? 'selected' : '' }}>
+                                {{ $status['label'] }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -99,16 +97,7 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $performance->performance_type === '演劇' ? 'bg-blue-100 text-blue-800' : '' }}
-                                    {{ $performance->performance_type === 'ミュージカル' ? 'bg-purple-100 text-purple-800' : '' }}
-                                    {{ $performance->performance_type === 'リーディング' ? 'bg-amber-100 text-amber-800' : '' }}
-                                    {{ $performance->performance_type === 'ダンス' ? 'bg-pink-100 text-pink-800' : '' }}
-                                    {{ $performance->performance_type === 'イベント' ? 'bg-indigo-100 text-indigo-800' : '' }}
-                                    {{ $performance->performance_type === 'コンサート' ? 'bg-green-100 text-green-800' : '' }}
-                                    {{ $performance->performance_type === 'その他' ? 'bg-gray-100 text-gray-800' : '' }}">
-                                    {{ $performance->performance_type }}
-                                </span>
+                                <x-performance-type-badge :type="$performance->performance_type" />
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 @if($performance->start_date && $performance->end_date)
@@ -139,14 +128,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $performance->status === 'planning' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                    {{ $performance->status === 'preparation' ? 'bg-blue-100 text-blue-800' : '' }}
-                                    {{ $performance->status === 'in_progress' ? 'bg-green-100 text-green-800' : '' }}
-                                    {{ $performance->status === 'completed' ? 'bg-gray-100 text-gray-800' : '' }}
-                                    {{ $performance->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                                    {{ $performance->status_label }}
-                                </span>
+                                <x-status-badge :status="$performance->status" type="performance" />
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
                                 <span>{{ $performance->phases_count ?? 0 }}</span>

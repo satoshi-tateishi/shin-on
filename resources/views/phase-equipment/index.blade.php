@@ -81,67 +81,41 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <x-equipment-stats-card
+            title="予約済み"
+            :count="$equipmentStats['reserved']"
+            color="blue"
+            :href="route('phases.equipment.index', [$phase, 'status' => 'reserved'])"
+            :active="request('status') === 'reserved'"
+        >
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </x-slot>
+        </x-equipment-stats-card>
 
-    <!-- 予約済みカード -->
-    <a href="{{ route('phases.equipment.index', [$phase, 'status' => 'reserved']) }}"
-       class="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow {{ request('status') === 'reserved' ? 'ring-2 ring-blue-500' : '' }}">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">予約済み</dt>
-                        <dd class="text-lg font-medium text-blue-900">{{ $equipmentStats['reserved'] }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </a>
+        <x-equipment-stats-card
+            title="出庫中"
+            :count="$equipmentStats['checked_out']"
+            color="orange"
+            :href="route('phases.equipment.index', [$phase, 'status' => 'checked_out'])"
+            :active="request('status') === 'checked_out'"
+        >
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </x-slot>
+        </x-equipment-stats-card>
 
-    <!-- 出庫中カード -->
-    <a href="{{ route('phases.equipment.index', [$phase, 'status' => 'checked_out']) }}"
-       class="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow {{ request('status') === 'checked_out' ? 'ring-2 ring-orange-500' : '' }}">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">出庫中</dt>
-                        <dd class="text-lg font-medium text-orange-900">{{ $equipmentStats['checked_out'] }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </a>
-
-    <!-- 返却済みカード -->
-    <a href="{{ route('phases.equipment.index', [$phase, 'status' => 'checked_in']) }}"
-       class="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow {{ request('status') === 'checked_in' ? 'ring-2 ring-green-500' : '' }}">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">返却済み</dt>
-                        <dd class="text-lg font-medium text-green-900">{{ $equipmentStats['checked_in'] }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </a>
-
+        <x-equipment-stats-card
+            title="返却済み"
+            :count="$equipmentStats['checked_in']"
+            color="green"
+            :href="route('phases.equipment.index', [$phase, 'status' => 'checked_in'])"
+            :active="request('status') === 'checked_in'"
+        >
+            <x-slot name="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </x-slot>
+        </x-equipment-stats-card>
     </div>
 
     <!-- フィルター状態の表示 -->
@@ -240,9 +214,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $phaseEquipment->status_color }}">
-                                    {{ $phaseEquipment->status_label }}
-                                </span>
+                                <x-status-badge :status="$phaseEquipment->status" type="equipment" />
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 @if($phaseEquipment->checkout_date)
@@ -641,4 +613,5 @@ document.addEventListener('click', function(event) {
     }
 });
 </script>
+<script src="{{ asset('js/equipment-management.js') }}"></script>
 @endsection

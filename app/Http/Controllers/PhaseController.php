@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PhaseRequest;
 use App\Models\Location;
 use App\Models\Performance;
 use App\Models\Phase;
@@ -23,17 +24,9 @@ class PhaseController extends Controller
         return view('phases.create', compact('performance', 'locations'));
     }
 
-    public function store(Request $request, Performance $performance): RedirectResponse
+    public function store(PhaseRequest $request, Performance $performance): RedirectResponse
     {
-        $validated = $request->validate([
-            'location_id' => 'nullable|exists:locations,id',
-            'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'note' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
-
+        $validated = $request->validated();
         $validated['performance_id'] = $performance->id;
 
         $phase = Phase::create($validated);
@@ -59,18 +52,9 @@ class PhaseController extends Controller
         return view('phases.edit', compact('performance', 'phase', 'locations'));
     }
 
-    public function update(Request $request, Phase $phase): RedirectResponse
+    public function update(PhaseRequest $request, Phase $phase): RedirectResponse
     {
-        $validated = $request->validate([
-            'location_id' => 'nullable|exists:locations,id',
-            'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'note' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
-
-        $phase->update($validated);
+        $phase->update($request->validated());
 
         return redirect()->route('phases.show', $phase)
             ->with('success', 'フェーズが正常に更新されました。');

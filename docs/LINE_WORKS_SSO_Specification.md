@@ -244,6 +244,46 @@ LINEWORKS_DOMAIN=shin-on1981
 
 ## ユーザーデータ処理
 
+### lineworks_id フィールドについて
+
+`users` テーブルの `lineworks_id` カラムには、LINE WORKS ID Token の `sub` フィールドの値が格納されます。
+
+#### 格納データ詳細
+
+| 項目 | 内容 |
+|------|------|
+| **データ型** | VARCHAR(255) |
+| **制約** | UNIQUE, NULL許可 |
+| **格納値** | ID Token の `sub` フィールド（ユーザー一意識別子） |
+| **取得方法** | `$lineWorksUser->getId()` |
+
+#### ID Token内での対応関係
+
+```json
+{
+    "sub": "unique_user_id_123",  ← この値がlineworks_idに格納
+    "name": "立石 智史",
+    "email": "user@shin-on1981",
+    ...
+}
+```
+
+#### 利用用途
+
+1. **ユーザー検索**: 既存ユーザーの特定
+   ```php
+   $user = User::where('lineworks_id', $lineWorksUser->getId())->first();
+   ```
+
+2. **アカウント連携**: LINE WORKSアカウントとローカルアカウントの紐付け
+3. **重複防止**: 同一LINE WORKSユーザーの重複登録防止
+
+#### 重要な特徴
+
+- **永続性**: ユーザーのメールアドレスや名前が変更されても `sub` は変わらない
+- **一意性**: LINE WORKS内でユーザーを一意に識別する
+- **セキュリティ**: 外部から推測困難な値
+
 ### データベース保存
 
 ```php
