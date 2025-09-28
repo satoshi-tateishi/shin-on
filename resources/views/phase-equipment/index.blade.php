@@ -75,6 +75,23 @@
                         </svg>
                         出庫中 → 返却済み ({{ $equipmentStats['checked_out'] }}件)
                     </button>
+
+                    <button type="button"
+                            onclick="openInheritanceModal()"
+                            class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-purple-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        他フェーズへ継承 ({{ $equipmentStats['checked_out'] }}件)
+                    </button>
+                @else
+                    <button type="button" disabled
+                            class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent text-sm font-medium rounded-md text-gray-500 cursor-not-allowed">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        継承可能な機材がありません
+                    </button>
                 @endif
             </div>
         </div>
@@ -235,7 +252,7 @@
                                     @if(auth()->user()->role === 'editor' ||
                                         auth()->user()->role === 'admin' ||
                                         $phase->performance->staff->contains('user_id', auth()->id()))
-                                        @if($phaseEquipment->canCheckout() || $phaseEquipment->status === 'checked_in')
+                                        @if($phaseEquipment->canCheckout() && $phaseEquipment->status !== 'checked_in')
                                             <button onclick="event.stopPropagation(); openCheckoutModal({{ $phaseEquipment->id }})"
                                                     class="text-orange-600 hover:text-orange-900">出庫</button>
                                         @endif
@@ -359,6 +376,91 @@
     confirm-text="選択"
     :required="true"
 />
+
+<!-- 機材継承モーダル -->
+<div id="inheritanceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-medium text-gray-900">機材継承</h3>
+                <button type="button" onclick="closeInheritanceModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- ステップ1: 継承先選択 -->
+            <div id="step1" class="step-content">
+                <h4 class="text-md font-medium text-gray-900 mb-4">継承先フェーズを選択</h4>
+                <div class="space-y-4">
+                    <!-- 同一公演内フェーズ -->
+                    <div>
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">同一公演内のフェーズ</h5>
+                        <div id="samePerformancePhases" class="space-y-2">
+                            <!-- 動的に追加される -->
+                        </div>
+                    </div>
+
+                    <!-- 他公演フェーズ -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h5 class="text-sm font-medium text-gray-700">他公演のフェーズ</h5>
+                            <button type="button" id="toggleOtherPerformances" onclick="toggleOtherPerformances()"
+                                    class="text-sm text-blue-600 hover:text-blue-800">表示</button>
+                        </div>
+                        <div id="otherPerformancePhases" class="space-y-2 hidden">
+                            <!-- 動的に追加される -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeInheritanceModal()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                        キャンセル
+                    </button>
+                    <button type="button" id="nextToStep2" onclick="goToStep2()" disabled
+                            class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        次へ
+                    </button>
+                </div>
+            </div>
+
+            <!-- ステップ2: 継承確認 -->
+            <div id="step2" class="step-content hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-md font-medium text-gray-900">継承内容の確認</h4>
+                    <button type="button" onclick="goToStep1()"
+                            class="text-sm text-blue-600 hover:text-blue-800">戻る</button>
+                </div>
+
+                <div id="inheritancePreview" class="mb-6">
+                    <!-- 動的に追加される -->
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="goToStep1()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                        戻る
+                    </button>
+                    <button type="button" id="executeInheritance" onclick="executeInheritance()"
+                            class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700">
+                        継承実行
+                    </button>
+                </div>
+            </div>
+
+            <!-- 実行中表示 -->
+            <div id="executingStep" class="step-content hidden">
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <p class="mt-2 text-sm text-gray-600">機材を継承中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 function openCheckoutModal(phaseEquipmentId) {
@@ -604,6 +706,7 @@ document.getElementById('checkinForm').addEventListener('submit', function(e) {
 document.addEventListener('click', function(event) {
     const checkoutModal = document.getElementById('checkoutModal');
     const checkinModal = document.getElementById('checkinModal');
+    const inheritanceModal = document.getElementById('inheritanceModal');
 
     if (event.target === checkoutModal) {
         closeCheckoutModal();
@@ -611,7 +714,352 @@ document.addEventListener('click', function(event) {
     if (event.target === checkinModal) {
         closeCheckinModal();
     }
+    if (event.target === inheritanceModal) {
+        closeInheritanceModal();
+    }
 });
+
+// 機材継承関連のJavaScript機能
+let inheritanceData = {
+    selectedTargetPhaseId: null,
+    targetPhases: null,
+    previewData: null
+};
+
+// 継承モーダルを開く
+async function openInheritanceModal() {
+    try {
+        // 継承可能な継承先フェーズを取得
+        const response = await fetch(`/phases/{{ $phase->id }}/inheritable-target-phases`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.error || '継承先フェーズの取得に失敗しました');
+            return;
+        }
+
+        inheritanceData.targetPhases = await response.json();
+
+        // モーダルを表示
+        document.getElementById('inheritanceModal').classList.remove('hidden');
+
+        // ステップ1を表示
+        showStep(1);
+
+        // フェーズリストを描画
+        renderPhaseList();
+
+    } catch (error) {
+        console.error('Inheritance modal error:', error);
+        alert('継承モーダルの表示中にエラーが発生しました');
+    }
+}
+
+// 継承モーダルを閉じる
+function closeInheritanceModal() {
+    document.getElementById('inheritanceModal').classList.add('hidden');
+    inheritanceData.selectedTargetPhaseId = null;
+    inheritanceData.previewData = null;
+    showStep(1);
+}
+
+// ステップ表示制御
+function showStep(stepIdentifier) {
+    document.querySelectorAll('.step-content').forEach(step => {
+        step.classList.add('hidden');
+    });
+
+    let elementId;
+    if (stepIdentifier === 'executingStep') {
+        elementId = 'executingStep';
+    } else {
+        elementId = `step${stepIdentifier}`;
+    }
+
+    document.getElementById(elementId).classList.remove('hidden');
+}
+
+// フェーズリストを描画
+function renderPhaseList() {
+    const samePerformanceContainer = document.getElementById('samePerformancePhases');
+    const otherPerformanceContainer = document.getElementById('otherPerformancePhases');
+
+    // 同一公演内フェーズ
+    samePerformanceContainer.innerHTML = '';
+    if (inheritanceData.targetPhases.same_performance.length > 0) {
+        inheritanceData.targetPhases.same_performance.forEach(phase => {
+            const phaseElement = createPhaseElement(phase);
+            samePerformanceContainer.appendChild(phaseElement);
+        });
+    } else {
+        samePerformanceContainer.innerHTML = '<p class="text-sm text-gray-500">継承可能なフェーズがありません</p>';
+    }
+
+    // 他公演フェーズ（初期は非表示）
+    otherPerformanceContainer.innerHTML = '';
+}
+
+// フェーズ要素を作成
+function createPhaseElement(phase) {
+    const div = document.createElement('div');
+    div.className = 'border rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors';
+    div.setAttribute('data-phase-id', phase.id);
+
+    div.innerHTML = `
+        <div class="flex items-center">
+            <input type="radio" name="target_phase" value="${phase.id}" class="mr-3">
+            <div class="flex-1">
+                <div class="font-medium text-gray-900">${phase.name}</div>
+                <div class="text-sm text-gray-500">${phase.performance.title}</div>
+                <div class="text-xs text-gray-400">
+                    ${phase.start_date} ～ ${phase.end_date}
+                    <span class="ml-2 px-2 py-1 bg-${getStatusColor(phase.performance.status)}-100 text-${getStatusColor(phase.performance.status)}-800 rounded text-xs">
+                        ${getStatusLabel(phase.performance.status)}
+                    </span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    div.addEventListener('click', () => selectTargetPhase(phase.id));
+
+    return div;
+}
+
+// ステータス色を取得
+function getStatusColor(status) {
+    const colors = {
+        'preparing': 'blue',
+        'ongoing': 'green',
+        'completed': 'gray'
+    };
+    return colors[status] || 'gray';
+}
+
+// ステータスラベルを取得
+function getStatusLabel(status) {
+    const labels = {
+        'preparing': '準備中',
+        'ongoing': '進行中',
+        'completed': '完了'
+    };
+    return labels[status] || status;
+}
+
+// 継承先フェーズを選択
+function selectTargetPhase(phaseId) {
+    inheritanceData.selectedTargetPhaseId = phaseId;
+
+    // ラジオボタンを更新
+    document.querySelectorAll('input[name="target_phase"]').forEach(radio => {
+        radio.checked = radio.value == phaseId;
+    });
+
+    // 次へボタンを有効化
+    document.getElementById('nextToStep2').disabled = false;
+}
+
+// 他公演フェーズの表示切り替え
+async function toggleOtherPerformances() {
+    const container = document.getElementById('otherPerformancePhases');
+    const button = document.getElementById('toggleOtherPerformances');
+
+    if (container.classList.contains('hidden')) {
+        // 他公演フェーズを取得・表示
+        if (!inheritanceData.targetPhases.other_performances) {
+            try {
+                const response = await fetch(`/phases/{{ $phase->id }}/inheritable-target-phases?include_other_performances=true`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    inheritanceData.targetPhases.other_performances = data.other_performances;
+                }
+            } catch (error) {
+                console.error('Error fetching other performances:', error);
+            }
+        }
+
+        // 他公演フェーズを描画
+        container.innerHTML = '';
+        if (inheritanceData.targetPhases.other_performances && inheritanceData.targetPhases.other_performances.length > 0) {
+            inheritanceData.targetPhases.other_performances.forEach(phase => {
+                const phaseElement = createPhaseElement(phase);
+                container.appendChild(phaseElement);
+            });
+        } else {
+            container.innerHTML = '<p class="text-sm text-gray-500">継承可能な他公演フェーズがありません</p>';
+        }
+
+        container.classList.remove('hidden');
+        button.textContent = '非表示';
+    } else {
+        container.classList.add('hidden');
+        button.textContent = '表示';
+    }
+}
+
+// ステップ2へ進む
+async function goToStep2() {
+    if (!inheritanceData.selectedTargetPhaseId) {
+        alert('継承先フェーズを選択してください');
+        return;
+    }
+
+    try {
+        // 継承プレビューを取得
+        const response = await fetch(`/phases/{{ $phase->id }}/inheritance-preview?target_phase_id=${inheritanceData.selectedTargetPhaseId}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.error || '継承プレビューの取得に失敗しました');
+            return;
+        }
+
+        inheritanceData.previewData = await response.json();
+
+        // プレビューを描画
+        renderInheritancePreview();
+
+        // ステップ2を表示
+        showStep(2);
+
+    } catch (error) {
+        console.error('Step 2 error:', error);
+        alert('継承プレビューの取得中にエラーが発生しました');
+    }
+}
+
+// ステップ1に戻る
+function goToStep1() {
+    showStep(1);
+}
+
+// 継承プレビューを描画
+function renderInheritancePreview() {
+    const container = document.getElementById('inheritancePreview');
+    const data = inheritanceData.previewData;
+
+    container.innerHTML = `
+        <div class="bg-blue-50 rounded-lg p-4 mb-4">
+            <h5 class="font-medium text-blue-900">継承情報</h5>
+            <p class="text-sm text-blue-700">
+                <strong>継承元:</strong> ${data.source_phase.performance_title} - ${data.source_phase.name}<br>
+                <strong>継承先:</strong> ${data.target_phase.performance_title} - ${data.target_phase.name}<br>
+                <strong>期間:</strong> ${data.target_phase.start_date} ～ ${data.target_phase.end_date}
+            </p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">機材名</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">継承可否</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    ${data.equipments.map(equipment => `
+                        <tr class="${equipment.can_inherit ? '' : 'bg-red-50'}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${equipment.equipment_name}</div>
+                                <div class="text-sm text-gray-500">${equipment.category} > ${equipment.subcategory}</div>
+                                ${equipment.company_number ? `<div class="text-xs text-gray-400">${equipment.company_number}</div>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${equipment.quantity}
+                                ${equipment.management_type === 'quantity' && equipment.available_quantity !== null ?
+                                    `<div class="text-xs text-gray-500">利用可能: ${equipment.available_quantity}</div>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${equipment.can_inherit ?
+                                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">継承可能</span>' :
+                                    `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">継承不可</span>
+                                     <div class="text-xs text-red-600 mt-1">${getConflictReasonText(equipment.conflict_reason)}</div>`
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${equipment.note || '-'}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// 競合理由のテキストを取得
+function getConflictReasonText(reason) {
+    const reasons = {
+        'period_overlap': '期間重複',
+        'insufficient_quantity': '数量不足'
+    };
+    return reasons[reason] || reason;
+}
+
+// 継承実行
+async function executeInheritance() {
+    if (!inheritanceData.selectedTargetPhaseId || !inheritanceData.previewData) {
+        alert('継承データが不正です');
+        return;
+    }
+
+    // 実行中表示
+    showStep('executingStep');
+
+    try {
+        const response = await fetch(`/phases/{{ $phase->id }}/inherit-to`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                target_phase_id: inheritanceData.selectedTargetPhaseId,
+                inherit_type: 'all'
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            alert(`継承が完了しました。${result.inherited_count}件の機材を継承しました。`);
+            if (result.warnings && result.warnings.length > 0) {
+                const warningMessages = result.warnings.map(w => w.message).join('\n');
+                alert(`警告:\n${warningMessages}`);
+            }
+
+            // モーダルを閉じて画面をリロード
+            closeInheritanceModal();
+            window.location.reload();
+        } else {
+            throw new Error(result.error || '継承処理に失敗しました');
+        }
+
+    } catch (error) {
+        console.error('Inheritance execution error:', error);
+        alert('継承実行中にエラーが発生しました: ' + error.message);
+        showStep(2); // ステップ2に戻る
+    }
+}
 </script>
 <script src="{{ asset('js/equipment-management.js') }}"></script>
 @endsection

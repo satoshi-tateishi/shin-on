@@ -91,6 +91,7 @@ class ScheduleController extends Controller
                 $endDate
             );
 
+
             // 日付範囲を生成
             $dateRange = $this->generateDateRange($startDate, $endDate);
 
@@ -206,6 +207,7 @@ class ScheduleController extends Controller
                     $equipmentRepairs
                 );
 
+
                 $dailyStatus[$date] = $status;
             }
 
@@ -298,7 +300,7 @@ class ScheduleController extends Controller
             case 'checked_out':
                 return 'checked_out';
             case 'checked_in':
-                return 'checked_in';
+                return 'available';
             case 'cancelled':
                 return 'available';
             default:
@@ -383,4 +385,5 @@ class ScheduleController extends Controller
 
         return response()->json(['equipments' => $equipments]);
     }
+
 }

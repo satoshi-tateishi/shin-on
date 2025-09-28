@@ -17,6 +17,7 @@ use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PhaseEquipmentController;
 use App\Http\Controllers\PhaseEquipmentApiController;
 use App\Http\Controllers\PhaseEquipmentCheckoutController;
+use App\Http\Controllers\PhaseEquipmentInheritanceController;
 use App\Http\Controllers\RepairRecordController;
 use Illuminate\Support\Facades\Route;
 
@@ -154,6 +155,11 @@ Route::middleware('auth')->group(function () {
         Route::get('equipment-set-availability', [PhaseEquipmentApiController::class, 'checkSetAvailability'])->name('equipment-set-availability');
         Route::get('equipment/checked-out-equipments', [PhaseEquipmentApiController::class, 'getCheckedOutEquipments'])->name('equipment.checked-out-equipments');
         Route::get('equipment/{phaseEquipment}/equipment-info', [PhaseEquipmentApiController::class, 'getEquipmentInfo'])->name('equipment.equipment-info');
+
+        // 機材継承API
+        Route::get('inheritable-target-phases', [PhaseEquipmentInheritanceController::class, 'getInheritableTargetPhases'])->name('inheritable-target-phases');
+        Route::get('inheritance-preview', [PhaseEquipmentInheritanceController::class, 'getInheritancePreview'])->name('inheritance-preview');
+        Route::post('inherit-to', [PhaseEquipmentInheritanceController::class, 'inheritEquipment'])->name('inherit-to');
 
         Route::resource('equipment', PhaseEquipmentController::class)->parameter('equipment', 'phaseEquipment');
 

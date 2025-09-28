@@ -23,6 +23,7 @@ class PhaseEquipment extends Model
         'checkin_user_id',
         'status',
         'note',
+        'source_phase_equipment_id',
     ];
 
     protected function casts(): array
@@ -64,6 +65,22 @@ class PhaseEquipment extends Model
     public function checkinUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'checkin_user_id');
+    }
+
+    /**
+     * 継承元のPhaseEquipmentとの関連
+     */
+    public function sourcePhaseEquipment(): BelongsTo
+    {
+        return $this->belongsTo(PhaseEquipment::class, 'source_phase_equipment_id');
+    }
+
+    /**
+     * 継承先のPhaseEquipmentとの関連
+     */
+    public function inheritedPhaseEquipments(): HasMany
+    {
+        return $this->hasMany(PhaseEquipment::class, 'source_phase_equipment_id');
     }
 
     /**
@@ -226,6 +243,7 @@ class PhaseEquipment extends Model
     private static function overlappingEquipment($equipmentId, $phaseStartDate, $phaseEndDate, $excludeId = null)
     {
         $query = self::where('equipment_id', $equipmentId)
+            ->where('status', 'checked_out')
             ->whereHas('phase', function ($phaseQuery) use ($phaseStartDate, $phaseEndDate) {
                 $phaseQuery->where(function ($q) use ($phaseStartDate, $phaseEndDate) {
                     // 期間が重複する条件

@@ -8,6 +8,8 @@
 
 @push('head')
     <style>
+        [x-cloak] { display: none !important; }
+
         .schedule-table {
             border-spacing: 0;
         }
@@ -23,12 +25,12 @@
             max-width: 80px;
             width: 80px;
         }
-        /* 日付列の幅を狭く */
+        /* 日付列の幅 */
         .schedule-table th:nth-child(n+3),
         .schedule-table td:nth-child(n+3) {
-            width: 30px;
-            min-width: 30px;
-            max-width: 30px;
+            width: 40px;
+            min-width: 40px;
+            max-width: 40px;
         }
         /* テーブル内の文字サイズを小さく */
         .schedule-table {
@@ -98,6 +100,20 @@
             text-overflow: ellipsis;
             max-width: 100%;
             padding: 0 2px;
+        }
+
+        /* アノテーションテキストスタイル */
+        .annotation-text {
+            font-size: 8px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 35px;
+            display: block;
+            text-align: center;
         }
     </style>
 @endpush
@@ -220,7 +236,7 @@
             <!-- ステータス凡例 -->
             <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
                 <h3 class="text-sm font-medium text-gray-700 mb-2">ステータス凡例</h3>
-                <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <div class="flex items-center space-x-1">
                         <div class="w-3 h-3 bg-green-500 rounded"></div>
                         <span class="text-xs">利用可能</span>
@@ -234,24 +250,8 @@
                         <span class="text-xs">使用中</span>
                     </div>
                     <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-gray-500 rounded"></div>
-                        <span class="text-xs">返却済み</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
                         <div class="w-3 h-3 bg-red-500 rounded"></div>
                         <span class="text-xs">修理中</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-yellow-500 rounded"></div>
-                        <span class="text-xs">メンテナンス中</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-red-800 rounded"></div>
-                        <span class="text-xs">紛失</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-gray-800 rounded"></div>
-                        <span class="text-xs">廃棄</span>
                     </div>
                 </div>
             </div>
@@ -300,9 +300,8 @@
                                             <!-- スパンセルの場合 -->
                                             <template x-if="isSpanStart(equipment, dateIndex)">
                                                 <div :class="getStatusClass(equipment.daily_status[date]?.status)"
-                                                     class="w-full h-5 cursor-pointer span-content flex items-center justify-center"
-                                                     :title="getStatusTooltip(equipment.daily_status[date])"
-                                                     @click="showStatusDetail(equipment, date, equipment.daily_status[date])">
+                                                     class="w-full h-5 span-content flex items-center justify-center"
+                                                     :title="getStatusTooltip(equipment.daily_status[date])">
                                                     <span class="span-text" x-text="formatSpanText(isSpanStart(equipment, dateIndex))"></span>
                                                 </div>
                                             </template>
@@ -310,9 +309,8 @@
                                             <!-- 通常セルの場合 -->
                                             <template x-if="!isSpanStart(equipment, dateIndex)">
                                                 <div :class="getStatusClass(equipment.daily_status[date]?.status)"
-                                                     class="w-full h-5 cursor-pointer"
-                                                     :title="getStatusTooltip(equipment.daily_status[date])"
-                                                     @click="showStatusDetail(equipment, date, equipment.daily_status[date])">
+                                                     class="w-full h-5"
+                                                     :title="getStatusTooltip(equipment.daily_status[date])">
                                                 </div>
                                             </template>
                                         </td>
@@ -324,7 +322,7 @@
                 </div>
 
             <!-- ページネーション -->
-            <div x-show="pagination && pagination.last_page > 1" class="px-6 py-4 border-t border-gray-200">
+            <div x-show="pagination.last_page > 1" class="px-6 py-4 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-600">
                         <span x-text="pagination.from"></span>-<span x-text="pagination.to"></span>
@@ -354,62 +352,9 @@
             <p class="text-gray-600">該当するデータがありません。フィルター条件を変更してください。</p>
         </div>
 
-    </div>
 
-    <!-- ステータス詳細モーダル -->
-    <div x-show="showModal"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto"
-         style="display: none;">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="showModal = false"></div>
 
-            <div class="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
-                <div class="mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">ステータス詳細</h3>
-                </div>
-
-                <div x-show="modalData" class="space-y-3">
-                    <div>
-                        <span class="text-sm font-medium text-gray-500">機材名：</span>
-                        <span class="text-sm text-gray-900" x-text="modalData?.equipment?.equipment_name"></span>
-                    </div>
-                    <div>
-                        <span class="text-sm font-medium text-gray-500">日付：</span>
-                        <span class="text-sm text-gray-900" x-text="modalData?.date"></span>
-                    </div>
-                    <div>
-                        <span class="text-sm font-medium text-gray-500">ステータス：</span>
-                        <span class="text-sm text-gray-900" x-text="getStatusText(modalData?.status?.status)"></span>
-                    </div>
-                    <div x-show="modalData?.status?.phase_name">
-                        <span class="text-sm font-medium text-gray-500">フェーズ：</span>
-                        <span class="text-sm text-gray-900" x-text="modalData?.status?.phase_name"></span>
-                    </div>
-                    <div x-show="modalData?.status?.performance_title">
-                        <span class="text-sm font-medium text-gray-500">公演：</span>
-                        <span class="text-sm text-gray-900" x-text="modalData?.status?.performance_title"></span>
-                    </div>
-                    <div x-show="modalData?.status?.note">
-                        <span class="text-sm font-medium text-gray-500">備考：</span>
-                        <span class="text-sm text-gray-900" x-text="modalData?.status?.note"></span>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex justify-end">
-                    <button @click="showModal = false"
-                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">
-                        閉じる
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    </div><!-- Alpine.jsスコープ終了 -->
 
 @push('scripts')
 <script>
@@ -420,13 +365,18 @@
                 categories: [],
                 subcategories: [],
                 dateRange: [],
-                pagination: null,
+                pagination: {
+                    current_page: 1,
+                    last_page: 1,
+                    per_page: 100,
+                    total: 0,
+                    from: 0,
+                    to: 0
+                },
 
                 // UI状態
                 loading: false,
                 error: null,
-                showModal: false,
-                modalData: null,
 
                 // フィルター
                 filters: {
@@ -526,7 +476,7 @@
                 },
 
                 loadPage(page) {
-                    if (page >= 1 && page <= this.pagination.last_page) {
+                    if (this.pagination && page >= 1 && page <= this.pagination.last_page) {
                         this.loadScheduleData(page);
                     }
                 },
@@ -549,11 +499,7 @@
                         'available': 'bg-green-500 text-white',
                         'reserved': 'bg-blue-500 text-white',
                         'checked_out': 'bg-orange-500 text-white',
-                        'checked_in': 'bg-gray-500 text-white',
-                        'repair': 'bg-red-500 text-white',
-                        'maintenance': 'bg-yellow-500 text-white',
-                        'lost': 'bg-red-800 text-white',
-                        'retired': 'bg-gray-800 text-white'
+                        'repair': 'bg-red-500 text-white'
                     };
                     return classes[status] || 'bg-gray-200 text-gray-700';
                 },
@@ -563,11 +509,7 @@
                         'available': '●',
                         'reserved': '●',
                         'checked_out': '●',
-                        'checked_in': '●',
-                        'repair': '●',
-                        'maintenance': '●',
-                        'lost': '●',
-                        'retired': '●'
+                        'repair': '●'
                     };
                     return symbols[status] || '○';
                 },
@@ -577,11 +519,7 @@
                         'available': '利用可能',
                         'reserved': '予約済み',
                         'checked_out': '使用中',
-                        'checked_in': '返却済み',
-                        'repair': '修理中',
-                        'maintenance': 'メンテナンス中',
-                        'lost': '紛失',
-                        'retired': '廃棄'
+                        'repair': '修理中'
                     };
                     return texts[status] || '不明';
                 },
@@ -614,15 +552,6 @@
                     return days[d.getDay()];
                 },
 
-                // モーダル関連
-                showStatusDetail(equipment, date, status) {
-                    this.modalData = {
-                        equipment: equipment,
-                        date: date,
-                        status: status
-                    };
-                    this.showModal = true;
-                },
 
                 // スパン期間検出機能
                 detectSpanPeriods(equipment) {
