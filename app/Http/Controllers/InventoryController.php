@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentMovement;
-use App\Models\InventorySnapshot;
 use App\Models\Location;
 use App\Models\PhaseEquipment;
 use App\Models\RepairRecord;
@@ -32,9 +31,6 @@ class InventoryController extends Controller
             ->count();
         $totalLocations = Location::active()->warehouses()->count(); // 倉庫のみをカウント
 
-        // 最新のスナップショット日付を取得
-        $latestSnapshotDate = InventorySnapshot::max('snapshot_date');
-        $isSnapshotCurrent = $latestSnapshotDate && Carbon::parse($latestSnapshotDate)->isToday();
 
         // カテゴリ別統計
         $categoryStats = EquipmentCategory::active()
@@ -67,8 +63,6 @@ class InventoryController extends Controller
         return view('inventory.index', compact(
             'totalEquipments',
             'totalLocations',
-            'latestSnapshotDate',
-            'isSnapshotCurrent',
             'categoryStats',
             'locationStats'
         ));

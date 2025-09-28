@@ -65,6 +65,27 @@
 ./vendor/bin/sail artisan log:tail
 ```
 
+### バックアップ・メンテナンス
+```bash
+# Dropboxバックアップ実行
+./vendor/bin/sail artisan backup:dropbox
+
+# バックアップ接続テスト
+./vendor/bin/sail artisan backup:dropbox --test
+
+# 利用可能なバックアップ一覧
+./vendor/bin/sail artisan restore:dropbox --list
+
+# ログファイルクリーンアップ（7日以上古いもの）
+./vendor/bin/sail artisan logs:clear
+
+# ログファイルクリーンアップ（指定日数）
+./vendor/bin/sail artisan logs:clear --days=3
+
+# ログファイル強制削除
+./vendor/bin/sail artisan logs:clear --days=0 --force
+```
+
 ## 🤖 Laravel-Boost MCP
 
 ### Boost関連コマンド

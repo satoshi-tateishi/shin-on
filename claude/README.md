@@ -38,6 +38,8 @@
 
 ### ⚙️ 運用・ドキュメント
 - **[operations/documentation.md](operations/documentation.md)** - API仕様書・ドキュメント管理
+- **[operations/backup-system.md](operations/backup-system.md)** - Dropboxバックアップシステム ☁️
+- **[operations/log-maintenance.md](operations/log-maintenance.md)** - ログ管理・メンテナンスシステム 🗂️
 
 ### 📋 システム仕様書・設計書
 - **[../docs/Equipment_Management_System_Requirements_v2.md](../docs/Equipment_Management_System_Requirements_v2.md)** - 機材管理システム要件定義書 v2.0 ✨

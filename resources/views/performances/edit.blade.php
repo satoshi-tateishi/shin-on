@@ -27,7 +27,7 @@
 
 @section('content')
 <div class="bg-white shadow rounded-lg">
-    <form method="POST" action="{{ route('performances.update', $performance) }}" class="px-4 py-5 sm:p-6">
+    <form method="POST" action="{{ route('performances.update', $performance) }}" enctype="multipart/form-data" class="px-4 py-5 sm:p-6">
         @csrf
         @method('PUT')
 
@@ -309,6 +309,54 @@
             </div>
             @endif
 
+            <!-- 既存の公演チラシ画像 -->
+            @if($performance->attachments && $performance->attachments->count() > 0)
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">既存の公演チラシ画像</h3>
+                <div class="flex flex-wrap -m-0 mb-4">
+                    @foreach($performance->attachments as $attachment)
+                        @if($attachment->isImage())
+                            <div class="w-1/3 md:w-1/4 lg:w-1/5 xl:w-1/6 relative">
+                                <a href="{{ $attachment->file_url }}" target="_blank" class="block">
+                                    <img src="{{ $attachment->thumbnail_url ?? $attachment->file_url }}"
+                                         alt="{{ $attachment->original_name }}"
+                                         class="w-full h-32 object-contain hover:opacity-80 transition-opacity">
+                                </a>
+                                <!-- 削除チェックボックス -->
+                                <div class="absolute top-1 right-1">
+                                    <input type="checkbox" name="delete_attachments[]" value="{{ $attachment->id }}"
+                                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded bg-white shadow">
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+                <p class="text-sm text-gray-500">右上のチェックボックスにチェックを入れたファイルは削除されます。</p>
+            </div>
+            @endif
+
+            <!-- 新しい公演チラシ画像 -->
+            <div class="border-b border-gray-200 pb-6">
+                <div>
+                    <label for="attachments" class="block text-sm font-medium text-gray-700">新しい公演チラシ画像</label>
+                    <div class="mt-1">
+                        <input type="file" name="attachments[]" id="attachments" multiple
+                               accept=".pdf,.jpg,.jpeg,.png"
+                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">PDF、JPEG、PNG形式のファイルを複数選択できます。最大10ファイル、各5MBまで。</p>
+                    @error('attachments')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('attachments.*')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+
+                    <!-- ファイルプレビューエリア -->
+                    <div id="file-preview" class="mt-4 flex flex-wrap -m-0 hidden"></div>
+                </div>
+            </div>
+
             <!-- 備考 -->
             <div class="border-b border-gray-200 pb-6">
                 <div>
@@ -357,6 +405,43 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ファイルアップロード・プレビュー機能
+    const fileInput = document.getElementById('attachments');
+    const filePreview = document.getElementById('file-preview');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            filePreview.innerHTML = '';
+
+            if (files.length === 0) {
+                filePreview.classList.add('hidden');
+                return;
+            }
+
+            filePreview.classList.remove('hidden');
+
+            files.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'w-1/3 md:w-1/4 lg:w-1/5 xl:w-1/6';
+
+                    const imgElement = document.createElement('img');
+                    imgElement.className = 'w-full h-32 object-contain';
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imgElement.src = e.target.result;
+                        imgElement.alt = file.name;
+                    };
+                    reader.readAsDataURL(file);
+
+                    wrapper.appendChild(imgElement);
+                    filePreview.appendChild(wrapper);
+                }
+            });
+        });
+    }
     // サウンドデザイナー管理
     const addSoundDesignerBtn = document.getElementById('add-sound-designer');
     const soundDesignersContainer = document.getElementById('sound-designers-container');

@@ -100,7 +100,7 @@ class EquipmentController extends Controller
             'purchase_date' => 'nullable|date',
             'warranty_expiry' => 'nullable|date',
             'price' => 'nullable|numeric|min:0',
-            'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
+            'status' => 'required|in:available,in_use,repair,retired,lost',
             'location_id' => 'nullable|exists:locations,id',
             'now_location_id' => 'nullable|exists:locations,id',
             'is_discard' => 'nullable|boolean',
@@ -157,7 +157,7 @@ class EquipmentController extends Controller
             'purchase_date' => 'nullable|date',
             'warranty_expiry' => 'nullable|date',
             'price' => 'nullable|numeric|min:0',
-            'status' => 'required|in:available,in_use,repair,maintenance,retired,lost',
+            'status' => 'required|in:available,in_use,repair,retired,lost',
             'location_id' => 'nullable|exists:locations,id',
             'now_location_id' => 'nullable|exists:locations,id',
             'is_discard' => 'nullable|boolean',
@@ -362,7 +362,7 @@ class EquipmentController extends Controller
         }
 
         // 状態の妥当性チェック
-        $validStatuses = ['available', 'in_use', 'repair', 'maintenance', 'broken', 'retired', 'lost'];
+        $validStatuses = ['available', 'in_use', 'repair', 'broken', 'retired', 'lost'];
         if (! in_array($recordData['status'], $validStatuses)) {
             throw new \Exception("無効な状態です: {$recordData['status']}");
         }

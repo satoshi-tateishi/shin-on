@@ -40,6 +40,10 @@ class PerformanceRequest extends FormRequest
             'staff.*.position_id' => 'nullable|exists:positions,id',
             'sound_designers' => 'nullable|array',
             'sound_designers.*' => 'nullable|exists:users,id',
+            'attachments' => 'nullable|array|max:10',
+            'attachments.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'delete_attachments' => 'nullable|array',
+            'delete_attachments.*' => 'exists:performance_attachments,id',
         ];
     }
 
@@ -58,6 +62,10 @@ class PerformanceRequest extends FormRequest
             'staff.*.user_id.exists' => '選択されたスタッフが存在しません。',
             'staff.*.position_id.exists' => '選択されたポジションが存在しません。',
             'sound_designers.*.exists' => '選択されたサウンドデザイナーが存在しません。',
+            'attachments.max' => 'ファイルは最大10個まで選択できます。',
+            'attachments.*.file' => '有効なファイルを選択してください。',
+            'attachments.*.mimes' => 'ファイルはPDF、JPEG、PNG形式のみアップロード可能です。',
+            'attachments.*.max' => 'ファイルサイズは5MB以下にしてください。',
         ];
     }
 

@@ -141,6 +141,28 @@
                 </div>
                 @endif
 
+                <!-- 公演チラシ画像 -->
+                @if($performance->attachments && $performance->attachments->count() > 0)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">公演チラシ画像</dt>
+                    <dd class="mt-1">
+                        <div class="flex flex-wrap -m-0">
+                            @foreach($performance->attachments as $attachment)
+                                @if($attachment->isImage())
+                                    <div class="w-1/3 md:w-1/4 lg:w-1/5 xl:w-1/6">
+                                        <a href="{{ $attachment->file_url }}" target="_blank" class="block">
+                                            <img src="{{ $attachment->thumbnail_url ?? $attachment->file_url }}"
+                                                 alt="{{ $attachment->original_name }}"
+                                                 class="w-full h-32 object-contain hover:opacity-80 transition-opacity">
+                                        </a>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </dd>
+                </div>
+                @endif
+
                 <!-- 備考 -->
                 @if($performance->note)
                 <div>

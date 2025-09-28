@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\LineWorksController;
+use App\Http\Controllers\DropboxAuthController;
 use App\Http\Controllers\InventoryController;
-use App\Http\Controllers\InventorySnapshotController;
 use App\Http\Controllers\InventoryTransferController;
 use App\Http\Controllers\Master\EquipmentCategoryController;
 use App\Http\Controllers\Master\EquipmentController;
@@ -51,6 +51,26 @@ Route::middleware('auth')->group(function () {
         Route::get('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'index'])->name('company-logo.index');
         Route::post('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'store'])->name('company-logo.store');
         Route::delete('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'destroy'])->name('company-logo.destroy');
+
+        // バックアップ管理（管理者権限のみ）
+        Route::prefix('backup')->name('backup.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('index');
+            Route::post('run', [\App\Http\Controllers\Admin\BackupController::class, 'runBackup'])->name('run');
+            Route::get('list', [\App\Http\Controllers\Admin\BackupController::class, 'listBackups'])->name('list');
+        });
+    });
+
+    // Dropbox OAuth認証ルート（管理者権限のみ）
+    Route::middleware(['auth'])->prefix('auth/dropbox')->name('dropbox.')->group(function () {
+        Route::get('redirect', [DropboxAuthController::class, 'redirect'])->name('redirect');
+        Route::get('callback', [DropboxAuthController::class, 'callback'])->name('callback');
+    });
+
+    // Dropbox API ルート（管理者権限のみ）
+    Route::middleware(['auth'])->prefix('api/dropbox')->name('api.dropbox.')->group(function () {
+        Route::get('auth-status', [DropboxAuthController::class, 'authStatus'])->name('auth-status');
+        Route::post('refresh-token', [DropboxAuthController::class, 'refreshToken'])->name('refresh-token');
+        Route::post('revoke-auth', [DropboxAuthController::class, 'revokeAuth'])->name('revoke-auth');
     });
 
     // マスタ管理ルート

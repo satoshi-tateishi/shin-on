@@ -143,7 +143,6 @@
                         <option value="">すべて</option>
                         <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>利用可能</option>
                         <option value="in_use" {{ request('status') == 'in_use' ? 'selected' : '' }}>使用中</option>
-                        <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>メンテナンス中</option>
                         <option value="broken" {{ request('status') == 'broken' ? 'selected' : '' }}>故障</option>
                         <option value="retired" {{ request('status') == 'retired' ? 'selected' : '' }}>廃止</option>
                     </select>

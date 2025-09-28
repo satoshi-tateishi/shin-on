@@ -27,7 +27,7 @@ return new class extends Migration
             $table->date('purchase_date')->nullable()->comment('購入日');
             $table->date('warranty_expiry')->nullable()->comment('保証期限');
             $table->decimal('price', 12, 2)->nullable()->comment('価格');
-            $table->enum('status', ['available', 'in_use', 'repair', 'maintenance', 'retired', 'lost'])->default('available')->comment('状態');
+            $table->enum('status', ['available', 'in_use', 'repair', 'retired', 'lost'])->default('available')->comment('状態');
             $table->foreignId('location_id')->nullable()->constrained('locations')->onDelete('set null')->comment('基本倉庫ID');
             $table->foreignId('now_location_id')->nullable()->constrained('locations')->onDelete('set null')->comment('現在地ID');
             $table->boolean('is_discard')->default(false)->comment('廃棄フラグ');

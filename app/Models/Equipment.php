@@ -178,7 +178,6 @@ class Equipment extends Model
             'available' => '利用可能',
             'in_use' => '使用中',
             'repair' => '修理中',
-            'maintenance' => 'メンテナンス中',
             'retired' => '廃棄',
             'lost' => '紛失',
             default => '不明',

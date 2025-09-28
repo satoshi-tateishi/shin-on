@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Models\Performance;
+use App\Models\PerformanceAttachment;
 use App\Models\PerformanceStaff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PerformanceService
 {
@@ -33,8 +36,9 @@ class PerformanceService
 
             $this->syncProductions($performance, $data['production_ids'] ?? []);
             $this->syncStaff($performance, $data);
+            $this->handleFileUploads($performance, $data);
 
-            return $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions']);
+            return $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions', 'attachments']);
         });
     }
 
@@ -45,8 +49,10 @@ class PerformanceService
 
             $this->syncProductions($performance, $data['production_ids'] ?? []);
             $this->syncStaff($performance, $data);
+            $this->handleFileUploads($performance, $data);
+            $this->handleFileDeletions($performance, $data);
 
-            return $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions']);
+            return $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions', 'attachments']);
         });
     }
 
@@ -111,6 +117,78 @@ class PerformanceService
                         'position_id' => 1, // サウンドデザインのポジションID
                     ]);
                 }
+            }
+        }
+    }
+
+    /**
+     * ファイルアップロード処理
+     */
+    private function handleFileUploads(Performance $performance, array $data): void
+    {
+        Log::info('ファイルアップロード処理開始', ['performance_id' => $performance->id, 'has_attachments' => !empty($data['attachments'])]);
+
+        if (!empty($data['attachments'])) {
+            Log::info('添付ファイル数', ['count' => count($data['attachments'])]);
+
+            foreach ($data['attachments'] as $index => $file) {
+                Log::info('ファイル処理中', ['index' => $index, 'is_valid' => $file && $file->isValid()]);
+
+                if ($file && $file->isValid()) {
+                    // ファイルを保存
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs('performances/' . $performance->id, $filename, 'public');
+
+                    Log::info('ファイル保存完了', [
+                        'filename' => $filename,
+                        'path' => $path,
+                        'size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType()
+                    ]);
+
+                    // データベースに記録
+                    $attachment = PerformanceAttachment::create([
+                        'performance_id' => $performance->id,
+                        'original_name' => $file->getClientOriginalName(),
+                        'file_path' => $path,
+                        'mime_type' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                    ]);
+
+                    Log::info('DB記録完了', ['attachment_id' => $attachment->id]);
+
+                    // 画像の場合はサムネイル生成
+                    if ($attachment->isImage()) {
+                        $thumbnailResult = $attachment->generateThumbnail();
+                        Log::info('サムネイル生成結果', ['result' => $thumbnailResult]);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * ファイル削除処理（編集時）
+     */
+    private function handleFileDeletions(Performance $performance, array $data): void
+    {
+        if (!empty($data['delete_attachments'])) {
+            $deleteIds = $data['delete_attachments'];
+            $attachments = $performance->attachments()->whereIn('id', $deleteIds)->get();
+
+            foreach ($attachments as $attachment) {
+                // ファイルを削除
+                if (Storage::disk('public')->exists($attachment->file_path)) {
+                    Storage::disk('public')->delete($attachment->file_path);
+                }
+
+                // サムネイルも削除
+                if ($attachment->thumbnail_path && Storage::disk('public')->exists($attachment->thumbnail_path)) {
+                    Storage::disk('public')->delete($attachment->thumbnail_path);
+                }
+
+                // データベースから削除
+                $attachment->delete();
             }
         }
     }

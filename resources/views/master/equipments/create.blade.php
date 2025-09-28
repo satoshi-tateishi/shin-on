@@ -251,7 +251,6 @@
                         <option value="available" {{ old('status', 'available') == 'available' ? 'selected' : '' }}>利用可能</option>
                         <option value="in_use" {{ old('status') == 'in_use' ? 'selected' : '' }}>使用中</option>
                         <option value="repair" {{ old('status') == 'repair' ? 'selected' : '' }}>修理中</option>
-                        <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>メンテナンス中</option>
                         <option value="retired" {{ old('status') == 'retired' ? 'selected' : '' }}>廃棄</option>
                         <option value="lost" {{ old('status') == 'lost' ? 'selected' : '' }}>紛失</option>
                     </select>

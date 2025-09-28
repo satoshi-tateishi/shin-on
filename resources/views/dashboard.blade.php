@@ -349,6 +349,24 @@
                                 <p class="text-gray-600 text-sm leading-relaxed">ログインとダッシュボードのロゴ設定</p>
                             </div>
                         </a>
+
+                        <!-- バックアップ管理 -->
+                        <a href="{{ route('admin.backup.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-1">
+                            <div class="p-8">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                                        <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                        </svg>
+                                    </div>
+                                    <svg class="h-5 w-5 text-gray-400 group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-900 transition-colors">バックアップ管理</h3>
+                                <p class="text-gray-600 text-sm leading-relaxed">Dropboxへの自動バックアップ・リストア</p>
+                            </div>
+                        </a>
                     </div>
                 </div>
                 @endif

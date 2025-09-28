@@ -141,7 +141,6 @@
                                         @case('available') bg-green-100 text-green-800 @break
                                         @case('in_use') bg-blue-100 text-blue-800 @break
                                         @case('repair') bg-orange-100 text-orange-800 @break
-                                        @case('maintenance') bg-yellow-100 text-yellow-800 @break
                                         @case('retired') bg-gray-100 text-gray-800 @break
                                         @case('lost') bg-red-100 text-red-800 @break
                                     @endswitch">
@@ -149,7 +148,6 @@
                                         @case('available') 利用可能 @break
                                         @case('in_use') 使用中 @break
                                         @case('repair') 修理中 @break
-                                        @case('maintenance') メンテナンス中 @break
                                         @case('retired') 廃棄 @break
                                         @case('lost') 紛失 @break
                                     @endswitch

@@ -46,14 +46,14 @@ class PerformanceController extends Controller
 
     public function show(Performance $performance): View
     {
-        $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions']);
+        $performance->load(['phases.location', 'staff.user', 'staff.position', 'productions', 'attachments']);
 
         return view('performances.show', compact('performance'));
     }
 
     public function edit(Performance $performance): View
     {
-        $performance->load(['productions', 'staff']);
+        $performance->load(['productions', 'staff', 'attachments']);
         $productions = Production::active()->ordered()->get();
         $users = User::active()->staff()->ordered()->get();
         $positions = Position::active()->ordered()->get();

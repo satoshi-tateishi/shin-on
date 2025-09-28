@@ -115,6 +115,14 @@
             display: block;
             text-align: center;
         }
+
+        /* 土曜日・日曜日の背景色 */
+        .saturday-header {
+            background-color: #dbeafe !important; /* 薄い青 */
+        }
+        .sunday-header {
+            background-color: #fee2e2 !important; /* 薄い赤 */
+        }
     </style>
 @endpush
 
@@ -271,7 +279,8 @@
 
                                 <!-- 日付列 -->
                                 <template x-for="date in dateRange" :key="date">
-                                    <th class="border border-gray-300 px-0 py-0.5 text-center text-xs font-medium text-gray-700">
+                                    <th class="border border-gray-300 px-0 py-0.5 text-center text-xs font-medium text-gray-700"
+                                        :class="getDayHeaderClass(date)">
                                         <div class="text-xs" x-text="formatDateHeader(date)"></div>
                                         <div class="text-gray-500 text-xs" x-text="formatDayOfWeek(date)"></div>
                                     </th>
@@ -550,6 +559,17 @@
                     const d = new Date(date + 'T00:00:00');
                     const days = ['日', '月', '火', '水', '木', '金', '土'];
                     return days[d.getDay()];
+                },
+
+                getDayHeaderClass(date) {
+                    const d = new Date(date + 'T00:00:00');
+                    const dayOfWeek = d.getDay();
+                    if (dayOfWeek === 0) { // 日曜日
+                        return 'sunday-header';
+                    } else if (dayOfWeek === 6) { // 土曜日
+                        return 'saturday-header';
+                    }
+                    return '';
                 },
 
 

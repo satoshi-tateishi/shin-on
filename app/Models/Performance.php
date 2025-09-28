@@ -73,6 +73,14 @@ class Performance extends Model
     }
 
     /**
+     * 添付ファイルとの関連
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PerformanceAttachment::class);
+    }
+
+    /**
      * スコープ: アクティブな公演のみ
      */
     public function scopeActive($query)
