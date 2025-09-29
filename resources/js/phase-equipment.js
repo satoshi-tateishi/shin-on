@@ -254,30 +254,30 @@ class PhaseEquipmentManager {
             // 選択済みかチェック
             const isSelected = this.selectedEquipmentList.some(item => item.equipment.id === equipment.id);
 
-            let statusClass, statusText, statusTextClass, clickable;
+            let statusClass, statusText, statusTextClass, clickable, onClickAction;
 
             if (isSelected) {
-                statusClass = 'bg-blue-100 border-blue-300';
-                statusText = '選択済み';
+                statusClass = 'bg-blue-100 border-blue-300 cursor-pointer hover:bg-blue-200';
+                statusText = '選択済み（クリックで解除）';
                 statusTextClass = 'text-blue-800';
-                clickable = false;
+                clickable = true;
+                onClickAction = `phaseEquipmentManager.deselectEquipment(${equipment.id})`;
             } else if (isAvailable) {
-                statusClass = 'bg-green-50 border-green-200';
+                statusClass = 'bg-green-50 border-green-200 cursor-pointer hover:bg-gray-50';
                 statusText = '利用可能';
                 statusTextClass = 'text-green-800';
                 clickable = true;
+                onClickAction = `phaseEquipmentManager.selectEquipment(${equipment.id})`;
             } else {
-                statusClass = 'bg-red-50 border-red-200';
+                statusClass = 'bg-red-50 border-red-200 cursor-not-allowed opacity-75';
                 statusText = '利用不可';
                 statusTextClass = 'text-red-800';
                 clickable = false;
+                onClickAction = '';
             }
 
-            const cursorStyle = clickable ? 'cursor-pointer hover:bg-gray-50' : 'cursor-not-allowed opacity-75';
-            const onClickAction = clickable ? `phaseEquipmentManager.selectEquipment(${equipment.id})` : '';
-
             return `
-                <div class="p-3 border rounded-lg ${cursorStyle} ${statusClass}"
+                <div class="p-3 border rounded-lg ${statusClass}"
                      data-equipment-id="${equipment.id}"
                      ${onClickAction ? `onclick="${onClickAction}"` : ''}>
                     <div class="flex justify-between items-start">
@@ -304,7 +304,7 @@ class PhaseEquipmentManager {
     }
 
     /**
-     * 機材選択
+     * 機材選択 - クリックで直接リストに追加
      */
     selectEquipment(equipmentId) {
         console.log('🎯 [DEBUG] selectEquipment called with ID:', equipmentId);
@@ -316,29 +316,165 @@ class PhaseEquipmentManager {
 
         console.log('✅ [DEBUG] Equipment selected:', this.selectedEquipment.name);
 
-        // フォームに値設定
-        const equipmentIdInput = document.getElementById('equipment_id');
-        if (equipmentIdInput) {
-            equipmentIdInput.value = equipmentId;
-            console.log('📝 [DEBUG] Set equipment_id input to:', equipmentId);
+        // 数量管理機材の場合、数量入力ダイアログを表示
+        if (this.selectedEquipment.management_type === 'quantity') {
+            this.showQuantityDialog(this.selectedEquipment);
         } else {
-            console.error('❌ [DEBUG] equipment_id input not found');
+            // 個体管理機材の場合、直接リストに追加
+            this.directAddToList(this.selectedEquipment, 1);
+        }
+    }
+
+    /**
+     * 機材選択解除 - 選択済み機材をクリックでリストから削除
+     */
+    deselectEquipment(equipmentId) {
+        console.log('🔄 [DEBUG] deselectEquipment called with ID:', equipmentId);
+
+        const equipment = this.availableEquipments.find(eq => eq.id === equipmentId);
+        if (!equipment) {
+            console.error('❌ [DEBUG] Equipment not found:', equipmentId);
+            return;
         }
 
-        // 選択された機材情報表示
-        this.displaySelectedEquipment();
+        // 該当機材のインデックスを検索
+        const index = this.selectedEquipmentList.findIndex(item => item.equipment.id === equipmentId);
 
-        // セクション表示
-        this.showQuantitySection();
-
-        // リストに追加ボタン有効化
-        const addToListButton = document.getElementById('addToListButton');
-        if (addToListButton) {
-            addToListButton.disabled = false;
-            console.log('✅ [DEBUG] Add to list button enabled');
-        } else {
-            console.error('❌ [DEBUG] Add to list button not found');
+        if (index >= 0) {
+            // 確認ダイアログを表示
+            if (confirm(`${equipment.name} を選択解除しますか？`)) {
+                this.removeFromList(index);
+                console.log('✅ [DEBUG] Equipment deselected:', equipment.name);
+            }
         }
+    }
+
+    /**
+     * 数量入力ダイアログ表示
+     */
+    showQuantityDialog(equipment) {
+        // 既存のダイアログを削除
+        const existingDialog = document.getElementById('quantity-dialog');
+        if (existingDialog) {
+            existingDialog.remove();
+        }
+
+        // ダイアログを作成
+        const dialog = document.createElement('div');
+        dialog.id = 'quantity-dialog';
+        dialog.className = 'fixed inset-0 overflow-y-auto';
+        dialog.style.zIndex = '9999';
+        dialog.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="window.closeQuantityDialog()"></div>
+                <div class="relative inline-block bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">数量を入力</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-700 font-medium mb-2">${this.escapeHtml(equipment.name)}</p>
+                            <p class="text-sm text-gray-500 mb-4">利用可能数量: ${equipment.available_quantity}個</p>
+                            <label for="dialog-quantity" class="block text-sm font-medium text-gray-700 mb-2">数量</label>
+                            <input type="number" id="dialog-quantity" min="1" max="${equipment.available_quantity}" value="1"
+                                   oninput="window.validateQuantityInput(this, ${equipment.available_quantity})"
+                                   onkeydown="window.preventInvalidInput(event)"
+                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p id="quantity-error" class="mt-1 text-sm text-red-600 hidden">利用可能数量を超えています</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button onclick="window.confirmQuantityAndAdd()" type="button" id="dialog-add-button"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            追加
+                        </button>
+                        <button onclick="window.closeQuantityDialog()" type="button"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            キャンセル
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+
+        // 数量入力にフォーカス
+        setTimeout(() => {
+            const quantityInput = document.getElementById('dialog-quantity');
+            if (quantityInput) {
+                quantityInput.focus();
+                quantityInput.select();
+            }
+        }, 100);
+    }
+
+    /**
+     * 数量ダイアログを閉じる
+     */
+    closeQuantityDialog() {
+        const dialog = document.getElementById('quantity-dialog');
+        if (dialog) {
+            dialog.remove();
+        }
+    }
+
+    /**
+     * 数量を確認してリストに追加
+     */
+    confirmQuantityAndAdd() {
+        const quantityInput = document.getElementById('dialog-quantity');
+        if (!quantityInput || !this.selectedEquipment) {
+            return;
+        }
+
+        const quantity = parseInt(quantityInput.value) || 1;
+        const maxQuantity = this.selectedEquipment.available_quantity;
+
+        // 最大値チェック
+        if (quantity > maxQuantity) {
+            this.showError(`利用可能数量（${maxQuantity}個）を超えています`);
+            return;
+        }
+
+        // 最小値チェック
+        if (quantity < 1) {
+            this.showError('数量は1以上を入力してください');
+            return;
+        }
+
+        this.directAddToList(this.selectedEquipment, quantity);
+        this.closeQuantityDialog();
+    }
+
+    /**
+     * 機材を直接リストに追加
+     */
+    directAddToList(equipment, quantity) {
+        // 既に同じ機材が選択されているかチェック
+        const existingIndex = this.selectedEquipmentList.findIndex(item => item.equipment.id === equipment.id);
+
+        if (existingIndex >= 0) {
+            // 既存の機材の数量を更新
+            this.selectedEquipmentList[existingIndex].quantity = quantity;
+            console.log('📝 [DEBUG] Updated existing equipment quantity:', quantity);
+            this.showSuccess(`${equipment.name} の数量を更新しました`);
+        } else {
+            // 新しい機材をリストに追加
+            this.selectedEquipmentList.push({
+                equipment: equipment,
+                quantity: quantity
+            });
+            console.log('✅ [DEBUG] Added equipment to list:', equipment.name, 'quantity:', quantity);
+            this.showSuccess(`${equipment.name} をリストに追加しました`);
+        }
+
+        // テーブルを更新
+        this.updateSelectedEquipmentTable();
+
+        // 機材リストの表示を更新（選択済み状態を反映）
+        this.refreshEquipmentDisplay();
+
+        // 選択をリセット
+        this.selectedEquipment = null;
     }
 
     /**
@@ -522,8 +658,9 @@ class PhaseEquipmentManager {
     updateSelectedEquipmentTable() {
         const tableBody = document.getElementById('selectedEquipmentTableBody');
         const selectedCount = document.getElementById('selectedCount');
-        const selectedSection = document.getElementById('selectedEquipmentListSection');
         const finalSubmitButton = document.getElementById('finalSubmitButton');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const selectedTable = document.getElementById('selectedEquipmentTable');
 
         if (!tableBody) return;
 
@@ -532,9 +669,13 @@ class PhaseEquipmentManager {
             selectedCount.textContent = `${this.selectedEquipmentList.length}件`;
         }
 
-        // セクション表示/非表示
-        if (selectedSection) {
-            selectedSection.style.display = this.selectedEquipmentList.length > 0 ? 'block' : 'none';
+        // テーブル/空メッセージの表示切り替え
+        if (this.selectedEquipmentList.length > 0) {
+            if (emptyMessage) emptyMessage.classList.add('hidden');
+            if (selectedTable) selectedTable.classList.remove('hidden');
+        } else {
+            if (emptyMessage) emptyMessage.classList.remove('hidden');
+            if (selectedTable) selectedTable.classList.add('hidden');
         }
 
         // 最終サブミットボタンの状態
@@ -544,23 +685,21 @@ class PhaseEquipmentManager {
 
         // テーブル内容の更新
         tableBody.innerHTML = this.selectedEquipmentList.map((item, index) => {
-            const isQuantityManagement = item.equipment.management_type === 'quantity';
-
             return `
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center gap-2">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div>
                             <div class="text-sm font-medium text-gray-900">${this.escapeHtml(item.equipment.name)}</div>
                             ${item.equipment.company_number ?
-                                `<div class="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600">${this.escapeHtml(item.equipment.company_number)}</div>` :
+                                `<div class="text-xs text-gray-500 mt-1">${this.escapeHtml(item.equipment.company_number)}</div>` :
                                 ''
                             }
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
                         <span class="text-sm text-gray-900">${item.quantity}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
                         <button type="button" onclick="window.removeFromList(${index})"
                                 class="text-red-600 hover:text-red-800 text-sm font-medium">
                             削除
@@ -657,13 +796,16 @@ class PhaseEquipmentManager {
 
         const individualSelection = document.getElementById('individualSelection');
         const setSelection = document.getElementById('setSelection');
+        const addToListButtonContainer = document.getElementById('addToListButtonContainer');
 
         if (selectionType === 'individual') {
             if (individualSelection) individualSelection.style.display = 'block';
             if (setSelection) setSelection.style.display = 'none';
+            if (addToListButtonContainer) addToListButtonContainer.style.display = 'none';
         } else {
             if (individualSelection) individualSelection.style.display = 'none';
             if (setSelection) setSelection.style.display = 'block';
+            if (addToListButtonContainer) addToListButtonContainer.style.display = 'block';
         }
 
         // リセット
@@ -1024,6 +1166,15 @@ window.selectEquipment = function(equipmentId) {
     }
 }
 
+window.deselectEquipment = function(equipmentId) {
+    console.log('🔗 [DEBUG] Global deselectEquipment called with ID:', equipmentId);
+    if (phaseEquipmentManager) {
+        phaseEquipmentManager.deselectEquipment(equipmentId);
+    } else {
+        console.error('❌ [DEBUG] phaseEquipmentManager not available');
+    }
+}
+
 window.checkSetAvailability = function() {
     console.log('🔗 [DEBUG] Global checkSetAvailability called');
     if (phaseEquipmentManager) {
@@ -1063,6 +1214,67 @@ window.removeFromList = function(index) {
     console.log('🔗 [DEBUG] Global removeFromList called with index:', index);
     if (phaseEquipmentManager) {
         phaseEquipmentManager.removeFromList(index);
+    }
+}
+
+window.closeQuantityDialog = function() {
+    console.log('🔗 [DEBUG] Global closeQuantityDialog called');
+    if (phaseEquipmentManager) {
+        phaseEquipmentManager.closeQuantityDialog();
+    }
+}
+
+window.confirmQuantityAndAdd = function() {
+    console.log('🔗 [DEBUG] Global confirmQuantityAndAdd called');
+    if (phaseEquipmentManager) {
+        phaseEquipmentManager.confirmQuantityAndAdd();
+    }
+}
+
+window.validateQuantityInput = function(input, maxQuantity) {
+    console.log('🔗 [DEBUG] Global validateQuantityInput called');
+    const value = parseInt(input.value);
+    const errorElement = document.getElementById('quantity-error');
+    const addButton = document.getElementById('dialog-add-button');
+
+    // 数値チェック
+    if (isNaN(value) || value < 1) {
+        input.value = 1;
+        if (errorElement) errorElement.classList.add('hidden');
+        if (addButton) addButton.disabled = false;
+        return;
+    }
+
+    // 最大値チェック
+    if (value > maxQuantity) {
+        input.value = maxQuantity;
+        if (errorElement) {
+            errorElement.textContent = `最大値は${maxQuantity}個です`;
+            errorElement.classList.remove('hidden');
+        }
+        setTimeout(() => {
+            if (errorElement) errorElement.classList.add('hidden');
+        }, 2000);
+    } else {
+        if (errorElement) errorElement.classList.add('hidden');
+        if (addButton) addButton.disabled = false;
+    }
+}
+
+window.preventInvalidInput = function(event) {
+    console.log('🔗 [DEBUG] Global preventInvalidInput called');
+
+    // Enterキーで確定
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        window.confirmQuantityAndAdd();
+        return;
+    }
+
+    // 数字以外の入力を防ぐ（Backspace、Tab、矢印キーなどは許可）
+    const allowedKeys = ['Backspace', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Delete'];
+    if (!allowedKeys.includes(event.key) && isNaN(parseInt(event.key))) {
+        event.preventDefault();
     }
 }
 

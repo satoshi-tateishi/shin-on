@@ -68,7 +68,14 @@ class PhaseEquipmentController extends Controller
             ->orderBy('sort')
             ->get();
 
-        return view('phase-equipment.create', compact('phase', 'categories', 'subcategories', 'equipmentSets'));
+        // フェーズに登録済みの機材一覧を取得
+        $phaseEquipments = PhaseEquipment::where('phase_id', $phase->id)
+            ->with(['equipment.subcategory.category'])
+            ->orderBy('status')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('phase-equipment.create', compact('phase', 'categories', 'subcategories', 'equipmentSets', 'phaseEquipments'));
     }
 
     /**
