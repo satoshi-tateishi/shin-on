@@ -94,6 +94,9 @@
                                     @if($performance->director)
                                         <div class="text-xs text-gray-400">演出: {{ $performance->director }}</div>
                                     @endif
+                                    @if($performance->productions && $performance->productions->isNotEmpty())
+                                        <div class="text-xs text-gray-400">プロダクション: {{ $performance->productions->pluck('name')->join(', ') }}</div>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

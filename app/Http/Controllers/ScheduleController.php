@@ -201,7 +201,6 @@ class ScheduleController extends Controller
 
             foreach ($dateRange as $date) {
                 $status = $this->determineEquipmentStatusForDate(
-                    $equipment,
                     $date,
                     $equipmentPhases,
                     $equipmentRepairs
@@ -229,7 +228,7 @@ class ScheduleController extends Controller
     /**
      * 指定日における機材のステータスを決定
      */
-    private function determineEquipmentStatusForDate(Equipment $equipment, string $date, Collection $phases, Collection $repairs): array
+    private function determineEquipmentStatusForDate(string $date, Collection $phases, Collection $repairs): array
     {
         $dateCarbon = Carbon::parse($date);
 
@@ -255,34 +254,58 @@ class ScheduleController extends Controller
             }
         }
 
-        // 2. フェーズでの使用状態をチェック
+        // 2. フェーズでの使用状態をチェック（checkout_date/checkin_dateベース）
+        $applicablePhaseEquipments = [];
         foreach ($phases as $phaseEquipment) {
-            $phase = $phaseEquipment->phase;
-            $phaseStart = Carbon::parse($phase->start_date);
-            $phaseEnd = Carbon::parse($phase->end_date);
+            // checkout_date と checkin_date で実際の使用期間を判定
+            $isWithinUsagePeriod = $this->isDateWithinUsagePeriod($phaseEquipment, $dateCarbon);
 
-            if ($phaseStart->lte($dateCarbon) && $phaseEnd->gte($dateCarbon)) {
-                // フェーズ期間内でのステータス判定
-                $status = $this->determinePhaseEquipmentStatus($phaseEquipment, $dateCarbon);
-
-                return [
-                    'status' => $status,
-                    'detail' => $phaseEquipment->status,
-                    'phase_name' => $phase->name,
-                    'performance_title' => $phase->performance->display_name ?? null,
-                    'note' => $phaseEquipment->note,
-                ];
+            if ($isWithinUsagePeriod) {
+                $applicablePhaseEquipments[] = $phaseEquipment;
             }
         }
 
-        // 3. 機材自体のステータス（デフォルト）
-        // ただし、修理記録がある場合は修理期間外は'available'とする
-        $hasRepairRecords = $repairs->isNotEmpty();
-        $defaultStatus = $hasRepairRecords ? 'available' : $equipment->status;
+        // 該当するphase_equipmentがある場合、優先順位で選択
+        if (!empty($applicablePhaseEquipments)) {
+            // ステータス優先順位: checked_out > reserved > checked_in
+            // 同じ優先度の場合は最新のupdated_at
+            $selectedEquipment = collect($applicablePhaseEquipments)
+                ->sortBy([
+                    function ($pe) {
+                        // ステータス優先順位（数値が小さいほど優先）
+                        return match($pe->status) {
+                            'checked_out' => 1,
+                            'reserved' => 2,
+                            'checked_in' => 3,
+                            default => 4
+                        };
+                    },
+                    function ($pe) {
+                        // 同じ優先度の場合は最新を優先（負の値で降順）
+                        return -$pe->updated_at->timestamp;
+                    }
+                ])
+                ->first();
 
+            $status = $this->determinePhaseEquipmentStatus($selectedEquipment);
+
+            return [
+                'status' => $status,
+                'detail' => $selectedEquipment->status,
+                'phase_name' => $selectedEquipment->phase->name,
+                'performance_title' => $selectedEquipment->phase->performance->display_name ?? null,
+                'note' => $selectedEquipment->note,
+                'checkout_date' => $selectedEquipment->checkout_date,
+                'checkin_date' => $selectedEquipment->checkin_date,
+            ];
+        }
+
+        // 3. デフォルト状態
+        // repair_recordsとphase_equipmentで使用されていない場合は常に'available'
+        // 修理中は1番目の処理で既に判定済み
         return [
-            'status' => $defaultStatus,
-            'detail' => $defaultStatus,
+            'status' => 'available',
+            'detail' => 'available',
             'phase_name' => null,
             'performance_title' => null,
             'note' => null,
@@ -290,9 +313,47 @@ class ScheduleController extends Controller
     }
 
     /**
+     * 指定日がphase_equipmentの実際の使用期間内かどうかを判定
+     */
+    private function isDateWithinUsagePeriod(PhaseEquipment $phaseEquipment, Carbon $date): bool
+    {
+        switch ($phaseEquipment->status) {
+            case 'reserved':
+                // 予約済みの場合：フェーズ期間内で表示
+                $phaseStart = Carbon::parse($phaseEquipment->phase->start_date);
+                $phaseEnd = Carbon::parse($phaseEquipment->phase->end_date);
+                return $phaseStart->lte($date) && $phaseEnd->gte($date);
+
+            case 'checked_out':
+                // 出庫中の場合：checkout_date以降で表示
+                if (!$phaseEquipment->checkout_date) {
+                    return false;
+                }
+                $checkoutDate = Carbon::parse($phaseEquipment->checkout_date);
+                return $checkoutDate->lte($date);
+
+            case 'checked_in':
+                // 返却済みの場合：checkout_date から checkin_date までの期間で表示
+                if (!$phaseEquipment->checkout_date || !$phaseEquipment->checkin_date) {
+                    return false;
+                }
+                $checkoutDate = Carbon::parse($phaseEquipment->checkout_date);
+                $checkinDate = Carbon::parse($phaseEquipment->checkin_date);
+                return $checkoutDate->lte($date) && $checkinDate->gte($date);
+
+            case 'cancelled':
+                // キャンセル済みの場合：表示しない
+                return false;
+
+            default:
+                return false;
+        }
+    }
+
+    /**
      * フェーズ機材のステータスを判定
      */
-    private function determinePhaseEquipmentStatus(PhaseEquipment $phaseEquipment, Carbon $date): string
+    private function determinePhaseEquipmentStatus(PhaseEquipment $phaseEquipment): string
     {
         switch ($phaseEquipment->status) {
             case 'reserved':
@@ -300,7 +361,8 @@ class ScheduleController extends Controller
             case 'checked_out':
                 return 'checked_out';
             case 'checked_in':
-                return 'available';
+                // 返却済みでも実際の使用期間中は「使用中」として表示
+                return 'checked_out';
             case 'cancelled':
                 return 'available';
             default:

@@ -164,7 +164,7 @@
 
                                 <!-- 新音番号 -->
                                 <td class="px-4 py-4">
-                                    <div class="text-sm text-gray-900 break-words leading-relaxed" x-text="item.equipment?.company_number || '-'"></div>
+                                    <div class="text-sm text-gray-900 break-words leading-relaxed" x-text="(item.quantity > 0) ? (item.equipment?.company_number || '-') : '-'"></div>
                                 </td>
                             </tr>
                         </template>

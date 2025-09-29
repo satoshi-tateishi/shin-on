@@ -13,7 +13,7 @@
 - **文字セット**: utf8mb4
 - **照合順序**: utf8mb4_unicode_ci
 - **エンジン**: InnoDB
-- **総テーブル数**: 17テーブル
+- **総テーブル数**: 17テーブル（実装完了済み）
 
 ### 設計方針
 - **正規化**: 第3正規形まで実施
@@ -26,12 +26,12 @@
 ## 🗄️ テーブル構成
 
 ### テーブル分類
-| 分類 | テーブル数 | 説明 |
-|------|-----------|------|
-| **マスタテーブル** | 8 | 基準データ管理 |
-| **業務テーブル** | 4 | 公演・フェーズ管理 |
-| **セット管理テーブル** | 2 | 機材セット管理 |
-| **履歴・ログテーブル** | 3 | 移動・修理履歴 |
+| 分類 | テーブル数 | 説明 | 状況 |
+|------|-----------|------|------|
+| **マスタテーブル** | 8 | 基準データ管理 | ✅ 完了 |
+| **業務テーブル** | 4 | 公演・フェーズ管理 | ✅ 完了 |
+| **セット管理テーブル** | 2 | 機材セット管理 | ✅ 完了 |
+| **履歴・ログテーブル** | 3 | 移動・修理履歴 | ✅ 完了 |
 
 ---
 
@@ -164,6 +164,7 @@ CREATE TABLE equipments (
     price DECIMAL(10,2) NULL COMMENT '価格',
     status ENUM('available', 'in_use', 'repair', 'maintenance', 'retired', 'lost') NOT NULL DEFAULT 'available' COMMENT '状態',
     location_id BIGINT UNSIGNED NULL COMMENT 'デフォルト保管場所ID',
+    now_location_id BIGINT UNSIGNED NULL COMMENT '現在地ID（Phase 6.5で追加）',
     is_discard BOOLEAN DEFAULT FALSE COMMENT '廃棄フラグ',
     discard_at TIMESTAMP NULL COMMENT '廃棄日時',
     notes TEXT NULL COMMENT '備考',
@@ -172,6 +173,7 @@ CREATE TABLE equipments (
 
     FOREIGN KEY (subcategory_id) REFERENCES equipment_subcategories(id) ON DELETE RESTRICT,
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL,
+    FOREIGN KEY (now_location_id) REFERENCES locations(id) ON DELETE SET NULL,
 
     INDEX idx_subcategory_id (subcategory_id),
     INDEX idx_management_type (management_type),
@@ -276,11 +278,11 @@ CREATE TABLE productions (
 
 ---
 
-## 🎪 業務テーブル設計（未実装）
+## 🎪 業務テーブル設計（完了済み ✅）
 
-### 9. performances - 公演テーブル
+### 9. performances - 公演テーブル ✅
 
-**概要**: 演劇・ミュージカル公演の基本情報
+**概要**: 演劇・ミュージカル公演の基本情報（実装完了: 2025年9月18日）
 
 ```sql
 CREATE TABLE performances (
@@ -308,9 +310,9 @@ CREATE TABLE performances (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-### 10. phases - フェーズテーブル
+### 10. phases - フェーズテーブル ✅
 
-**概要**: 公演の制作フェーズ管理（期間重複チェックの核心）
+**概要**: 公演の制作フェーズ管理（期間重複チェックの核心）（実装完了: 2025年9月18日）
 
 ```sql
 CREATE TABLE phases (
@@ -352,9 +354,9 @@ CREATE TABLE phases (
 - 本番
 - 旅公演
 
-### 11. performance_staff - 公演担当者
+### 11. performance_staff - 公演担当者 ✅
 
-**概要**: 公演とスタッフの関連付け（中間テーブル）
+**概要**: 公演とスタッフの関連付け（中間テーブル）（実装完了: 2025年9月18日）
 
 ```sql
 CREATE TABLE performance_staff (
@@ -382,9 +384,9 @@ CREATE TABLE performance_staff (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-### 12. phase_equipment - フェーズ機材使用
+### 12. phase_equipment - フェーズ機材使用 ✅
 
-**概要**: フェーズでの機材使用記録（期間重複チェックの対象）
+**概要**: フェーズでの機材使用記録（期間重複チェックの対象）（実装完了: 2025年9月19日）
 
 ```sql
 CREATE TABLE phase_equipment (
@@ -397,6 +399,7 @@ CREATE TABLE phase_equipment (
     checkout_user_id BIGINT UNSIGNED NULL COMMENT '貸出者ID',
     checkin_user_id BIGINT UNSIGNED NULL COMMENT '返却者ID',
     status ENUM('reserved', 'checked_out', 'checked_in', 'cancelled') DEFAULT 'reserved' COMMENT 'ステータス',
+    source_phase_equipment_id BIGINT UNSIGNED NULL COMMENT '継承元フェーズ機材ID（継承機能用）',
     note TEXT NULL COMMENT '備考',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
@@ -405,6 +408,7 @@ CREATE TABLE phase_equipment (
     FOREIGN KEY (equipment_id) REFERENCES equipments(id) ON DELETE CASCADE,
     FOREIGN KEY (checkout_user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (checkin_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (source_phase_equipment_id) REFERENCES phase_equipment(id) ON DELETE SET NULL,
 
     -- 期間重複チェック用の重要なインデックス
     INDEX idx_equipment_phase (equipment_id, phase_id),
@@ -491,11 +495,13 @@ CREATE TABLE equipment_set_versions (
 
 ---
 
-## 📊 履歴・ログテーブル設計
+---
 
-### 15. equipment_movements - 機材移動履歴
+## 📊 履歴・ログテーブル設計（完了済み ✅）
 
-**概要**: 機材の移動・使用履歴（イベントソーシング）
+### 15. equipment_movements - 機材移動履歴 ✅
+
+**概要**: 機材の移動・使用履歴（イベントソーシング）（実装完了: 2025年9月19日）
 
 ```sql
 CREATE TABLE equipment_movements (
@@ -536,9 +542,9 @@ CREATE TABLE equipment_movements (
 - `repair_start`: 修理開始
 - `repair_complete`: 修理完了
 
-### 16. inventory_snapshots - 在庫スナップショット
+### 16. inventory_snapshots - 在庫スナップショット ✅
 
-**概要**: 基準日時点での在庫状況記録（Phase 6在庫管理システム用）
+**概要**: 基準日時点での在庫状況記録（Phase 6在庫管理システム用）（実装完了: 2025年9月23日）
 
 ```sql
 CREATE TABLE inventory_snapshots (
@@ -591,9 +597,9 @@ CREATE TABLE inventory_snapshots (
 | repair_quantity | INT | 修理中数量 | 修理中で使用不可の数量 |
 | maintenance_quantity | INT | メンテナンス中数量 | メンテナンス中の数量 |
 
-### 17. repair_records - 修理記録
+### 17. repair_records - 修理記録 ✅
 
-**概要**: 機材の修理・メンテナンス履歴
+**概要**: 機材の修理・メンテナンス履歴（実装完了: 2025年9月19日）
 
 ```sql
 CREATE TABLE repair_records (
@@ -775,11 +781,19 @@ PARTITION BY RANGE (YEAR(moved_at)) (
 ---
 
 **作成日**: 2025年1月
-**更新日**: 2025年1月
-**バージョン**: 2.0
+**更新日**: 2025年9月29日
+**バージョン**: 2.1
 **対象システム**: shin-on 機材管理システム
 
 ## 📝 更新履歴
+
+### v2.1 (2025年9月29日)
+- 全テーブル実装完了状況を反映（17テーブル全完了）
+- フェーズ間機材継承機能対応（source_phase_equipment_idカラム追加）
+- 各テーブルの実装完了日を記録
+- 在庫管理システム完成状況を更新
+- equipmentsテーブルのnow_location_idカラム追加（基本倉庫と現在地分離）
+- 実運用レベル達成状況を更新
 
 ### v2.0 (2025年1月)
 - 修理管理テーブル（repair_records）の詳細設計

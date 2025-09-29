@@ -372,4 +372,354 @@ class BackupService
             }
         }
     }
+
+    /**
+     * Dropboxから復元可能なバックアップ一覧を取得
+     */
+    public function getRestorableBackups(): array
+    {
+        try {
+            if (! $this->dropboxService->isAuthenticated()) {
+                return [
+                    'success' => false,
+                    'error' => 'Dropbox認証が必要です',
+                ];
+            }
+
+            $backups = $this->dropboxService->findBackupFolders();
+
+            $restorableBackups = [];
+
+            foreach ($backups as $backup) {
+                try {
+                    // full_pathを使用してバックアップ情報を取得
+                    $backupInfo = $this->getBackupInfo($backup['name'], $backup['full_path']);
+                    if ($backupInfo) {
+                        $restorableBackups[] = $backupInfo;
+                    } else {
+                        // デバッグのため、簡単な形式で追加
+                        $restorableBackups[] = [
+                            'name' => $backup['name'],
+                            'path' => $backup['path'],
+                            'date' => $this->parseBackupDate($backup['name']),
+                            'files' => [['name' => 'unknown', 'size' => 0, 'type' => 'unknown']],
+                            'total_size' => 0,
+                        ];
+                    }
+                } catch (Exception $e) {
+                    Log::error('Exception while getting backup info', [
+                        'backup' => $backup,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return [
+                'success' => true,
+                'backups' => $restorableBackups,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Failed to get restorable backups', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'バックアップ一覧の取得に失敗しました: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * バックアップ情報を取得
+     */
+    private function getBackupInfo(string $backupName, string $backupPath): ?array
+    {
+        try {
+            $contents = $this->dropboxService->listFolder($backupPath);
+
+            $info = [
+                'name' => $backupName,
+                'path' => $backupPath,
+                'date' => $this->parseBackupDate($backupName),
+                'files' => [],
+                'total_size' => 0,
+            ];
+
+            foreach ($contents['entries'] as $entry) {
+                if ($entry['.tag'] === 'file') {
+                    $filename = basename($entry['name']);
+                    $size = $entry['size'] ?? 0;
+
+                    $fileInfo = [
+                        'name' => $filename,
+                        'size' => $size,
+                        'type' => $this->getBackupFileType($filename),
+                        'path' => $entry['path_display'],
+                    ];
+
+                    $info['files'][] = $fileInfo;
+                    $info['total_size'] += $size;
+                }
+            }
+
+            return $info;
+
+        } catch (Exception $e) {
+            Log::error('Failed to get backup info', [
+                'backup_name' => $backupName,
+                'backup_path' => $backupPath,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * バックアップファイル種別を判定
+     */
+    private function getBackupFileType(string $filename): string
+    {
+        if (str_contains($filename, 'database_backup') && str_ends_with($filename, '.sql')) {
+            return 'database';
+        }
+        if (str_contains($filename, 'files_backup') && str_ends_with($filename, '.zip')) {
+            return 'files';
+        }
+        if (str_contains($filename, 'test_') && str_ends_with($filename, '.txt')) {
+            return 'test';
+        }
+        return 'unknown';
+    }
+
+    /**
+     * バックアップ名から日時を解析
+     */
+    private function parseBackupDate(string $backupName): ?string
+    {
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})$/', $backupName, $matches)) {
+            return sprintf('%s-%s-%s %s:%s:%s', $matches[1], $matches[2], $matches[3], $matches[4], $matches[5], $matches[6]);
+        }
+        return null;
+    }
+
+    /**
+     * Dropboxからバックアップをダウンロード
+     */
+    public function downloadBackupFromDropbox(string $timestamp): array
+    {
+        try {
+            if (! $this->dropboxService->isAuthenticated()) {
+                throw new Exception('Dropbox認証が必要です');
+            }
+
+            // バックアップフォルダのパスを構築
+            $backupFolders = $this->dropboxService->findBackupFolders();
+            $targetBackup = null;
+
+            foreach ($backupFolders as $backup) {
+                if ($backup['name'] === $timestamp) {
+                    $targetBackup = $backup;
+                    break;
+                }
+            }
+
+            if (! $targetBackup) {
+                throw new Exception("バックアップが見つかりません: {$timestamp}");
+            }
+
+            // ダウンロード先ディレクトリを作成
+            $downloadDir = storage_path("app/restore/{$timestamp}");
+            if (! File::exists($downloadDir)) {
+                File::makeDirectory($downloadDir, 0755, true);
+            }
+
+            // バックアップファイル一覧を取得
+            $contents = $this->dropboxService->listFolder($targetBackup['full_path']);
+            $downloadedFiles = [];
+
+            foreach ($contents['entries'] as $entry) {
+                if ($entry['.tag'] === 'file') {
+                    $filename = basename($entry['name']);
+                    $localPath = $downloadDir . '/' . $filename;
+
+                    // Dropboxからファイルをダウンロード
+                    $fileContent = $this->dropboxService->downloadFile($entry['path_display']);
+                    File::put($localPath, $fileContent);
+
+                    $downloadedFiles[] = [
+                        'filename' => $filename,
+                        'local_path' => $localPath,
+                        'type' => $this->getBackupFileType($filename),
+                        'size' => strlen($fileContent),
+                    ];
+
+                    Log::info('Downloaded backup file', [
+                        'filename' => $filename,
+                        'size' => strlen($fileContent),
+                    ]);
+                }
+            }
+
+            return [
+                'success' => true,
+                'download_dir' => $downloadDir,
+                'files' => $downloadedFiles,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Failed to download backup from Dropbox', [
+                'timestamp' => $timestamp,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * データベースを復元
+     */
+    public function restoreDatabase(string $sqlFilePath, bool $createBackupFirst = true): array
+    {
+        try {
+            if (! File::exists($sqlFilePath)) {
+                throw new Exception("バックアップファイルが見つかりません: {$sqlFilePath}");
+            }
+
+            // 復元前に現在のデータベースをバックアップ
+            if ($createBackupFirst) {
+                $timestamp = Carbon::now(config('backup.timezone', 'Asia/Tokyo'))->format('Y-m-d_H-i-s');
+                $preRestoreBackup = $this->createDatabaseBackup("pre_restore_{$timestamp}");
+
+                // Dropboxにもアップロード
+                if ($this->dropboxService->isAuthenticated()) {
+                    try {
+                        $uploadResult = $this->dropboxService->uploadFile(
+                            $preRestoreBackup,
+                            "/pre_restore_backups/database_backup_pre_restore_{$timestamp}.sql"
+                        );
+                        Log::info('Pre-restore backup uploaded to Dropbox', [
+                            'local_path' => $preRestoreBackup,
+                            'dropbox_path' => "/pre_restore_backups/database_backup_pre_restore_{$timestamp}.sql",
+                        ]);
+
+                        // Dropboxアップロード成功後、ローカルファイルを削除
+                        if (File::exists($preRestoreBackup)) {
+                            File::delete($preRestoreBackup);
+                            Log::info("Deleted local pre-restore backup file after successful upload", [
+                                'local_path' => $preRestoreBackup,
+                            ]);
+                        }
+                    } catch (Exception $e) {
+                        Log::warning('Failed to upload pre-restore backup to Dropbox', [
+                            'error' => $e->getMessage(),
+                            'local_path' => $preRestoreBackup,
+                        ]);
+                    }
+                }
+
+                Log::info('Created pre-restore backup', [
+                    'backup_path' => $preRestoreBackup,
+                ]);
+            }
+
+            // SQLファイルの妥当性をチェック
+            $this->validateSqlFile($sqlFilePath);
+
+            // データベース接続情報取得
+            $connection = config('database.default');
+            $database = config("database.connections.{$connection}.database");
+            $host = config("database.connections.{$connection}.host");
+            $port = config("database.connections.{$connection}.port");
+            $username = config("database.connections.{$connection}.username");
+            $password = config("database.connections.{$connection}.password");
+
+            if ($connection === 'mysql') {
+                // MySQLコマンドで復元実行
+                $command = sprintf(
+                    'mysql -h%s -P%s -u%s -p%s %s < %s',
+                    escapeshellarg($host),
+                    escapeshellarg($port),
+                    escapeshellarg($username),
+                    escapeshellarg($password),
+                    escapeshellarg($database),
+                    escapeshellarg($sqlFilePath)
+                );
+
+                $result = Process::run($command);
+
+                if (! $result->successful()) {
+                    throw new Exception('データベースの復元に失敗しました: '.$result->errorOutput());
+                }
+            } else {
+                throw new Exception('MySQL以外のデータベースの復元は現在サポートされていません');
+            }
+
+            Log::info('Database restored successfully', [
+                'sql_file' => $sqlFilePath,
+                'database' => $database,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'データベースの復元が完了しました',
+                'pre_restore_backup' => $createBackupFirst ? $preRestoreBackup : null,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Database restore failed', [
+                'sql_file' => $sqlFilePath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * SQLファイルの妥当性をチェック
+     */
+    private function validateSqlFile(string $sqlFilePath): void
+    {
+        $fileSize = File::size($sqlFilePath);
+        if ($fileSize === 0) {
+            throw new Exception('SQLファイルが空です');
+        }
+
+        // ファイルの先頭を読んで基本的な妥当性をチェック
+        $handle = fopen($sqlFilePath, 'r');
+        if (! $handle) {
+            throw new Exception('SQLファイルを開けません');
+        }
+
+        $firstLine = fgets($handle);
+        fclose($handle);
+
+        // SQLファイルの基本的な形式チェック
+        if (! $firstLine || (! str_contains($firstLine, '--') && ! str_contains(strtoupper($firstLine), 'CREATE') && ! str_contains(strtoupper($firstLine), 'INSERT'))) {
+            throw new Exception('有効なSQLファイルではありません');
+        }
+    }
+
+    /**
+     * 復元後のクリーンアップ
+     */
+    public function cleanupRestoreFiles(string $timestamp): void
+    {
+        $restoreDir = storage_path("app/restore/{$timestamp}");
+
+        if (File::exists($restoreDir)) {
+            File::deleteDirectory($restoreDir);
+            Log::info('Cleaned up restore files', ['directory' => $restoreDir]);
+        }
+    }
 }

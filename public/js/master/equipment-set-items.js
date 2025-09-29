@@ -479,80 +479,6 @@ class EquipmentSetItems {
         }
     }
 
-    /**
-     * セット使用可能性チェック
-     */
-    async checkAvailability() {
-        try {
-            const response = await fetch(`/master/equipment-sets/${this.equipmentSetId}/availability`);
-            const data = await response.json();
-
-            if (data.success) {
-                this.showAvailabilityResults(data);
-            } else {
-                alert(data.message || '使用可能性の確認に失敗しました。');
-            }
-        } catch (error) {
-            console.error('使用可能性チェックエラー:', error);
-            alert('使用可能性の確認中にエラーが発生しました。');
-        }
-    }
-
-    /**
-     * 使用可能性結果表示
-     */
-    showAvailabilityResults(data) {
-        let html = `
-            <div class="mb-4">
-                <h4 class="text-lg font-medium ${data.overall_available ? 'text-green-600' : 'text-red-600'}">
-                    ${data.message}
-                </h4>
-            </div>
-            <div class="space-y-2">
-        `;
-
-        data.equipment_details.forEach(item => {
-            const statusColor = item.available ? 'text-green-600' : 'text-red-600';
-            const requiredBadge = item.is_required
-                ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">必須</span>'
-                : '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">任意</span>';
-
-            html += `
-                <div class="flex justify-between items-center p-2 border border-gray-200 rounded">
-                    <div>
-                        <span class="font-medium">${item.equipment_name}</span>
-                        ${requiredBadge}
-                        <span class="text-sm text-gray-500 ml-2">数量: ${item.required_quantity}</span>
-                    </div>
-                    <div class="${statusColor}">
-                        ${item.available ? '利用可能' : item.message}
-                    </div>
-                </div>
-            `;
-        });
-
-        html += '</div>';
-
-        // アラートの代わりにモーダルで表示
-        const modalHTML = `
-            <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onclick="this.remove()">
-                <div class="relative top-20 mx-auto p-5 border w-2/3 max-w-2xl shadow-lg rounded-md bg-white" onclick="event.stopPropagation()">
-                    <div class="mt-3">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">セット使用可能性チェック結果</h3>
-                        ${html}
-                        <div class="flex justify-end mt-6">
-                            <button onclick="this.closest('.fixed').remove()"
-                                    class="px-4 py-2 bg-gray-600 text-white border border-transparent rounded-md shadow-sm text-sm font-medium hover:bg-gray-700">
-                                閉じる
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
 }
 
 // グローバル変数・関数
@@ -579,6 +505,3 @@ function removeEquipmentItem(equipmentId, equipmentName) {
     equipmentSetItems?.removeEquipment(equipmentId, equipmentName);
 }
 
-function checkSetAvailability() {
-    equipmentSetItems?.checkAvailability();
-}

@@ -65,7 +65,7 @@
 
                         <div>
                             <dt class="text-sm font-medium text-gray-500">セット名</dt>
-                            <dd class="mt-1 text-sm font-gray-900 font-bold">{{ $equipmentSet->name }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900 font-bold">{{ $equipmentSet->name }}</dd>
                         </div>
 
                         <div>
@@ -131,8 +131,8 @@
                                                 順序
                                             </th>
                                         @endif
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">機材名</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">機材名</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" style="display: none;">数量</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">必須</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状態</th>
@@ -155,22 +155,20 @@
                                                     </div>
                                                 </td>
                                             @endif
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <a href="{{ route('master.equipments.show', $item->equipment) }}" class="text-blue-600 hover:text-blue-900">
-                                                    {{ $item->equipment->name }}
-                                                </a>
-                                                @if($item->equipment->company_number)
-                                                    <span class="inline-block ml-2 px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">{{ $item->equipment->company_number }}</span>
-                                                @endif
-                                            </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 @if($item->equipment->category)
-                                                    <div>{{ $item->equipment->category->name }}</div>
+                                                    <div class="text-xs">{{ $item->equipment->category->name }}</div>
                                                     @if($item->equipment->subcategory)
                                                         <div class="text-xs text-gray-400">{{ $item->equipment->subcategory->name }}</div>
                                                     @endif
                                                 @else
                                                     ---
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {{ $item->equipment->name }}
+                                                @if($item->equipment->company_number)
+                                                    <span class="inline-block ml-2 px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">{{ $item->equipment->company_number }}</span>
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" style="display: none;">
@@ -219,16 +217,6 @@
                             </table>
                         </div>
 
-                        <!-- セット使用可能性チェック -->
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <button onclick="checkSetAvailability()"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                セット使用可能性チェック
-                            </button>
-                        </div>
                     </div>
                 @else
                     <div class="px-6 py-8 text-center">

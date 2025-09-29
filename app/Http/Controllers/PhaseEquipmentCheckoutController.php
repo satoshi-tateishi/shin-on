@@ -58,6 +58,7 @@ class PhaseEquipmentCheckoutController extends Controller
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
 
+
             // EquipmentMovement レコードを作成
             EquipmentMovement::createCheckout(
                 $phaseEquipment->equipment_id,
@@ -136,6 +137,7 @@ class PhaseEquipmentCheckoutController extends Controller
                 'checkin_user_id' => auth()->id(),
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
+
 
             // location_id=92-94の機材の場合、機材の場所を更新
             $toLocationId = $validated['to_location_id'] ?? null;
@@ -385,6 +387,7 @@ class PhaseEquipmentCheckoutController extends Controller
                     'checkin_date' => $today,
                     'checkin_user_id' => auth()->id(),
                 ]);
+
 
                 EquipmentMovement::createCheckin(
                     $phaseEquipment->equipment_id,

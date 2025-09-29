@@ -396,6 +396,20 @@ class PhaseEquipmentManager {
      * 機材をリストに追加
      */
     addEquipmentToList() {
+        // 選択モードを確認
+        const selectionType = document.querySelector('input[name="selection_type"]:checked')?.value;
+
+        if (selectionType === 'set') {
+            this.addEquipmentSetToList();
+        } else {
+            this.addIndividualEquipmentToList();
+        }
+    }
+
+    /**
+     * 個別機材をリストに追加
+     */
+    addIndividualEquipmentToList() {
         if (!this.selectedEquipment) {
             console.error('❌ [DEBUG] No equipment selected');
             return;
@@ -431,6 +445,75 @@ class PhaseEquipmentManager {
 
         // 成功メッセージを表示
         this.showSuccess(`${this.selectedEquipment.name} をリストに追加しました`);
+    }
+
+    /**
+     * 機材セットをリストに追加
+     */
+    async addEquipmentSetToList() {
+        const setSelect = document.getElementById('equipment_set_id');
+        if (!setSelect || !setSelect.value) {
+            this.showError('機材セットが選択されていません');
+            return;
+        }
+
+        const setId = setSelect.value;
+        const setName = setSelect.options[setSelect.selectedIndex].text;
+
+        try {
+            // フェーズの機材可用性APIを使用してセット内機材を取得
+            const response = await fetch(`/phases/${this.phaseId}/equipment-set-availability?set_id=${setId}`);
+            if (!response.ok) throw new Error('セット情報の取得に失敗しました');
+
+            const setData = await response.json();
+
+            if (!setData.all_available) {
+                this.showError('一部の機材が利用できないため、セットを追加できません');
+                return;
+            }
+
+            // セット内の各機材をリストに追加
+            let addedCount = 0;
+            for (const item of setData.items) {
+                // 機材オブジェクトを構築（APIレスポンスから）
+                const equipment = {
+                    id: item.equipment_id,
+                    name: item.equipment_name,
+                    company_number: item.company_number || null,
+                    management_type: 'individual' // デフォルト値
+                };
+
+                // 既に同じ機材が選択されているかチェック
+                const existingIndex = this.selectedEquipmentList.findIndex(listItem =>
+                    listItem.equipment.id === equipment.id
+                );
+
+                if (existingIndex >= 0) {
+                    // 既存の機材の数量を更新
+                    this.selectedEquipmentList[existingIndex].quantity = item.required_quantity;
+                } else {
+                    // 新しい機材をリストに追加
+                    this.selectedEquipmentList.push({
+                        equipment: equipment,
+                        quantity: item.required_quantity
+                    });
+                    addedCount++;
+                }
+            }
+
+            // テーブルを更新
+            this.updateSelectedEquipmentTable();
+
+            // フォームをリセット
+            this.resetForm();
+
+            // 成功メッセージを表示
+            this.showSuccess(`機材セット「${setName}」の${addedCount}件の機材をリストに追加しました`);
+
+        } catch (error) {
+            console.error('Set addition error:', error);
+            this.showError('機材セットの追加中にエラーが発生しました');
+        }
     }
 
     /**
@@ -646,10 +729,10 @@ class PhaseEquipmentManager {
             </div>
         `;
 
-        // 送信ボタンの状態
-        const submitButton = document.getElementById('submitButton');
-        if (submitButton) {
-            submitButton.disabled = !data.all_available;
+        // リストに追加ボタンの状態
+        const addToListButton = document.getElementById('addToListButton');
+        if (addToListButton) {
+            addToListButton.disabled = !data.all_available;
         }
     }
 
@@ -674,9 +757,9 @@ class PhaseEquipmentManager {
             quantitySection.style.display = 'none';
         }
 
-        const submitButton = document.getElementById('submitButton');
-        if (submitButton) {
-            submitButton.disabled = true;
+        const addToListButton = document.getElementById('addToListButton');
+        if (addToListButton) {
+            addToListButton.disabled = true;
         }
 
         const setInfo = document.getElementById('setAvailabilityInfo');

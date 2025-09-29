@@ -133,6 +133,7 @@ class PhaseEquipmentService
             ->toArray();
     }
 
+
     private function validateEquipmentAvailability(Equipment $equipment, Phase $phase, int $quantity): void
     {
         // 個体管理機材の場合のみ期間重複チェック

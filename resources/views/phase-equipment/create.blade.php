@@ -46,11 +46,13 @@
                     <div class="flex space-x-4">
                         <label class="inline-flex items-center">
                             <input type="radio" name="selection_type" value="individual" checked
+                                   onchange="toggleSelectionMode()"
                                    class="form-radio h-4 w-4 text-blue-600">
                             <span class="ml-2 text-sm text-gray-700">個別機材</span>
                         </label>
                         <label class="inline-flex items-center">
                             <input type="radio" name="selection_type" value="set"
+                                   onchange="toggleSelectionMode()"
                                    class="form-radio h-4 w-4 text-blue-600">
                             <span class="ml-2 text-sm text-gray-700">機材セット</span>
                         </label>

@@ -59,6 +59,8 @@ Access Token期限切れ → Refresh Token使用 → 新しいAccess Token取得
 | 管理画面 | `/admin/backup` | Web管理画面 (認証・バックアップ実行) | admin |
 | バックアップ実行 | `/admin/backup/run` | Ajax バックアップ実行 | admin |
 | バックアップ一覧 | `/admin/backup/list` | Ajax バックアップ一覧取得 | admin |
+| 接続テスト | `/admin/backup/test` | Ajax 接続テスト・トークン情報取得 | admin |
+| トークン更新 | `/admin/backup/refresh-token` | Ajax トークン強制更新 | admin |
 
 ### CLI コマンド
 
@@ -157,7 +159,62 @@ class DropboxToken extends Model
 
 ## API実装詳細
 
-### 1. OAuth 2.0 認証フロー
+### 1. トークン期限情報取得
+
+**サービス**: `app/Services/DropboxService.php`
+
+```php
+public function getTokenInfo(): array
+{
+    if (!$this->tokenModel) {
+        throw new Exception('No token available');
+    }
+
+    $now = Carbon::now();
+    $expiresAt = $this->tokenModel->access_token_expires_at;
+
+    $isExpired = $expiresAt ? $now->isAfter($expiresAt) : false;
+    $expiresIn = $expiresAt ? $expiresAt->diffInSeconds($now, false) : null;
+    $willExpireSoon = $expiresAt ? $now->diffInMinutes($expiresAt) < 30 : false;
+
+    return [
+        'access_token_expires_at' => $expiresAt?->toISOString(),
+        'access_token_expires_at_formatted' => $expiresAt?->format('Y-m-d H:i:s'),
+        'is_access_token_expired' => $isExpired,
+        'expires_in_seconds' => $expiresIn,
+        'expires_in_minutes' => $expiresAt ? intval($now->diffInMinutes($expiresAt)) : null,
+        'will_expire_soon' => $willExpireSoon,
+        'has_refresh_token' => $this->tokenModel->hasValidRefreshToken(),
+        'last_refreshed_at' => $this->tokenModel->last_refreshed_at?->toISOString(),
+        'last_refreshed_at_formatted' => $this->tokenModel->last_refreshed_at?->format('Y-m-d H:i:s'),
+    ];
+}
+```
+
+### 2. 強制トークン更新
+
+**サービス**: `app/Services/DropboxService.php`
+
+```php
+public function forceRefreshToken(): bool
+{
+    if (!$this->tokenModel || !$this->tokenModel->hasValidRefreshToken()) {
+        throw new Exception('No valid refresh token available');
+    }
+
+    try {
+        $this->refreshAccessToken();
+        return true;
+    } catch (Exception $e) {
+        Log::error('Forced token refresh failed', [
+            'error' => $e->getMessage(),
+        ]);
+        throw $e;
+    }
+}
+```
+
+### 3. OAuth 2.0 認証フロー
 
 **コントローラー**: `app/Http/Controllers/DropboxAuthController.php`
 
@@ -178,7 +235,7 @@ private function exchangeCodeForTokens(string $code): array
 }
 ```
 
-### 2. トークンリフレッシュ処理
+### 4. トークンリフレッシュ処理
 
 **サービス**: `app/Services/DropboxService.php`
 
@@ -205,7 +262,7 @@ private function refreshAccessToken(): string
 }
 ```
 
-### 3. ファイルアップロード
+### 5. ファイルアップロード
 
 ```php
 public function uploadFile(string $filePath, string $remotePath): bool
@@ -228,7 +285,7 @@ public function uploadFile(string $filePath, string $remotePath): bool
 }
 ```
 
-### 4. ファイルダウンロード
+### 6. ファイルダウンロード
 
 ```php
 public function downloadFile(string $remotePath): string
@@ -238,7 +295,7 @@ public function downloadFile(string $remotePath): string
 }
 ```
 
-### 5. アカウント情報取得
+### 7. アカウント情報取得
 
 ```php
 public function getAccountInfo(): array
@@ -617,6 +674,58 @@ private function handleRateLimit(\Exception $e): void
 }
 ```
 
+## Web管理画面機能
+
+### トークン期限表示機能
+
+**実装ファイル**: `resources/views/admin/backup/index.blade.php`
+
+#### 表示情報
+- アクセストークン期限日時
+- 期限切れ状態（正常・警告・危険）
+- 最終更新日時（リフレッシュ実行時）
+- リフレッシュトークンの利用可能状態
+- ※残り時間のリアルタイム表示は削除済み
+
+#### 期限監視・警告システム
+```javascript
+// 30秒ごとの自動期限チェック（残り時間表示なし）
+setInterval(checkTokenExpiration, 30000);
+
+function checkTokenExpiration() {
+    const expiresAt = new Date(tokenInfo.access_token_expires_at);
+    const minutesUntilExpiry = Math.floor((expiresAt - now) / (1000 * 60));
+
+    // 期限切れまたは10分以内の場合は警告
+    if (minutesUntilExpiry <= 0) {
+        showTokenWarning('danger', 'アクセストークンが期限切れです。');
+    } else if (minutesUntilExpiry <= 10) {
+        showTokenWarning('warning', `アクセストークンが${minutesUntilExpiry}分後に期限切れになります。`);
+    }
+}
+```
+
+#### 手動トークン更新機能
+```javascript
+// トークン更新ボタン
+document.getElementById('refresh-token').addEventListener('click', function() {
+    fetch('/admin/backup/refresh-token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrf_token
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'トークンが正常に更新されました');
+            setTimeout(() => window.location.reload(), 1500);
+        }
+    });
+});
+```
+
 ## 監視・ログ
 
 ### 重要ログポイント
@@ -673,7 +782,13 @@ $response = Http::timeout(300)
 
 ## 運用考慮事項
 
-### 1. バックアップ保持期間
+### 1. トークン管理監視
+- ✅ アクセストークン期限の自動監視（30秒間隔）
+- ✅ 期限切れ・期限間近の警告通知機能
+- ✅ 手動トークン更新機能
+- ✅ 最終更新日時の記録・表示
+
+### 2. バックアップ保持期間
 
 ```php
 'retention' => [
@@ -681,7 +796,7 @@ $response = Http::timeout(300)
 ],
 ```
 
-### 2. 自動クリーンアップ実装済み ✅
+### 3. 自動クリーンアップ実装済み ✅
 
 ```php
 // ローカルバックアップファイル自動削除 (実装済み)
@@ -691,9 +806,9 @@ if (File::exists($result['path'])) {
 }
 ```
 
-### 3. モニタリング
+### 4. モニタリング
 
-- ✅ トークン有効期限の監視
+- ✅ トークン有効期限の監視（リアルタイム期限表示・警告）
 - ✅ バックアップ成功/失敗率
 - ✅ ローカルストレージ使用量の追跡 (自動削除で最適化)
 - ✅ Dropbox API使用量の監視
@@ -747,7 +862,10 @@ Error: request body: expected null, got value
 
 **5. "Access token has expired"**
 - 原因: アクセストークンの期限切れ
-- 解決: 自動リフレッシュが動作しているか確認
+- 解決:
+  - 自動リフレッシュが動作しているか確認
+  - 管理画面の「トークン更新」ボタンで手動更新
+  - 期限表示で事前に状況確認
 
 **6. "Invalid refresh token"**
 - 原因: リフレッシュトークンが無効
@@ -760,6 +878,10 @@ Error: request body: expected null, got value
 **8. "Insufficient storage"**
 - 原因: Dropboxストレージ容量不足
 - 解決: 古いバックアップ削除または容量追加
+
+**9. トークン期限警告の対応**
+- 管理画面で期限が30分以内に表示される場合
+- 解決: 「トークン更新」ボタンで即座に更新可能
 
 ### デバッグコマンド
 
@@ -786,6 +908,7 @@ Error: request body: expected null, got value
 | 2025/09/29 | ファイルサイズ最適化 | 208MB → 4.6MB (98%削減) |
 | 2025/09/29 | ローカル自動削除 | 435MB → 0MB (100%削減) |
 | 2025/09/29 | フラット構造採用 | ディレクトリ階層簡素化 |
+| 2025/09/29 | トークン期限表示機能 | リアルタイム監視・警告システム |
 
 ## 🎯 実装成果
 
@@ -794,6 +917,7 @@ Error: request body: expected null, got value
 | バックアップサイズ | 208 MB | 4.6 MB | 98% 削減 |
 | ローカルストレージ | 435 MB 累積 | 0 MB | 100% 削減 |
 | 実行時間 | 長時間 | 高速 | 大幅改善 |
+| トークン管理 | 手動確認のみ | リアルタイム監視 | 運用効率向上 |
 
 ---
 

@@ -51,6 +51,49 @@ class DropboxService
         }
     }
 
+    public function getTokenInfo(): array
+    {
+        if (! $this->tokenModel) {
+            throw new Exception('No token available');
+        }
+
+        $now = Carbon::now();
+        $expiresAt = $this->tokenModel->access_token_expires_at;
+
+        $isExpired = $expiresAt ? $now->isAfter($expiresAt) : false;
+        $expiresIn = $expiresAt ? $expiresAt->diffInSeconds($now, false) : null;
+        $willExpireSoon = $expiresAt ? $now->diffInMinutes($expiresAt) < 30 : false;
+
+        return [
+            'access_token_expires_at' => $expiresAt?->toISOString(),
+            'access_token_expires_at_formatted' => $expiresAt?->format('Y-m-d H:i:s'),
+            'is_access_token_expired' => $isExpired,
+            'expires_in_seconds' => $expiresIn,
+            'expires_in_minutes' => $expiresAt ? intval($now->diffInMinutes($expiresAt)) : null,
+            'will_expire_soon' => $willExpireSoon,
+            'has_refresh_token' => $this->tokenModel->hasValidRefreshToken(),
+            'last_refreshed_at' => $this->tokenModel->last_refreshed_at?->toISOString(),
+            'last_refreshed_at_formatted' => $this->tokenModel->last_refreshed_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    public function forceRefreshToken(): bool
+    {
+        if (! $this->tokenModel || ! $this->tokenModel->hasValidRefreshToken()) {
+            throw new Exception('No valid refresh token available');
+        }
+
+        try {
+            $this->refreshAccessToken();
+            return true;
+        } catch (Exception $e) {
+            Log::error('Forced token refresh failed', [
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
     public function uploadFile(string $filePath, string $remotePath): bool
     {
         if (! $this->isAuthenticated()) {

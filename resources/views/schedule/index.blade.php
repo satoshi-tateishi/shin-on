@@ -528,6 +528,7 @@
                         'available': '利用可能',
                         'reserved': '予約済み',
                         'checked_out': '使用中',
+                        'in_use': '使用中',
                         'repair': '修理中'
                     };
                     return texts[status] || '不明';
@@ -580,13 +581,16 @@
 
                     this.dateRange.forEach((date, index) => {
                         const status = equipment.daily_status[date];
+                        // スパン条件: reserved/checked_outでphase_nameがある場合のみ
+                        // phase_nameがない場合は個別セルとして表示
                         const shouldSpan = status && (status.status === 'reserved' || status.status === 'checked_out')
-                                          && status.phase_name && status.performance_title;
+                                          && status.phase_name;
 
                         if (shouldSpan) {
-                            if (!currentSpan ||
-                                currentSpan.phase_name !== status.phase_name ||
-                                currentSpan.performance_title !== status.performance_title) {
+                            // phase_nameとperformance_titleの組み合わせでグループ化
+                            const groupKey = `${status.phase_name}_${status.performance_title || ''}`;
+
+                            if (!currentSpan || currentSpan.groupKey !== groupKey) {
                                 // 新しいスパン開始
                                 if (currentSpan) spans.push(currentSpan);
                                 currentSpan = {
@@ -594,7 +598,8 @@
                                     endIndex: index,
                                     phase_name: status.phase_name,
                                     performance_title: status.performance_title,
-                                    status: status.status
+                                    status: status.status,
+                                    groupKey: groupKey
                                 };
                             } else {
                                 // 既存スパンを延長
@@ -633,7 +638,11 @@
 
                 formatSpanText(span) {
                     if (!span) return '';
-                    return `${span.performance_title} - ${span.phase_name}`;
+                    if (span.performance_title) {
+                        return `${span.performance_title} - ${span.phase_name}`;
+                    } else {
+                        return span.phase_name;
+                    }
                 },
 
             };

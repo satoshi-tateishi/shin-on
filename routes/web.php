@@ -57,6 +57,22 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('index');
             Route::post('run', [\App\Http\Controllers\Admin\BackupController::class, 'runBackup'])->name('run');
             Route::get('list', [\App\Http\Controllers\Admin\BackupController::class, 'listBackups'])->name('list');
+            Route::post('test', [\App\Http\Controllers\Admin\BackupController::class, 'testConnection'])->name('test');
+            Route::post('refresh-token', [\App\Http\Controllers\Admin\BackupController::class, 'refreshToken'])->name('refresh-token');
+
+            // 復元機能
+            Route::get('restorable', [\App\Http\Controllers\Admin\BackupController::class, 'getRestorableBackups'])->name('restorable');
+            Route::post('download', [\App\Http\Controllers\Admin\BackupController::class, 'downloadBackup'])->name('download');
+            Route::post('restore', [\App\Http\Controllers\Admin\BackupController::class, 'restoreDatabase'])->name('restore');
+            Route::post('validate-restore', [\App\Http\Controllers\Admin\BackupController::class, 'validateRestore'])->name('validate-restore');
+
+            // 環境設定バックアップ機能
+            Route::prefix('env')->name('env.')->group(function () {
+                Route::post('backup', [\App\Http\Controllers\Admin\EnvBackupController::class, 'backupEnv'])->name('backup');
+                Route::get('list', [\App\Http\Controllers\Admin\EnvBackupController::class, 'listEnvBackups'])->name('list');
+                Route::post('restore', [\App\Http\Controllers\Admin\EnvBackupController::class, 'restoreEnv'])->name('restore');
+                Route::post('validate-password', [\App\Http\Controllers\Admin\EnvBackupController::class, 'validatePassword'])->name('validate-password');
+            });
         });
     });
 
@@ -125,7 +141,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('equipment-sets/{equipmentSet}/items/{equipment}', [EquipmentSetController::class, 'removeEquipment'])->name('equipment-sets.remove-equipment');
         Route::patch('equipment-sets/{equipmentSet}/items/sort', [EquipmentSetController::class, 'updateItemSort'])->name('equipment-sets.update-item-sort');
         Route::patch('equipment-sets/{equipmentSet}/items/{equipment}', [EquipmentSetController::class, 'updateEquipmentItem'])->name('equipment-sets.update-equipment-item');
-        Route::get('equipment-sets/{equipmentSet}/availability', [EquipmentSetController::class, 'checkAvailability'])->name('equipment-sets.check-availability');
 
         Route::resource('equipment-sets', EquipmentSetController::class);
 

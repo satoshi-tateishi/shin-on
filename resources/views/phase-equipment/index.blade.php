@@ -252,13 +252,13 @@
                                     @if(auth()->user()->role === 'editor' ||
                                         auth()->user()->role === 'admin' ||
                                         $phase->performance->staff->contains('user_id', auth()->id()))
-                                        @if($phaseEquipment->canCheckout() && $phaseEquipment->status !== 'checked_in')
-                                            <button onclick="event.stopPropagation(); openCheckoutModal({{ $phaseEquipment->id }})"
+                                        @if($phaseEquipment->canCheckout())
+                                            <button type="button" onclick="event.stopPropagation(); var form = document.getElementById('checkoutForm'); if(form) { form.action = '/phases/{{ $phase->id }}/equipment/{{ $phaseEquipment->id }}/checkout'; document.getElementById('checkoutModal').classList.remove('hidden'); }"
                                                     class="text-orange-600 hover:text-orange-900">出庫</button>
                                         @endif
 
                                         @if($phaseEquipment->canCheckin())
-                                            <button onclick="event.stopPropagation(); handleEquipmentReturn({{ $phaseEquipment->id }}, {{ $phase->id }})"
+                                            <button type="button" onclick="event.stopPropagation(); handleEquipmentReturn({{ $phaseEquipment->id }}, {{ $phase->id }})"
                                                     class="text-green-600 hover:text-green-900">返却</button>
                                         @endif
 
@@ -463,19 +463,13 @@
 </div>
 
 <script>
-function openCheckoutModal(phaseEquipmentId) {
-    const form = document.getElementById('checkoutForm');
-    form.action = `{{ route('phases.equipment.checkout', [$phase, '__ID__']) }}`.replace('__ID__', phaseEquipmentId);
-    document.getElementById('checkoutModal').classList.remove('hidden');
-}
-
 function closeCheckoutModal() {
     document.getElementById('checkoutModal').classList.add('hidden');
 }
 
 async function openCheckinModal(phaseEquipmentId) {
     const form = document.getElementById('checkinForm');
-    form.action = `{{ route('phases.equipment.checkin', [$phase, '__ID__']) }}`.replace('__ID__', phaseEquipmentId);
+    form.action = `/phases/{{ $phase->id }}/equipment/${phaseEquipmentId}/checkin`;
 
     // フォームをリセット
     form.reset();

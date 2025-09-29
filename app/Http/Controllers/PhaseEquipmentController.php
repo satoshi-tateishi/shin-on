@@ -316,7 +316,8 @@ class PhaseEquipmentController extends Controller
      * Remove the specified phase equipment.
      *
      * Deletes a phase equipment record, effectively removing the equipment
-     * assignment from the phase.
+     * assignment from the phase. If the equipment is currently checked out
+     * or checked in, resets the equipment status to available.
      *
      * @param Phase $phase The phase containing the equipment
      * @param PhaseEquipment $phaseEquipment The phase equipment record to delete
@@ -324,11 +325,29 @@ class PhaseEquipmentController extends Controller
      */
     public function destroy(Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
     {
-        $phaseEquipment->delete();
+        try {
+            DB::beginTransaction();
 
-        return redirect()
-            ->route('phases.equipment.index', $phase)
-            ->with('success', '機材使用記録を削除しました。');
+            // 出庫中または返却済みの機材の場合、Equipment の status を available に戻す
+            if (in_array($phaseEquipment->status, ['checked_out', 'checked_in'])) {
+                $phaseEquipment->equipment->update(['status' => 'available']);
+            }
+
+            $phaseEquipment->delete();
+
+            DB::commit();
+
+            return redirect()
+                ->route('phases.equipment.index', $phase)
+                ->with('success', '機材使用記録を削除しました。');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return redirect()
+                ->route('phases.equipment.index', $phase)
+                ->withErrors(['error' => '機材使用記録の削除に失敗しました。']);
+        }
     }
 
     /**
