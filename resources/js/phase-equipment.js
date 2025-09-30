@@ -258,7 +258,7 @@ class PhaseEquipmentManager {
 
             if (isSelected) {
                 statusClass = 'bg-blue-100 border-blue-300 cursor-pointer hover:bg-blue-200';
-                statusText = '選択済み（クリックで解除）';
+                statusText = 'クリックで解除';
                 statusTextClass = 'text-blue-800';
                 clickable = true;
                 onClickAction = `phaseEquipmentManager.deselectEquipment(${equipment.id})`;
@@ -285,7 +285,7 @@ class PhaseEquipmentManager {
                             <div class="flex items-center gap-2">
                                 <div class="font-medium text-gray-900">${this.escapeHtml(equipment.name)}</div>
                                 ${equipment.company_number ? `<div class="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600">${this.escapeHtml(equipment.company_number)}</div>` : ''}
-                                ${isSelected ? '<div class="px-2 py-1 bg-blue-500 text-white rounded text-xs font-medium">選択済み</div>' : ''}
+                                ${isSelected ? '<div class="px-2 py-1 bg-blue-500 text-white rounded text-xs font-medium">選択</div>' : ''}
                             </div>
                         </div>
                         <div class="text-right">

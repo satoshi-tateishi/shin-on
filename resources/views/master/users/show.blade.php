@@ -59,134 +59,113 @@
                 </div>
                 <div class="px-6 py-4">
                     <!-- プロフィール画像 -->
-                    <div class="mb-4">
+                    <div class="mb-6 flex items-center">
                         @if($user->icon)
-                            <img class="h-16 w-16 rounded-full" src="{{ $user->icon }}" alt="{{ $user->name }}">
+                            <img class="h-20 w-20 rounded-full" src="{{ $user->icon }}" alt="{{ $user->name }}">
                         @else
-                            <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span class="text-gray-600 text-lg">{{ mb_substr($user->name, 0, 1) }}</span>
+                            <div class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span class="text-gray-600 text-2xl font-medium">{{ mb_substr($user->name, 0, 1) }}</span>
                             </div>
                         @endif
-                    </div>
-
-                    <!-- ソート順 -->
-                    <div class="mb-4">
-                        <dt class="text-sm font-medium text-gray-500">ソート順</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $user->sort ?? 0 }}</dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- 氏名・フリガナ -->
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">氏名</dt>
-                            <dd class="mt-1 text-sm text-gray-900 @if($user->is_resigned) line-through text-gray-500 @endif">
+                        <div class="ml-4">
+                            <h2 class="text-xl font-semibold text-gray-900 @if($user->is_resigned) line-through text-gray-500 @endif">
                                 {{ $user->name }}
                                 @if($user->furigana)
-                                    <span class="ml-2 text-xs text-gray-500">{{ $user->furigana }}</span>
+                                    <span class="ml-2 text-sm font-normal text-gray-500">{{ $user->furigana }}</span>
                                 @endif
-                            </dd>
-                            <dd class="mt-1 text-sm text-gray-600">{{ $user->email }}</dd>
+                            </h2>
+                            <p class="text-sm text-gray-600">{{ $user->email }}</p>
                         </div>
+                    </div>
 
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">所属</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    @if($user->affiliation === 'employee') bg-blue-100 text-blue-800
-                                    @elseif($user->affiliation === 'partner') bg-purple-100 text-purple-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    {{ $user->affiliation_label }}
-                                </span>
-                            </dd>
-                        </div>
-
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">入社日</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                @if($user->hired_at)
-                                    {{ $user->hired_at->format('Y年m月d日') }}
-                                    <span class="ml-2 text-xs text-gray-500">
-                                        @if($user->resigned_at)
-                                            ({{ \Carbon\Carbon::parse($user->hired_at)->diff(\Carbon\Carbon::parse($user->resigned_at))->format('%y年%mヶ月') }})
-                                        @else
-                                            ({{ \Carbon\Carbon::parse($user->hired_at)->diff(\Carbon\Carbon::now())->format('%y年%mヶ月') }})
-                                        @endif
+                    <!-- テーブル形式 -->
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50 w-1/4">所属</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        @if($user->affiliation === 'employee') bg-blue-100 text-blue-800
+                                        @elseif($user->affiliation === 'partner') bg-purple-100 text-purple-800
+                                        @else bg-gray-100 text-gray-800 @endif">
+                                        {{ $user->affiliation_label }}
                                     </span>
-                                @else
-                                    ---
-                                @endif
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">退職日</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                @if($user->resigned_at)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">入社日</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">
+                                    @if($user->hired_at)
+                                        {{ $user->hired_at->format('Y年m月d日') }}
+                                        <span class="ml-2 text-xs text-gray-500">
+                                            @if($user->resigned_at)
+                                                ({{ \Carbon\Carbon::parse($user->hired_at)->diff(\Carbon\Carbon::parse($user->resigned_at))->format('%y年%mヶ月') }})
+                                            @else
+                                                ({{ \Carbon\Carbon::parse($user->hired_at)->diff(\Carbon\Carbon::now())->format('%y年%mヶ月') }})
+                                            @endif
+                                        </span>
+                                    @else
+                                        ---
+                                    @endif
+                                </td>
+                            </tr>
+                            @if($user->resigned_at)
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">退職日</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">
                                     <span class="text-red-600 font-medium">{{ $user->resigned_at->format('Y年m月d日') }}</span>
-                                @else
-                                    ---
-                                @endif
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">生年月日</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                @if($user->birthday)
-                                    {{ $user->birthday->format('Y年m月d日') }}
-                                    <span class="ml-2 text-xs text-gray-500">
-                                        ({{ \Carbon\Carbon::parse($user->birthday)->age }}歳)
-                                    </span>
-                                @else
-                                    ---
-                                @endif
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">LINE WORKS ID</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->lineworks_id ?? '---' }}</dd>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 職種・役割 -->
-            <div class="mt-6 bg-white border border-gray-200 rounded-lg">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">職種・役割</h3>
-                </div>
-                <div class="px-6 py-4">
-                    <div class="flex flex-wrap gap-2">
-                        @if($user->is_staff)
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                スタッフ
-                            </span>
-                        @endif
-                        @if($user->is_designer)
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                </svg>
-                                サウンドデザイナー
-                            </span>
-                        @endif
-                        @if($user->is_driver)
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                ドライバー
-                            </span>
-                        @endif
-                        @if(!$user->is_staff && !$user->is_designer && !$user->is_driver)
-                            <span class="text-gray-500 text-sm">職種・役割が設定されていません</span>
-                        @endif
-                    </div>
+                                </td>
+                            </tr>
+                            @endif
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">生年月日</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">
+                                    @if($user->birthday)
+                                        {{ $user->birthday->format('Y年m月d日') }}
+                                        <span class="ml-2 text-xs text-gray-500">
+                                            ({{ \Carbon\Carbon::parse($user->birthday)->age }}歳)
+                                        </span>
+                                    @else
+                                        ---
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">職種・役割</td>
+                                <td class="px-3 py-3">
+                                    <div class="flex flex-wrap gap-2">
+                                        @if($user->is_staff)
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                スタッフ
+                                            </span>
+                                        @endif
+                                        @if($user->is_designer)
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                </svg>
+                                                サウンドデザイナー
+                                            </span>
+                                        @endif
+                                        @if($user->is_driver)
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                                </svg>
+                                                ドライバー
+                                            </span>
+                                        @endif
+                                        @if(!$user->is_staff && !$user->is_designer && !$user->is_driver)
+                                            <span class="text-gray-500 text-sm">職種・役割が設定されていません</span>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -196,37 +175,30 @@
                     <h3 class="text-lg font-medium text-gray-900">連絡先情報</h3>
                 </div>
                 <div class="px-6 py-4">
-                    <div class="space-y-6">
-                        <!-- 携帯電話 -->
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">携帯電話</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->mobile_phone ?: '---' }}</dd>
-                        </div>
-
-                        <!-- 郵便番号・住所 -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">郵便番号</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $user->postal_code ?: '---' }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">住所</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $user->address ?: '---' }}</dd>
-                            </div>
-                        </div>
-
-                        <!-- 緊急連絡先 -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">緊急連絡先氏名</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $user->emergency_contact_name ?: '---' }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">緊急連絡先電話番号</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $user->emergency_contact_phone ?: '---' }}</dd>
-                            </div>
-                        </div>
-                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50 w-1/4">携帯電話</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->mobile_phone ?: '---' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">郵便番号</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->postal_code ?: '---' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">住所</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->address ?: '---' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">緊急連絡先氏名</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->emergency_contact_name ?: '---' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">緊急連絡先電話番号</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->emergency_contact_phone ?: '---' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -236,47 +208,46 @@
                     <h3 class="text-lg font-medium text-gray-900">システム情報</h3>
                 </div>
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">権限</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    @switch($user->role)
-                                        @case('admin') bg-red-100 text-red-800 @break
-                                        @case('editor') bg-blue-100 text-blue-800 @break
-                                        @case('viewer') bg-green-100 text-green-800 @break
-                                        @default bg-gray-100 text-gray-800 @break
-                                    @endswitch">
-                                    @switch($user->role)
-                                        @case('admin') 管理者 @break
-                                        @case('editor') 編集者 @break
-                                        @case('viewer') 閲覧者 @break
-                                        @default 不明 @break
-                                    @endswitch
-                                </span>
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">アカウント状態</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $user->is_active ? '有効' : '無効' }}
-                                </span>
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">登録日</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->created_at->format('Y年m月d日 H:i') }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">最終更新日</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->updated_at->format('Y年m月d日 H:i') }}</dd>
-                        </div>
-                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50 w-1/4">権限</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        @switch($user->role)
+                                            @case('admin') bg-red-100 text-red-800 @break
+                                            @case('editor') bg-blue-100 text-blue-800 @break
+                                            @case('viewer') bg-green-100 text-green-800 @break
+                                            @default bg-gray-100 text-gray-800 @break
+                                        @endswitch">
+                                        @switch($user->role)
+                                            @case('admin') 管理者 @break
+                                            @case('editor') 編集者 @break
+                                            @case('viewer') 閲覧者 @break
+                                            @default 不明 @break
+                                        @endswitch
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">アカウント状態</td>
+                                <td class="px-3 py-3">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                        {{ $user->is_active ? '有効' : '無効' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">登録日</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->created_at->format('Y年m月d日 H:i') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-3 text-sm font-medium text-gray-500 bg-gray-50">最終更新日</td>
+                                <td class="px-3 py-3 text-sm text-gray-900">{{ $user->updated_at->format('Y年m月d日 H:i') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -335,29 +306,6 @@
                 </div>
             </div>
 
-            <!-- 認証情報 -->
-            <div class="mt-6 bg-white border border-gray-200 rounded-lg">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">認証情報</h3>
-                </div>
-                <div class="px-6 py-4">
-                    <div class="bg-blue-50 p-4 rounded-lg">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h4 class="text-sm font-medium text-blue-800">LINE WORKS認証</h4>
-                                <div class="mt-1 text-sm text-blue-700">
-                                    <p>このユーザーはLINE WORKS認証でログインします。パスワードによる認証は行いません。</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 @endsection

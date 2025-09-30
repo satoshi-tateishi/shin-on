@@ -107,12 +107,13 @@ class EquipmentSetController extends Controller
 
     protected function getCsvHeaders(): array
     {
-        return ['sort', 'name', 'description', 'is_active', 'created_at', 'updated_at'];
+        return ['id', 'sort', 'name', 'description', 'is_active', 'created_at', 'updated_at'];
     }
 
     protected function mapRecordToCsvRow($record): array
     {
         return [
+            $record->id,
             $record->sort,
             $record->name,
             $record->description,
@@ -125,11 +126,15 @@ class EquipmentSetController extends Controller
     protected function mapCsvRowToRecord(array $headers, array $data): array
     {
         $recordData = [];
+        $id = null;
 
         foreach ($headers as $index => $header) {
             $value = $data[$index] ?? '';
 
             switch ($header) {
+                case 'id':
+                    $id = $value ? (int) $value : null;
+                    break;
                 case 'sort':
                     $recordData['sort'] = intval($value ?: 0);
                     break;
@@ -145,11 +150,20 @@ class EquipmentSetController extends Controller
             }
         }
 
+        // IDがあれば含める（更新時の識別用）
+        if ($id) {
+            $recordData['id'] = $id;
+        }
+
         return $recordData;
     }
 
     protected function getUniqueIdentifier(array $recordData): array
     {
+        // IDがある場合はIDで特定、なければnameで特定
+        if (!empty($recordData['id'])) {
+            return ['id' => $recordData['id']];
+        }
         return ['name' => $recordData['name']];
     }
 

@@ -230,7 +230,7 @@ class UserController extends Controller
     protected function getCsvHeaders(): array
     {
         return [
-            'sort', 'name', 'furigana', 'email', 'mobile_phone', 'birthday', 'hired_at', 'resigned_at',
+            'id', 'sort', 'name', 'furigana', 'email', 'mobile_phone', 'birthday', 'hired_at', 'resigned_at',
             'postal_code', 'address', 'emergency_contact_name', 'emergency_contact_phone', 'notes',
             'affiliation', 'role', 'is_designer', 'is_staff', 'is_driver', 'is_on_leave',
             'is_resigned', 'is_active', 'created_at', 'updated_at',
@@ -240,6 +240,7 @@ class UserController extends Controller
     protected function mapRecordToCsvRow($record): array
     {
         return [
+            $record->id,
             $record->sort,
             $record->name,
             $record->furigana,
@@ -269,11 +270,15 @@ class UserController extends Controller
     protected function mapCsvRowToRecord(array $headers, array $data): array
     {
         $recordData = [];
+        $id = null;
 
         foreach ($headers as $index => $header) {
             $value = $data[$index] ?? '';
 
             switch ($header) {
+                case 'id':
+                    $id = $value ? (int) $value : null;
+                    break;
                 case 'sort':
                     $recordData['sort'] = (int) $value ?: null;
                     break;
@@ -342,11 +347,20 @@ class UserController extends Controller
         $recordData['lineworks_token'] = null;
         $recordData['lineworks_refresh_token'] = null;
 
+        // IDがあれば含める（更新時の識別用）
+        if ($id) {
+            $recordData['id'] = $id;
+        }
+
         return $recordData;
     }
 
     protected function getUniqueIdentifier(array $recordData): array
     {
+        // IDがある場合はIDで特定、なければemailで特定
+        if (!empty($recordData['id'])) {
+            return ['id' => $recordData['id']];
+        }
         return ['email' => $recordData['email']];
     }
 

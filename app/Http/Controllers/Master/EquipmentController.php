@@ -211,7 +211,7 @@ class EquipmentController extends Controller
     protected function getCsvHeaders(): array
     {
         return [
-            'subcategory_id', 'sort', 'manufacturer', 'name', 'company_number',
+            'id', 'subcategory_id', 'sort', 'manufacturer', 'name', 'company_number',
             'management_type', 'quantity', 'unit', 'model_number', 'serial_number',
             'supplier', 'purchase_date', 'warranty_expiry', 'price', 'status',
             'location_id', 'now_location_id', 'is_schedule_visible', 'is_discard', 'discard_at', 'notes', 'created_at', 'updated_at',
@@ -221,6 +221,7 @@ class EquipmentController extends Controller
     protected function mapRecordToCsvRow($record): array
     {
         return [
+            $record->id,
             $record->subcategory_id,
             $record->sort,
             $record->manufacturer,
@@ -250,11 +251,15 @@ class EquipmentController extends Controller
     protected function mapCsvRowToRecord(array $headers, array $data): array
     {
         $recordData = [];
+        $id = null;
 
         foreach ($headers as $index => $header) {
             $value = $data[$index] ?? '';
 
             switch ($header) {
+                case 'id':
+                    $id = $value ? (int) $value : null;
+                    break;
                 case 'subcategory_id':
                     $recordData['subcategory_id'] = ! empty($value) ? intval($value) : null;
                     break;
@@ -321,11 +326,20 @@ class EquipmentController extends Controller
             }
         }
 
+        // IDがあれば含める（更新時の識別用）
+        if ($id) {
+            $recordData['id'] = $id;
+        }
+
         return $recordData;
     }
 
     protected function getUniqueIdentifier(array $recordData): array
     {
+        // IDがある場合はIDで特定、なければnameとcompany_numberで特定
+        if (!empty($recordData['id'])) {
+            return ['id' => $recordData['id']];
+        }
         return ['name' => $recordData['name'], 'company_number' => $recordData['company_number']];
     }
 

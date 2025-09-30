@@ -107,12 +107,13 @@ class ProductionController extends Controller
 
     protected function getCsvHeaders(): array
     {
-        return ['sort', 'type', 'name', 'postal_code', 'address', 'note', 'is_active', 'created_at', 'updated_at'];
+        return ['id', 'sort', 'type', 'name', 'postal_code', 'address', 'note', 'is_active', 'created_at', 'updated_at'];
     }
 
     protected function mapRecordToCsvRow($record): array
     {
         return [
+            $record->id,
             $record->sort,
             $record->type,
             $record->name,
@@ -128,11 +129,15 @@ class ProductionController extends Controller
     protected function mapCsvRowToRecord(array $headers, array $data): array
     {
         $recordData = [];
+        $id = null;
 
         foreach ($headers as $index => $header) {
             $value = $data[$index] ?? '';
 
             switch ($header) {
+                case 'id':
+                    $id = $value ? (int) $value : null;
+                    break;
                 case 'sort':
                     $recordData['sort'] = intval($value ?: 0);
                     break;
@@ -155,6 +160,11 @@ class ProductionController extends Controller
                     $recordData['is_active'] = in_array($value, ['1', 'true', 'TRUE', 'はい', 'Yes']);
                     break;
             }
+        }
+
+        // IDがあれば含める（更新時の識別用）
+        if ($id) {
+            $recordData['id'] = $id;
         }
 
         return $recordData;
@@ -188,6 +198,10 @@ class ProductionController extends Controller
 
     protected function getUniqueIdentifier(array $recordData): array
     {
+        // IDがある場合はIDで特定、なければnameとtypeで特定
+        if (!empty($recordData['id'])) {
+            return ['id' => $recordData['id']];
+        }
         return ['name' => $recordData['name'], 'type' => $recordData['type']];
     }
 

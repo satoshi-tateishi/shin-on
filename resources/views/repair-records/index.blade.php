@@ -207,13 +207,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <h3 class="mt-2 text-sm font-medium text-gray-900">修理記録がありません</h3>
-            <p class="mt-1 text-sm text-gray-500">新しい修理記録を作成してください。</p>
-            <div class="mt-6">
-                <a href="{{ route('repair-records.create') }}"
-                   class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-red-700">
-                    修理報告
-                </a>
-            </div>
+            <p class="mt-1 text-sm text-gray-500">検索条件に該当する修理記録が見つかりませんでした。</p>
         </div>
     @endif
 </div>

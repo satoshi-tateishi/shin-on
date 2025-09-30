@@ -44,130 +44,141 @@
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">基本情報</h3>
 
-            <div class="space-y-4">
-                <!-- ステータス -->
-                <div>
-                    <dd class="mt-1">
-                        <x-status-badge :status="$performance->status" type="performance" />
-                    </dd>
-                </div>
+            <!-- 基本情報テーブル -->
+            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-4">
+                <table class="w-full divide-y divide-gray-300">
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- ステータス -->
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">ステータス</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">
+                                <x-status-badge :status="$performance->status" type="performance" />
+                            </td>
+                        </tr>
 
-                <!-- 公演種別 -->
-                <div>
-                    <dd class="mt-1">
-                        <x-performance-type-badge :type="$performance->performance_type" />
-                    </dd>
-                </div>
+                        <!-- 公演種別 -->
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">公演種別</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">
+                                <x-performance-type-badge :type="$performance->performance_type" />
+                            </td>
+                        </tr>
 
-                <!-- 公演名 -->
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">公演名</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {{ $performance->title }}
-                    </dd>
-                </div>
+                        <!-- 公演名 -->
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">公演名</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">{{ $performance->title }}</td>
+                        </tr>
 
-                <!-- 略称 -->
-                @if($performance->short_name)
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">略称</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            {{ $performance->short_name }}
-                        </span>
-                    </dd>
-                </div>
-                @endif
-
-                <!-- 期間 -->
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">期間</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        @if($performance->start_date && $performance->end_date)
-                            <div>{{ $performance->start_date }} 〜 {{ $performance->end_date }}</div>
-                            @if($performance->duration_days)
-                                <div class="text-xs text-gray-500">({{ $performance->duration_days }}日間)</div>
-                            @endif
-                        @elseif($performance->phases->count() > 0)
-                            <span class="text-gray-500">フェーズで設定</span>
-                        @else
-                            <span class="text-gray-400">期間未設定</span>
+                        <!-- 略称 -->
+                        @if($performance->short_name)
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">略称</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ $performance->short_name }}
+                                </span>
+                            </td>
+                        </tr>
                         @endif
-                    </dd>
-                </div>
 
-                <!-- 演出 -->
-                @if($performance->director)
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">演出</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $performance->director }}</dd>
-                </div>
-                @endif
-
-                <!-- プロダクション -->
-                @if($performance->productions->count() > 0)
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">プロダクション</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {{ $performance->productions->pluck('name')->implode(', ') }}
-                    </dd>
-                </div>
-                @endif
-
-                <!-- 担当者 -->
-                @if($performance->staff->count() > 0)
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">担当者</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg inline-block">
-                            <table class="table-auto divide-y divide-gray-300">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="pl-3 pr-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">ポジション</th>
-                                        <th class="pl-2 pr-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    @foreach($performance->staff->sortBy([['position.sort', 'asc'], ['user.sort', 'asc']]) as $staff)
-                                        <tr>
-                                            <td class="pl-3 pr-2 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-r border-gray-300">{{ $staff->position->name }}</td>
-                                            <td class="pl-2 pr-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $staff->user->name }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </dd>
-                </div>
-                @endif
-
-                <!-- 公演チラシ画像 -->
-                @if($performance->attachments && $performance->attachments->count() > 0)
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">公演チラシ画像</dt>
-                    <dd class="mt-1">
-                        <div class="flex flex-wrap -m-0">
-                            @foreach($performance->attachments as $attachment)
-                                @if($attachment->isImage())
-                                    <div class="w-1/3 md:w-1/4 lg:w-1/5 xl:w-1/6">
-                                        <a href="{{ $attachment->file_url }}" target="_blank" class="block">
-                                            <img src="{{ $attachment->thumbnail_url ?? $attachment->file_url }}"
-                                                 alt="{{ $attachment->original_name }}"
-                                                 class="w-full h-32 object-contain hover:opacity-80 transition-opacity">
-                                        </a>
-                                    </div>
+                        <!-- 期間 -->
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">期間</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">
+                                @if($performance->start_date && $performance->end_date)
+                                    {{ $performance->start_date }} 〜 {{ $performance->end_date }}
+                                    @if($performance->duration_days)
+                                        <span class="text-xs text-gray-500 ml-2">({{ $performance->duration_days }}日間)</span>
+                                    @endif
+                                @elseif($performance->phases->count() > 0)
+                                    <span class="text-gray-500">フェーズで設定</span>
+                                @else
+                                    <span class="text-gray-400">期間未設定</span>
                                 @endif
-                            @endforeach
-                        </div>
-                    </dd>
-                </div>
-                @endif
+                            </td>
+                        </tr>
 
-                <!-- 備考 -->
-                @if($performance->note)
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">備考</dt>
-                    <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ $performance->note }}</dd>
+                        <!-- 演出 -->
+                        @if($performance->director)
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">演出</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">{{ $performance->director }}</td>
+                        </tr>
+                        @endif
+
+                        <!-- プロダクション -->
+                        @if($performance->productions->count() > 0)
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 text-right w-32">プロダクション</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900">
+                                {{ $performance->productions->pluck('name')->implode(', ') }}
+                            </td>
+                        </tr>
+                        @endif
+
+                        <!-- 備考 -->
+                        @if($performance->note)
+                        <tr>
+                            <td class="pl-4 pr-3 py-3 whitespace-nowrap text-sm font-medium text-gray-500 bg-gray-50 align-top text-right w-32">備考</td>
+                            <td class="pl-3 px-6 py-3 text-sm text-gray-900 whitespace-pre-wrap">{{ $performance->note }}</td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+
+                <!-- 担当者と公演チラシ画像 -->
+                @if($performance->staff->count() > 0 || ($performance->attachments && $performance->attachments->count() > 0))
+                <div class="flex gap-6">
+                    <!-- 担当者 -->
+                    @if($performance->staff->count() > 0)
+                    <div class="flex-shrink-0">
+                        <dt class="text-sm font-medium text-gray-500 mb-2">担当者</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg inline-block">
+                                <table class="table-auto divide-y divide-gray-300">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="pl-3 pr-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">ポジション</th>
+                                            <th class="pl-2 pr-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($performance->staff->sortBy([['position.sort', 'asc'], ['user.sort', 'asc']]) as $staff)
+                                            <tr>
+                                                <td class="pl-3 pr-2 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-r border-gray-300">{{ $staff->position->name }}</td>
+                                                <td class="pl-2 pr-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $staff->user->name }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </dd>
+                    </div>
+                    @endif
+
+                    <!-- 公演チラシ画像 -->
+                    @if($performance->attachments && $performance->attachments->count() > 0)
+                    <div class="flex-grow">
+                        <dt class="text-sm font-medium text-gray-500 mb-2">公演チラシ画像</dt>
+                        <dd class="mt-1">
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($performance->attachments as $attachment)
+                                    @if($attachment->isImage())
+                                        <div class="w-32 h-32">
+                                            <a href="{{ $attachment->file_url }}" target="_blank" class="block w-full h-full">
+                                                <img src="{{ $attachment->thumbnail_url ?? $attachment->file_url }}"
+                                                     alt="{{ $attachment->original_name }}"
+                                                     class="w-full h-full object-contain hover:opacity-80 transition-opacity border border-gray-200 rounded">
+                                            </a>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </dd>
+                    </div>
+                    @endif
                 </div>
                 @endif
             </div>

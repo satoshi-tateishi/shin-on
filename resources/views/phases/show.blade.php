@@ -5,12 +5,12 @@
 @section('breadcrumb')
     > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
     > <a href="{{ route('performances.show', $performance) }}" class="text-blue-600 hover:text-blue-800">{{ $performance->title }}</a>
-    > <span class="text-gray-800">フェーズ詳細 【{{ $phase->name }}】</span>
+    > <span class="text-gray-800">【{{ $phase->name }}】フェーズ詳細</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">{{ $performance->title }} フェーズ詳細【{{ $phase->name }}】</h1>
+        <h1 class="text-3xl font-bold text-gray-900">{{ $performance->title }}【{{ $phase->name }}】フェーズ詳細</h1>
     </div>
 
     <div class="flex space-x-3">

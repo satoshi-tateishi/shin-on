@@ -61,7 +61,8 @@ class Performance extends Model
     public function productions(): BelongsToMany
     {
         return $this->belongsToMany(Production::class, 'performance_production')
-            ->withTimestamps();
+            ->withTimestamps()
+            ->orderByPivot('id', 'asc');
     }
 
     /**
