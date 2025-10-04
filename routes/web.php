@@ -47,10 +47,11 @@ Route::middleware('auth')->group(function () {
 
     // 管理者機能ルート
     Route::prefix('admin')->name('admin.')->group(function () {
-        // 会社ロゴ管理
+        // 会社設定管理
         Route::get('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'index'])->name('company-logo.index');
         Route::post('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'store'])->name('company-logo.store');
         Route::delete('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'destroy'])->name('company-logo.destroy');
+        Route::post('company-info', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'storeCompanyInfo'])->name('company-logo.store-company-info');
 
         // バックアップ管理（管理者権限のみ）
         Route::prefix('backup')->name('backup.')->group(function () {
@@ -205,6 +206,9 @@ Route::middleware('auth')->group(function () {
 
     // 修理管理ルート
     Route::resource('repair-records', RepairRecordController::class);
+
+    // 修理伝票PDF出力
+    Route::get('repair-records/{repairRecord}/pdf', [RepairRecordController::class, 'exportPdf'])->name('repair-records.export-pdf');
 
     // 修理ワークフロー専用アクション
     Route::patch('repair-records/{repairRecord}/start', [RepairRecordController::class, 'start'])->name('repair-records.start');

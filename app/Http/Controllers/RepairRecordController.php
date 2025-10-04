@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipment;
+use App\Models\CompanyInfo;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentSubcategory;
 use App\Models\RepairRecord;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -601,5 +604,40 @@ class RepairRecordController extends Controller
             return redirect()->route('repair-records.show', $repairRecord)
                 ->with('error', '予約解除に失敗しました: '.$e->getMessage());
         }
+    }
+
+    /**
+     * 修理伝票をPDFでエクスポート
+     */
+    public function exportPdf(RepairRecord $repairRecord): Response
+    {
+        // 修理記録と関連データを取得
+        $repairRecord->load([
+            'equipment.subcategory.category',
+            'reportedBy',
+            'staffUser'
+        ]);
+
+        // 会社情報を取得
+        $companyInfo = CompanyInfo::getActiveCompanyInfo();
+
+        // ファイル名を生成（修理伝票_機材名_日付.pdf）
+        $equipmentName = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $repairRecord->equipment->name);
+        $date = now()->format('Ymd');
+        $filename = "修理伝票_{$equipmentName}_{$date}.pdf";
+
+        // PDFを生成
+        $pdf = Pdf::loadView('repair-records.pdf.slip', compact('repairRecord', 'companyInfo'));
+
+        // DOMPDFの設定を取得して日本語フォントを設定
+        $pdf->getDomPDF()->set_option('isHtml5ParserEnabled', true);
+        $pdf->getDomPDF()->set_option('isPhpEnabled', false);
+        $pdf->getDomPDF()->set_option('isFontSubsettingEnabled', true);  // フォントサブセッティングを有効化
+        $pdf->getDomPDF()->set_option('defaultFont', 'DejaVu Sans');
+
+        $pdf->setPaper('a4', 'portrait');
+
+        // プレビュー表示（インライン）に変更
+        return $pdf->stream($filename);
     }
 }

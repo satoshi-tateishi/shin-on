@@ -345,8 +345,8 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </div>
-                                <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-900 transition-colors">会社ロゴ管理</h3>
-                                <p class="text-gray-600 text-sm leading-relaxed">ログインとダッシュボードのロゴ設定</p>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-900 transition-colors">会社設定</h3>
+                                <p class="text-gray-600 text-sm leading-relaxed">会社情報とロゴの管理</p>
                             </div>
                         </a>
 
