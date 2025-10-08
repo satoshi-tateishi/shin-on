@@ -177,6 +177,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('performances', PerformanceController::class)->only(['index', 'show']);
     Route::resource('performances.phases', PhaseController::class)->shallow()->middleware(['performance.access'])->except(['index', 'show']);
     Route::get('phases/{phase}', [PhaseController::class, 'show'])->name('phases.show');
+    Route::get('phases/{phase}/export-pdf', [PhaseController::class, 'exportPdf'])->name('phases.export-pdf');
 
     // フェーズ機材使用管理ルート
     Route::prefix('phases/{phase}')->name('phases.')->middleware(['performance.access'])->group(function () {
