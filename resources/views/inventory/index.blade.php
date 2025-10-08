@@ -120,6 +120,25 @@
                 <div class="text-sm text-gray-500">
                     表示件数: <span x-text="inventoryData.length"></span>件
                 </div>
+                <div class="flex space-x-3">
+                    <!-- 選択中の倉庫のPDF出力 -->
+                    <a :href="`/inventory/export-pdf?as_of_date=${asOfDate}&location_id=${filters.location_id}`"
+                       class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        この倉庫をPDF出力
+                    </a>
+
+                    <!-- 全倉庫のPDF出力 -->
+                    <a :href="`/inventory/export-pdf?as_of_date=${asOfDate}&all_locations=1`"
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        全倉庫をPDF出力
+                    </a>
+                </div>
             </div>
 
             <!-- Inventory Table -->

@@ -245,6 +245,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::get('api/inventory', [InventoryController::class, 'getInventory'])->name('api.inventory');
         Route::get('api/warehouses', [InventoryController::class, 'getWarehouses'])->name('api.warehouses');
+        Route::get('export-pdf', [InventoryController::class, 'exportPdf'])->name('export-pdf');
     });
 
     // 倉庫間移動専用画面
