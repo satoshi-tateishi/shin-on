@@ -585,10 +585,17 @@ thead tr.column-header th {
 1. **在庫一覧PDF**
    - ビュー: `resources/views/inventory/pdf.blade.php`
    - コントローラー: `app/Http/Controllers/InventoryController.php::exportPdf()`
+   - 特徴: 倉庫ごとのページ分割、会社ロゴ表示
 
 2. **修理伝票PDF**
    - ビュー: `resources/views/repair-records/pdf/slip.blade.php`
    - コントローラー: `app/Http/Controllers/RepairRecordController.php::exportPdf()`
+   - 特徴: 伝票形式のレイアウト
+
+3. **フェーズ詳細PDF（使用機材リスト）**
+   - ビュー: `resources/views/phases/pdf.blade.php`
+   - コントローラー: `app/Http/Controllers/PhaseController.php::exportPdf()`
+   - 特徴: 横並びテーブルレイアウト（基本情報60% + 担当者40%）、中央揃えヘッダー
 
 ---
 
