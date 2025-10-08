@@ -76,9 +76,9 @@ class LocationController extends Controller
         ]);
 
         $validated['sort'] = $this->getNextSortOrder();
-        $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['is_inventory_visible'] = $request->boolean('is_inventory_visible', true);
-        $validated['is_transfer_visible'] = $request->boolean('is_transfer_visible', true);
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_inventory_visible'] = $request->boolean('is_inventory_visible');
+        $validated['is_transfer_visible'] = $request->boolean('is_transfer_visible');
 
         Location::create($validated);
 

@@ -59,6 +59,15 @@
             text-align: left;
         }
 
+        thead tr.header-row th.header-right {
+            text-align: right;
+        }
+
+        thead tr.header-row th.header-right img {
+            max-height: 40px;
+            vertical-align: middle;
+        }
+
         thead tr.info-row th {
             background-color: #fff;
             border: none;
@@ -76,7 +85,7 @@
             padding: 6px 4px;
             font-size: 9pt;
             font-weight: bold;
-            text-align: left;
+            text-align: center;
         }
 
         tbody td {
@@ -93,20 +102,24 @@
         /* 列幅調整 */
         .col-category {
             width: 20%;
+            vertical-align: middle;
         }
 
         .col-equipment {
             width: 25%;
+            vertical-align: middle;
         }
 
         .col-quantity {
             width: 10%;
             text-align: center;
+            vertical-align: middle;
         }
 
         .col-company-number {
             width: 45%;
             word-wrap: break-word;
+            vertical-align: middle;
         }
 
         /* カテゴリ表示（縦並び） */
@@ -176,7 +189,11 @@
         <script type="text/php">
             if (isset($pdf)) {
                 $font = $fontMetrics->getFont("IPAGothic");
-                $pdf->page_text(297, 820, "ページ {PAGE_NUM}", $font, 8, array(0.4, 0.4, 0.4));
+                $text = "ページ {PAGE_NUM}";
+                $pageWidth = $pdf->get_width();
+                $textWidth = $fontMetrics->getTextWidth($text, $font, 8);
+                $x = ($pageWidth - $textWidth) / 2;
+                $pdf->page_text($x, 820, $text, $font, 8, array(0.4, 0.4, 0.4));
             }
         </script>
     </div>
@@ -189,7 +206,14 @@
                     <thead>
                         <!-- ヘッダー行（倉庫名） -->
                         <tr class="header-row">
-                            <th colspan="4">{{ $locationInventory['locationName'] }} 在庫一覧</th>
+                            <th colspan="2">{{ $locationInventory['locationName'] }} 在庫一覧</th>
+                            <th colspan="2" class="header-right">
+                                @if($logoPath && file_exists($logoPath))
+                                    <img src="{{ $logoPath }}" alt="Company Logo">
+                                @else
+                                    office shin•on
+                                @endif
+                            </th>
                         </tr>
                         <!-- 情報行（出力日時） -->
                         <tr class="info-row">

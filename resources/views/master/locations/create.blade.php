@@ -78,7 +78,7 @@
                                 <div>
                                     <div class="flex items-center">
                                         <input type="checkbox" name="is_inventory_visible" id="is_inventory_visible" value="1"
-                                               {{ old('is_inventory_visible', true) ? 'checked' : '' }}
+                                               {{ old('is_inventory_visible') ? 'checked' : '' }}
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                         <label for="is_inventory_visible" class="ml-2 block text-sm text-gray-900">
                                             在庫管理フィルタに表示
@@ -91,7 +91,7 @@
                                 <div>
                                     <div class="flex items-center">
                                         <input type="checkbox" name="is_transfer_visible" id="is_transfer_visible" value="1"
-                                               {{ old('is_transfer_visible', true) ? 'checked' : '' }}
+                                               {{ old('is_transfer_visible') ? 'checked' : '' }}
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                         <label for="is_transfer_visible" class="ml-2 block text-sm text-gray-900">
                                             倉庫間移動フィルタに表示

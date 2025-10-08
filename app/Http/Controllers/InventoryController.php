@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanyLogo;
 use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentMovement;
@@ -356,10 +357,15 @@ class InventoryController extends Controller
                 ];
             })->toArray();
 
+            // アクティブなロゴを取得
+            $companyLogo = CompanyLogo::getActiveLogo();
+            $logoPath = $companyLogo ? public_path('storage/' . $companyLogo->file_path) : null;
+
             // PDFデータ準備
             $data = [
                 'asOfDate' => now()->format('Y年m月d日 H:i'),
                 'locationInventories' => $locationInventories,
+                'logoPath' => $logoPath,
             ];
 
             // PDF生成
