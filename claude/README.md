@@ -31,6 +31,7 @@
 - **[development/php-standards.md](development/php-standards.md)** - PHP・Laravel コーディング標準
 - **[development/javascript-standards.md](development/javascript-standards.md)** - JavaScript・Alpine.js 標準
 - **[development/dompdf-japanese-fonts.md](development/dompdf-japanese-fonts.md)** - Dompdf 日本語フォント対応ガイド 📄
+- **[development/playwright-mcp.md](development/playwright-mcp.md)** - Playwright MCP ブラウザ自動化設定ガイド 🌐
 - **[development/testing.md](development/testing.md)** - テストの書き方・実行方法
 
 ### 🏗️ アーキテクチャ

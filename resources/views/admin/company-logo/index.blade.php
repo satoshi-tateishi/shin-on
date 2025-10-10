@@ -33,26 +33,25 @@
                 </div>
             @endif
 
-            <!-- 会社情報フォーム -->
+            <!-- 会社基本情報フォーム -->
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">会社基本情報</h2>
-                <form method="POST" action="{{ route('admin.company-logo.store-company-info') }}" class="space-y-4">
+                <form method="POST" action="{{ route('admin.company-logo.store-company-info') }}" class="space-y-4 max-w-md">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">会社名 <span class="text-red-500">*</span></label>
-                            <input type="text" name="company_name" id="company_name"
-                                   value="{{ old('company_name', $companyInfo->company_name ?? '') }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   required>
-                        </div>
-                        <div>
-                            <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">郵便番号</label>
-                            <input type="text" name="postal_code" id="postal_code"
-                                   value="{{ old('postal_code', $companyInfo->postal_code ?? '') }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="000-0000">
-                        </div>
+                    <div>
+                        <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">会社名 <span class="text-red-500">*</span></label>
+                        <input type="text" name="company_name" id="company_name"
+                               value="{{ old('company_name', $companyInfo->company_name ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               required>
+                    </div>
+
+                    <div class="max-w-[200px]">
+                        <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">郵便番号</label>
+                        <input type="text" name="postal_code" id="postal_code"
+                               value="{{ old('postal_code', $companyInfo->postal_code ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="000-0000">
                     </div>
 
                     <div>
@@ -62,20 +61,32 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
-                            <input type="text" name="phone" id="phone"
-                                   value="{{ old('phone', $companyInfo->phone ?? '') }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="00-0000-0000">
-                        </div>
-                        <div>
-                            <label for="repair_contact_person" class="block text-sm font-medium text-gray-700 mb-1">修理担当者名</label>
-                            <input type="text" name="repair_contact_person" id="repair_contact_person"
-                                   value="{{ old('repair_contact_person', $companyInfo->repair_contact_person ?? '') }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
+                    <div class="max-w-[200px]">
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
+                        <input type="text" name="phone" id="phone"
+                               value="{{ old('phone', $companyInfo->phone ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="00-0000-0000">
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                            {{ $companyInfo ? '更新' : '登録' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 修理担当者フォーム -->
+            <div class="mb-8 pt-8 border-t border-b border-gray-200 pb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">修理担当者</h2>
+                <form method="POST" action="{{ route('admin.company-logo.store-company-info') }}" class="space-y-4 max-w-md">
+                    @csrf
+                    <div class="max-w-[200px]">
+                        <label for="repair_contact_person" class="block text-sm font-medium text-gray-700 mb-1">修理担当者名</label>
+                        <input type="text" name="repair_contact_person" id="repair_contact_person"
+                               value="{{ old('repair_contact_person', $companyInfo->repair_contact_person ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
                     <div>

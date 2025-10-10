@@ -19,6 +19,7 @@
 - [claude/development/php-standards.md](claude/development/php-standards.md) - PHP標準、Laravel Pint
 - [claude/development/javascript-standards.md](claude/development/javascript-standards.md) - JavaScript標準、Alpine.js、タイムゾーン対応
 - [claude/development/dompdf-japanese-fonts.md](claude/development/dompdf-japanese-fonts.md) - Dompdf 日本語フォント対応 📄
+- [claude/development/playwright-mcp.md](claude/development/playwright-mcp.md) - Playwright MCP ブラウザ自動化設定 🌐
 - [claude/development/testing.md](claude/development/testing.md) - PHPUnit、テスト実行
 
 #### 🏗️ アーキテクチャ
