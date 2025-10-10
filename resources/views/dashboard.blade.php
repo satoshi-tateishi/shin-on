@@ -332,8 +332,8 @@
                         <h2 class="text-2xl font-bold text-gray-900">システム管理</h2>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                        <!-- 会社ロゴ管理 -->
-                        <a href="{{ route('admin.company-logo.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 hover:-translate-y-1">
+                        <!-- 会社設定 -->
+                        <a href="{{ route('admin.company-info.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 hover:-translate-y-1">
                             <div class="p-8">
                                 <div class="flex items-center justify-between mb-4">
                                     <div class="p-3 bg-red-50 rounded-xl group-hover:bg-red-100 transition-colors">

@@ -48,10 +48,10 @@ Route::middleware('auth')->group(function () {
     // 管理者機能ルート
     Route::prefix('admin')->name('admin.')->group(function () {
         // 会社設定管理
-        Route::get('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'index'])->name('company-logo.index');
-        Route::post('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'store'])->name('company-logo.store');
-        Route::delete('company-logo', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'destroy'])->name('company-logo.destroy');
-        Route::post('company-info', [\App\Http\Controllers\Admin\CompanyLogoController::class, 'storeCompanyInfo'])->name('company-logo.store-company-info');
+        Route::get('company-info', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'index'])->name('company-info.index');
+        Route::post('company-info/logo', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'store'])->name('company-info.store');
+        Route::delete('company-info/logo', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'destroy'])->name('company-info.destroy');
+        Route::post('company-info', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'storeCompanyInfo'])->name('company-info.store-company-info');
 
         // バックアップ管理（管理者権限のみ）
         Route::prefix('backup')->name('backup.')->group(function () {

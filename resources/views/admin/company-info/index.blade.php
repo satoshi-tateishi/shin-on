@@ -11,32 +11,10 @@
         </div>
 
         <div class="p-6">
-            @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                    <ul class="list-disc list-inside">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             <!-- 会社基本情報フォーム -->
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">会社基本情報</h2>
-                <form method="POST" action="{{ route('admin.company-logo.store-company-info') }}" class="space-y-4 max-w-md">
+                <form method="POST" action="{{ route('admin.company-info.store-company-info') }}" class="space-y-4 max-w-md">
                     @csrf
                     <div>
                         <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">会社名 <span class="text-red-500">*</span></label>
@@ -80,8 +58,14 @@
             <!-- 修理担当者フォーム -->
             <div class="mb-8 pt-8 border-t border-b border-gray-200 pb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">修理担当者</h2>
-                <form method="POST" action="{{ route('admin.company-logo.store-company-info') }}" class="space-y-4 max-w-md">
+                <form method="POST" action="{{ route('admin.company-info.store-company-info') }}" class="space-y-4 max-w-md">
                     @csrf
+                    <!-- 会社基本情報を隠しフィールドとして保持 -->
+                    <input type="hidden" name="company_name" value="{{ $companyInfo->company_name ?? '' }}">
+                    <input type="hidden" name="postal_code" value="{{ $companyInfo->postal_code ?? '' }}">
+                    <input type="hidden" name="address" value="{{ $companyInfo->address ?? '' }}">
+                    <input type="hidden" name="phone" value="{{ $companyInfo->phone ?? '' }}">
+
                     <div class="max-w-[200px]">
                         <label for="repair_contact_person" class="block text-sm font-medium text-gray-700 mb-1">修理担当者名</label>
                         <input type="text" name="repair_contact_person" id="repair_contact_person"
@@ -124,7 +108,7 @@
                                 </p>
                             </div>
                         </div>
-                        <form method="POST" action="{{ route('admin.company-logo.destroy') }}"
+                        <form method="POST" action="{{ route('admin.company-info.destroy') }}"
                               class="inline"
                               onsubmit="return confirm('現在のロゴを削除してもよろしいですか？')">
                             @csrf
@@ -150,7 +134,7 @@
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">
                     {{ $logo ? '新しいロゴをアップロード' : 'ロゴをアップロード' }}
                 </h2>
-                <form method="POST" action="{{ route('admin.company-logo.store') }}" enctype="multipart/form-data" id="logoForm">
+                <form method="POST" action="{{ route('admin.company-info.store') }}" enctype="multipart/form-data" id="logoForm">
                     @csrf
                     <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 transition-colors duration-200 hover:border-gray-400">
                         <div class="text-center">
