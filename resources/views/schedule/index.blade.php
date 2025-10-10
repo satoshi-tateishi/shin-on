@@ -123,12 +123,45 @@
         .sunday-header {
             background-color: #fee2e2 !important; /* 薄い赤 */
         }
+
+        /* メモ表示スタイル */
+        .cell-memo {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 7px;
+            font-weight: 600;
+            color: #1f2937;
+            background-color: transparent;
+            padding: 1px 3px;
+            border-radius: 2px;
+            z-index: 5;
+            text-shadow: 0 0 3px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+        }
+
+        /* セルにカーソルを当てたときの効果 */
+        .clickable-cell {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clickable-cell:hover {
+            opacity: 0.8;
+            box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+
+        /* カスタムカラー用 */
+        .custom-color {
+            background-color: var(--custom-bg-color) !important;
+        }
     </style>
 @endpush
 
 @section('header')
     <div>
         <h1 class="text-3xl font-bold text-gray-900">機材スケジュール表</h1>
+        <p class="text-sm text-gray-500 mt-1">機材の使用状況をExcel風のスケジュール表で確認できます</p>
     </div>
 @endsection
 
@@ -309,17 +342,40 @@
                                             <!-- スパンセルの場合 -->
                                             <template x-if="isSpanStart(equipment, dateIndex)">
                                                 <div :class="getStatusClass(equipment.daily_status[date]?.status)"
-                                                     class="w-full h-5 span-content flex items-center justify-center"
-                                                     :title="getStatusTooltip(equipment.daily_status[date])">
-                                                    <span class="span-text" x-text="formatSpanText(isSpanStart(equipment, dateIndex))"></span>
+                                                     class="w-full h-5 span-content flex relative"
+                                                     style="overflow: visible;">
+                                                    <!-- スパンテキスト（中央表示） -->
+                                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                                        <span class="span-text" x-text="formatSpanText(isSpanStart(equipment, dateIndex))"></span>
+                                                    </div>
+
+                                                    <!-- 日付ごとのクリック可能領域 -->
+                                                    <template x-for="(spanDate, spanOffset) in getSpanDates(equipment, dateIndex)" :key="`span-${equipment.equipment_id}-${spanDate}`">
+                                                        <div @click="openMemoModal(equipment.equipment_id, spanDate, equipment.equipment_name)"
+                                                             :class="getCellCustomClass(equipment.equipment_id, spanDate)"
+                                                             class="clickable-cell relative z-10"
+                                                             :style="`width: 40px; min-width: 40px; ${getCellCustomStyle(equipment.equipment_id, spanDate)}`"
+                                                             :title="`${spanDate} - クリックしてメモ入力`">
+                                                            <!-- メモ表示 -->
+                                                            <span x-show="getCellMemo(equipment.equipment_id, spanDate)"
+                                                                  class="cell-memo"
+                                                                  x-text="formatCellMemo(equipment.equipment_id, spanDate)"></span>
+                                                        </div>
+                                                    </template>
                                                 </div>
                                             </template>
 
                                             <!-- 通常セルの場合 -->
                                             <template x-if="!isSpanStart(equipment, dateIndex)">
-                                                <div :class="getStatusClass(equipment.daily_status[date]?.status)"
-                                                     class="w-full h-5"
+                                                <div @click="openMemoModal(equipment.equipment_id, date, equipment.equipment_name)"
+                                                     :class="[getStatusClass(equipment.daily_status[date]?.status), getCellCustomClass(equipment.equipment_id, date)]"
+                                                     class="w-full h-5 clickable-cell relative"
+                                                     :style="getCellCustomStyle(equipment.equipment_id, date)"
                                                      :title="getStatusTooltip(equipment.daily_status[date])">
+                                                    <!-- メモ表示 -->
+                                                    <span x-show="getCellMemo(equipment.equipment_id, date)"
+                                                          class="cell-memo"
+                                                          x-text="formatCellMemo(equipment.equipment_id, date)"></span>
                                                 </div>
                                             </template>
                                         </td>
@@ -361,7 +417,81 @@
             <p class="text-gray-600">該当するデータがありません。フィルター条件を変更してください。</p>
         </div>
 
+        <!-- メモ入力モーダル -->
+        <div x-show="showMemoModal"
+             x-cloak
+             class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+             @click.self="closeMemoModal()">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">セルの編集</h3>
 
+                    <!-- 機材・日付情報 -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded text-sm">
+                        <div class="font-medium text-gray-700" x-text="currentCell.equipmentName"></div>
+                        <div class="text-gray-500 text-xs" x-text="currentCell.date"></div>
+                    </div>
+
+                    <!-- メモ入力 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">メモ</label>
+                        <textarea
+                            x-model="currentCell.memo"
+                            rows="3"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="メモを入力してください"
+                        ></textarea>
+                    </div>
+
+                    <!-- 色選択 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">背景色</label>
+                        <div class="grid grid-cols-6 gap-2">
+                            <button
+                                type="button"
+                                @click="currentCell.customColor = ''"
+                                class="w-full h-8 border-2 rounded"
+                                :class="currentCell.customColor === '' ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'"
+                                title="デフォルト">
+                                <span class="text-xs">デフォ</span>
+                            </button>
+                            <template x-for="color in colorPalette" :key="color.value">
+                                <button
+                                    type="button"
+                                    @click="currentCell.customColor = color.value"
+                                    class="w-full h-8 border-2 rounded"
+                                    :style="`background-color: ${color.value}`"
+                                    :class="currentCell.customColor === color.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'"
+                                    :title="color.name">
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- ボタン -->
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button
+                            type="button"
+                            @click="clearCellData()"
+                            class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600">
+                            クリア
+                        </button>
+                        <button
+                            type="button"
+                            @click="closeMemoModal()"
+                            class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300">
+                            キャンセル
+                        </button>
+                        <button
+                            type="button"
+                            @click="saveCellData()"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+                            保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div><!-- Alpine.jsスコープ終了 -->
 
@@ -396,10 +526,216 @@
                     per_page: 100
                 },
 
+                // メモ・色カスタマイズ機能
+                showMemoModal: false,
+                currentCell: {
+                    equipmentId: '',
+                    date: '',
+                    equipmentName: '',
+                    memo: '',
+                    customColor: ''
+                },
+                cellData: {}, // { 'equipmentId_date': { memo: '', color: '' } }
+                colorPalette: [
+                    { name: 'ピンク', value: '#fce7f3' },
+                    { name: '紫', value: '#e9d5ff' },
+                    { name: '青', value: '#dbeafe' },
+                    { name: '緑', value: '#d1fae5' },
+                    { name: '黄', value: '#fef3c7' },
+                    { name: 'オレンジ', value: '#fed7aa' },
+                    { name: '赤', value: '#fee2e2' },
+                    { name: 'グレー', value: '#e5e7eb' },
+                    { name: '茶', value: '#ede9e4' },
+                    { name: 'ライム', value: '#ecfccb' }
+                ],
+
                 init() {
                     this.loadCategories();
                     this.loadSubcategories();
                     this.loadScheduleData();
+                },
+
+                // セルデータの読み込み（API）
+                async loadCellMemos() {
+                    try {
+                        const params = new URLSearchParams({
+                            start_date: this.filters.start_date,
+                            end_date: this.filters.end_date
+                        });
+
+                        const response = await fetch(`/api/schedule/cell-memos?${params}`, {
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // APIレスポンスをcellDataオブジェクトに変換
+                            this.cellData = {};
+                            data.memos.forEach(memo => {
+                                const key = this.getCellKey(memo.equipment_id, memo.schedule_date);
+                                this.cellData[key] = {
+                                    memo: memo.memo,
+                                    color: memo.color
+                                };
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Failed to load cell memos:', error);
+                    }
+                },
+
+                // セルデータをAPIに保存
+                async saveCellMemoToAPI(equipmentId, date, memo, color) {
+                    try {
+                        const response = await fetch('/api/schedule/cell-memos', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                equipment_id: equipmentId,
+                                schedule_date: date,
+                                memo: memo,
+                                color: color
+                            })
+                        });
+                        const data = await response.json();
+
+                        if (!data.success) {
+                            throw new Error(data.error || 'メモの保存に失敗しました');
+                        }
+
+                        return true;
+                    } catch (error) {
+                        console.error('Failed to save cell memo:', error);
+                        alert('メモの保存に失敗しました');
+                        return false;
+                    }
+                },
+
+                // セルデータをAPIから削除
+                async deleteCellMemoFromAPI(equipmentId, date) {
+                    try {
+                        const response = await fetch('/api/schedule/cell-memos', {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                equipment_id: equipmentId,
+                                schedule_date: date
+                            })
+                        });
+                        const data = await response.json();
+
+                        if (!data.success) {
+                            throw new Error(data.error || 'メモの削除に失敗しました');
+                        }
+
+                        return true;
+                    } catch (error) {
+                        console.error('Failed to delete cell memo:', error);
+                        alert('メモの削除に失敗しました');
+                        return false;
+                    }
+                },
+
+                getCellKey(equipmentId, date) {
+                    return `${equipmentId}_${date}`;
+                },
+
+                // モーダル制御
+                openMemoModal(equipmentId, date, equipmentName) {
+                    const key = this.getCellKey(equipmentId, date);
+                    const existing = this.cellData[key] || { memo: '', color: '' };
+
+                    this.currentCell = {
+                        equipmentId: equipmentId,
+                        date: date,
+                        equipmentName: equipmentName,
+                        memo: existing.memo,
+                        customColor: existing.color
+                    };
+
+                    this.showMemoModal = true;
+                },
+
+                closeMemoModal() {
+                    this.showMemoModal = false;
+                    this.currentCell = {
+                        equipmentId: '',
+                        date: '',
+                        equipmentName: '',
+                        memo: '',
+                        customColor: ''
+                    };
+                },
+
+                async saveCellData() {
+                    const success = await this.saveCellMemoToAPI(
+                        this.currentCell.equipmentId,
+                        this.currentCell.date,
+                        this.currentCell.memo,
+                        this.currentCell.customColor
+                    );
+
+                    if (success) {
+                        // ローカルのcellDataも更新
+                        const key = this.getCellKey(this.currentCell.equipmentId, this.currentCell.date);
+                        this.cellData[key] = {
+                            memo: this.currentCell.memo,
+                            color: this.currentCell.customColor
+                        };
+                        this.closeMemoModal();
+                    }
+                },
+
+                async clearCellData() {
+                    const success = await this.deleteCellMemoFromAPI(
+                        this.currentCell.equipmentId,
+                        this.currentCell.date
+                    );
+
+                    if (success) {
+                        // ローカルのcellDataからも削除
+                        const key = this.getCellKey(this.currentCell.equipmentId, this.currentCell.date);
+                        delete this.cellData[key];
+                        this.closeMemoModal();
+                    }
+                },
+
+                // セルメモ取得・表示
+                getCellMemo(equipmentId, date) {
+                    const key = this.getCellKey(equipmentId, date);
+                    return this.cellData[key]?.memo || '';
+                },
+
+                formatCellMemo(equipmentId, date) {
+                    const memo = this.getCellMemo(equipmentId, date);
+                    if (!memo) return '';
+
+                    // 文字列を配列に変換して正確な文字数を取得
+                    const chars = Array.from(memo);
+                    if (chars.length <= 3) return memo;
+
+                    // 最初の3文字を取得
+                    return chars.slice(0, 3).join('') + '...';
+                },
+
+                getCellCustomClass(equipmentId, date) {
+                    const key = this.getCellKey(equipmentId, date);
+                    const color = this.cellData[key]?.color;
+                    return color ? 'custom-color' : '';
+                },
+
+                getCellCustomStyle(equipmentId, date) {
+                    const key = this.getCellKey(equipmentId, date);
+                    const color = this.cellData[key]?.color;
+                    return color ? `--custom-bg-color: ${color}` : '';
                 },
 
                 async loadCategories() {
@@ -473,6 +809,9 @@
                             this.scheduleData = data.equipment_schedules;
                             this.dateRange = data.date_range;
                             this.pagination = data.pagination;
+
+                            // スケジュールデータ読み込み後、セルメモも読み込む
+                            await this.loadCellMemos();
                         } else {
                             this.error = data.error || 'データの取得に失敗しました';
                         }
@@ -643,6 +982,18 @@
                     } else {
                         return span.phase_name;
                     }
+                },
+
+                // スパン内の日付一覧を取得
+                getSpanDates(equipment, dateIndex) {
+                    const span = this.isSpanStart(equipment, dateIndex);
+                    if (!span) return [];
+
+                    const dates = [];
+                    for (let i = span.startIndex; i <= span.endIndex; i++) {
+                        dates.push(this.dateRange[i]);
+                    }
+                    return dates;
                 },
 
             };

@@ -236,10 +236,16 @@ Route::middleware('auth')->group(function () {
     Route::get('schedule', function () {
         return view('schedule.index');
     })->name('schedule.index');
+
     Route::get('api/schedule/equipment', [\App\Http\Controllers\ScheduleController::class, 'getEquipmentSchedule'])->name('api.schedule.equipment');
     Route::get('api/schedule/categories', [\App\Http\Controllers\ScheduleController::class, 'getCategories'])->name('api.schedule.categories');
     Route::get('api/schedule/subcategories', [\App\Http\Controllers\ScheduleController::class, 'getSubcategories'])->name('api.schedule.subcategories');
     Route::get('api/schedule/equipments', [\App\Http\Controllers\ScheduleController::class, 'getEquipments'])->name('api.schedule.equipments');
+
+    // スケジュールセルメモAPI
+    Route::get('api/schedule/cell-memos', [\App\Http\Controllers\Api\ScheduleCellMemoController::class, 'index'])->name('api.schedule.cell-memos.index');
+    Route::post('api/schedule/cell-memos', [\App\Http\Controllers\Api\ScheduleCellMemoController::class, 'store'])->name('api.schedule.cell-memos.store');
+    Route::delete('api/schedule/cell-memos', [\App\Http\Controllers\Api\ScheduleCellMemoController::class, 'destroy'])->name('api.schedule.cell-memos.destroy');
 
     // 在庫管理ルート
     Route::prefix('inventory')->name('inventory.')->group(function () {
