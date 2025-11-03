@@ -99,13 +99,15 @@
                 fetch('/auth/lineworks/process-id-token', {
                     method: 'POST',
                     body: formData,
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    redirect: 'follow'
                 })
                 .then(response => {
                     console.log('Server response status:', response.status);
-                    if (response.ok) {
-                        // 成功時はダッシュボードにリダイレクト
-                        window.location.href = '/dashboard';
+                    console.log('Response URL:', response.url);
+                    if (response.ok || response.redirected) {
+                        // サーバーからのリダイレクトURLに従う
+                        window.location.href = response.url;
                     } else {
                         return response.text().then(text => {
                             throw new Error(`サーバーエラー (${response.status}): ${text}`);

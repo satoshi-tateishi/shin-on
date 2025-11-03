@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\TwoFactorLog;
 use App\Models\User;
+use App\Services\LineWorksBotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -150,10 +152,52 @@ class LineWorksController extends Controller
                 ]);
             }
 
-            Auth::login($user);
-            \Log::info("User logged in successfully: {$user->id}");
+            // 2FA処理: OTPを生成してLINE WORKS Botで送信
+            try {
+                $otp = $this->generateOTP();
+                $hashedOtp = Hash::make($otp);
 
-            return redirect()->intended('/dashboard');
+                // ユーザー情報に2FAコードを保存
+                $user->update([
+                    'two_factor_code' => $hashedOtp,
+                    'two_factor_expires_at' => now()->addMinutes(10),
+                    'two_factor_attempts' => 0,
+                    'two_factor_locked_until' => null,
+                ]);
+
+                // LINE WORKS Bot経由でOTP送信
+                // LINE WORKS内部IDを取得（.comを除去）
+                $lineworksUserId = str_replace('.com', '', $user->email);
+
+                $botService = app(LineWorksBotService::class);
+                $botService->sendOtpMessage($lineworksUserId, $otp);
+
+                // ログ記録
+                TwoFactorLog::log($user->id, 'sent');
+
+                \Log::info("2FA OTP sent to user: {$user->id}");
+
+                // セッションにユーザーIDを保存（2FA検証用）
+                session(['two_factor:user_id' => $user->id]);
+                \Log::info("Session set - two_factor:user_id: {$user->id}");
+
+                // 2FA入力画面にリダイレクト
+                \Log::info("Redirecting to two-factor.show");
+                return redirect()->route('two-factor.show')
+                    ->with('status', '認証コードをLINE WORKSに送信しました。');
+            } catch (\Exception $e) {
+                \Log::error('2FA OTP send failed', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                // OTP送信失敗時は通常ログインにフォールバック
+                Auth::login($user);
+                \Log::warning("User logged in without 2FA due to OTP send failure: {$user->id}");
+
+                return redirect()->intended('/dashboard')
+                    ->with('warning', '認証コードの送信に失敗しましたが、ログインしました。');
+            }
         } catch (\Exception $e) {
             \Log::error('LINE WORKS callback failed: '.$e->getMessage());
             \Log::error('Stack trace: '.$e->getTraceAsString());
@@ -186,6 +230,28 @@ class LineWorksController extends Controller
         }
 
         return $email;
+    }
+
+    /**
+     * カスタムOTP生成（4種類の数字から6桁を生成）
+     *
+     * セキュリティ強度: 10^6 = 1,000,000通り（全組み合わせ）
+     * 実際の組み合わせ: C(10,4) × 4^6 = 210 × 4,096 = 860,160通り（約86%）
+     */
+    private function generateOTP(): string
+    {
+        // 0-9から4つの数字をランダム選択
+        $availableDigits = range(0, 9);
+        shuffle($availableDigits);
+        $selectedDigits = array_slice($availableDigits, 0, 4);
+
+        // 選ばれた4つの数字から6桁を生成
+        $otp = '';
+        for ($i = 0; $i < 6; $i++) {
+            $otp .= $selectedDigits[array_rand($selectedDigits)];
+        }
+
+        return $otp;
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LineWorksController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\DropboxAuthController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryTransferController;
@@ -34,6 +35,13 @@ Route::prefix('auth/lineworks')->group(function () {
     Route::get('redirect', [LineWorksController::class, 'redirect'])->name('lineworks.redirect');
     Route::get('callback', [LineWorksController::class, 'callback'])->name('lineworks.callback');
     Route::post('process-id-token', [LineWorksController::class, 'processIdToken'])->name('lineworks.process-id-token');
+});
+
+// 2FA（二段階認証）ルート
+Route::prefix('two-factor')->name('two-factor.')->group(function () {
+    Route::get('challenge', [TwoFactorController::class, 'show'])->name('show');
+    Route::post('verify', [TwoFactorController::class, 'verify'])->name('verify');
+    Route::post('resend', [TwoFactorController::class, 'resend'])->name('resend');
 });
 
 // 認証が必要なルート
