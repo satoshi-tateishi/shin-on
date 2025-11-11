@@ -424,7 +424,7 @@
             <table class="staff-table">
                 <thead>
                     <tr>
-                        <th style="width: 50%;">役職</th>
+                        <th style="width: 50%;">ポジション</th>
                         <th style="width: 50%;">氏名</th>
                     </tr>
                 </thead>

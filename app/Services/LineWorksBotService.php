@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use Exception;
 use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class LineWorksBotService
 {
@@ -38,7 +38,6 @@ class LineWorksBotService
     /**
      * JWT (JSON Web Token) を生成
      *
-     * @return string
      *
      * @throws Exception
      */
@@ -76,7 +75,6 @@ class LineWorksBotService
     /**
      * Access Token を取得（キャッシュ機能付き）
      *
-     * @return string
      *
      * @throws Exception
      */
@@ -132,7 +130,6 @@ class LineWorksBotService
      *
      * @param  string  $userId  LINE WORKS ID (例: user@domain)
      * @param  string  $message  送信するメッセージ
-     * @return bool
      *
      * @throws Exception
      */
@@ -174,7 +171,6 @@ class LineWorksBotService
      *
      * @param  string  $userId  LINE WORKS ID
      * @param  string  $otp  6桁のOTP
-     * @return bool
      *
      * @throws Exception
      */
@@ -185,5 +181,176 @@ class LineWorksBotService
         $message .= '有効期限:10分';
 
         return $this->sendMessage($userId, $message);
+    }
+
+    /**
+     * ファイルアップロード用のURLを取得
+     *
+     * @param  string  $fileName  アップロードするファイル名
+     * @return array ['fileId' => string, 'uploadUrl' => string]
+     *
+     * @throws Exception
+     */
+    public function getUploadUrl(string $fileName): array
+    {
+        $accessToken = $this->getAccessToken();
+
+        $url = "{$this->apiBaseUrl}/bots/{$this->botId}/attachments";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.$accessToken,
+            'Content-Type' => 'application/json',
+        ])->post($url, [
+            'fileName' => $fileName,
+        ]);
+
+        if (! $response->successful()) {
+            Log::error('LINE WORKS Bot getUploadUrl failed', [
+                'fileName' => $fileName,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new Exception('Failed to get upload URL: '.$response->body());
+        }
+
+        $data = $response->json();
+
+        Log::info('LINE WORKS Bot upload URL obtained', [
+            'fileName' => $fileName,
+            'fileId' => $data['fileId'] ?? null,
+        ]);
+
+        return [
+            'fileId' => $data['fileId'],
+            'uploadUrl' => $data['uploadUrl'],
+        ];
+    }
+
+    /**
+     * ファイルをアップロード
+     *
+     * @param  string  $uploadUrl  getUploadUrlで取得したアップロードURL
+     * @param  string  $filePath  アップロードするファイルのパス
+     * @param  string|null  $originalFileName  元のファイル名（指定しない場合はファイルパスから取得）
+     * @return array ['fileId' => string, 'fileName' => string, 'fileSize' => string]
+     *
+     * @throws Exception
+     */
+    public function uploadFile(string $uploadUrl, string $filePath, ?string $originalFileName = null): array
+    {
+        $accessToken = $this->getAccessToken();
+
+        if (! file_exists($filePath)) {
+            throw new Exception("File not found: {$filePath}");
+        }
+
+        $fileName = $originalFileName ?? basename($filePath);
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.$accessToken,
+        ])->attach('resourceName', $fileName)
+            ->attach('FileData', file_get_contents($filePath), $fileName)
+            ->post($uploadUrl);
+
+        if (! $response->successful()) {
+            Log::error('LINE WORKS Bot uploadFile failed', [
+                'fileName' => $fileName,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new Exception('Failed to upload file: '.$response->body());
+        }
+
+        $data = $response->json();
+
+        Log::info('LINE WORKS Bot file uploaded', [
+            'fileName' => $data['fileName'] ?? null,
+            'fileSize' => $data['fileSize'] ?? null,
+        ]);
+
+        return [
+            'fileId' => $data['fileId'],
+            'fileName' => $data['fileName'],
+            'fileSize' => $data['fileSize'],
+        ];
+    }
+
+    /**
+     * ファイルメッセージを送信
+     *
+     * @param  string  $userId  LINE WORKS ID
+     * @param  string  $fileId  アップロードしたファイルのID
+     *
+     * @throws Exception
+     */
+    public function sendFileMessage(string $userId, string $fileId): bool
+    {
+        $accessToken = $this->getAccessToken();
+
+        $url = "{$this->apiBaseUrl}/bots/{$this->botId}/users/{$userId}/messages";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.$accessToken,
+            'Content-Type' => 'application/json',
+        ])->post($url, [
+            'content' => [
+                'type' => 'file',
+                'fileId' => $fileId,
+            ],
+        ]);
+
+        if (! $response->successful()) {
+            Log::error('LINE WORKS Bot file message send failed', [
+                'user_id' => $userId,
+                'fileId' => $fileId,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new Exception('Failed to send file message: '.$response->body());
+        }
+
+        Log::info('LINE WORKS Bot file message sent successfully', [
+            'user_id' => $userId,
+            'fileId' => $fileId,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * PDFファイルをLINE WORKSユーザーに送信（統合メソッド）
+     *
+     * @param  string  $userId  LINE WORKS ID
+     * @param  string  $filePath  送信するPDFファイルのパス
+     * @param  string  $fileName  ファイル名
+     *
+     * @throws Exception
+     */
+    public function sendPdfToUser(string $userId, string $filePath, string $fileName): bool
+    {
+        try {
+            // 1. アップロードURL取得
+            $uploadData = $this->getUploadUrl($fileName);
+
+            // 2. ファイルアップロード（元のファイル名を指定）
+            $this->uploadFile($uploadData['uploadUrl'], $filePath, $fileName);
+
+            // 3. ファイルメッセージ送信
+            $this->sendFileMessage($userId, $uploadData['fileId']);
+
+            Log::info('LINE WORKS Bot PDF sent successfully', [
+                'user_id' => $userId,
+                'fileName' => $fileName,
+            ]);
+
+            return true;
+        } catch (Exception $e) {
+            Log::error('LINE WORKS Bot PDF send failed', [
+                'user_id' => $userId,
+                'fileName' => $fileName,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 }

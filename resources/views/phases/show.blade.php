@@ -21,13 +21,48 @@
             </svg>
             戻る
         </a>
-        <a href="{{ route('phases.export-pdf', $phase) }}"
-           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-            </svg>
-            PDF出力
-        </a>
+
+        <!-- PDF出力ドロップダウン -->
+        <div class="relative inline-block text-left" x-data="{ open: false }">
+            <button @click="open = !open" @click.away="open = false" type="button"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                PDF出力
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div class="py-1" role="menu">
+                    <a href="{{ route('phases.export-pdf', $phase) }}"
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       role="menuitem">
+                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        ダウンロード
+                    </a>
+                    <button type="button" onclick="showLineWorksConfirmation()"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+                            role="menuitem">
+                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        LINE WORKSに送信
+                    </button>
+                </div>
+            </div>
+        </div>
         @if(auth()->user()->role === 'editor' ||
             auth()->user()->role === 'admin' ||
             $performance->staff->contains('user_id', auth()->id()))
@@ -56,6 +91,25 @@
 @endsection
 
 @section('content')
+<!-- 成功/エラーメッセージ -->
+@if(session('success'))
+    <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-start">
+        <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ session('success') }}</span>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-start">
+        <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ session('error') }}</span>
+    </div>
+@endif
+
 <!-- フェーズ基本情報 -->
 <div class="bg-white shadow rounded-lg">
     <div class="px-4 py-5 sm:p-6">
@@ -266,6 +320,50 @@
     </div>
 </div>
 
+<!-- LINE WORKS送信確認モーダル -->
+<div id="lineworksModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 rounded-full mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 text-center mb-2">LINE WORKSに送信</h3>
+        <div class="bg-gray-50 rounded-md p-4 mb-4">
+            <div class="space-y-2 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <span class="font-medium">送信先:</span>
+                    <span>{{ auth()->user()->name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium">公演:</span>
+                    <span>{{ $performance->title }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium">フェーズ:</span>
+                    <span>{{ $phase->name }}</span>
+                </div>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 text-center mb-4">
+            フェーズ詳細のPDFファイルをあなたのLINE WORKSアカウントに送信します。
+        </p>
+        <form method="POST" action="{{ route('phases.send-lineworks', $phase) }}" id="lineworksSendForm">
+            @csrf
+            <div class="flex space-x-3">
+                <button type="button" onclick="hideLineWorksConfirmation()"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    キャンセル
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                    送信
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- 削除確認モーダル -->
 <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -305,6 +403,18 @@
 
 @push('scripts')
 <script>
+// LINE WORKS送信確認モーダル関数
+function showLineWorksConfirmation() {
+    document.getElementById('lineworksModal').classList.remove('hidden');
+    document.getElementById('lineworksModal').classList.add('flex');
+}
+
+function hideLineWorksConfirmation() {
+    document.getElementById('lineworksModal').classList.add('hidden');
+    document.getElementById('lineworksModal').classList.remove('flex');
+}
+
+// 削除確認モーダル関数
 function showDeleteConfirmation() {
     if (confirm('本当にこのフェーズを削除しますか？関連する機材使用記録もすべて削除されます。')) {
         document.getElementById('deleteModal').classList.remove('hidden');
@@ -348,6 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             hideDeleteConfirmation();
+            hideLineWorksConfirmation();
         }
     });
 });
