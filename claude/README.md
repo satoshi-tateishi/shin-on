@@ -49,8 +49,11 @@
 - **[docs/Equipment_Management_Database_Design_v2.md](docs/Equipment_Management_Database_Design_v2.md)** - データベース設計書 v2.0 ✨
 - **[docs/Phase_6_Inventory_Management_Specification.md](docs/Phase_6_Inventory_Management_Specification.md)** - Phase 6 在庫管理システム詳細仕様書 🎯
 - **[docs/Phase_Equipment_Inheritance_Specification.md](docs/Phase_Equipment_Inheritance_Specification.md)** - フェーズ間機材継承機能 詳細仕様書 🆕
-- **[docs/Dropbox_API_Specification.md](docs/Dropbox_API_Specification.md)** - Dropbox OAuth 2.0 & バックアップAPI仕様
-- **[docs/LINE_WORKS_SSO_Specification.md](docs/LINE_WORKS_SSO_Specification.md)** - LINE WORKS SSO認証仕様
+
+### 🔌 API仕様書・外部連携
+- **[docs/LINE_WORKS_Bot_API_Guide.md](docs/LINE_WORKS_Bot_API_Guide.md)** - LINE WORKS Bot API実装ガイド 🤖
+- **[docs/LINE_WORKS_SSO_Specification.md](docs/LINE_WORKS_SSO_Specification.md)** - LINE WORKS SSO認証仕様 🔐
+- **[docs/Dropbox_API_Specification.md](docs/Dropbox_API_Specification.md)** - Dropbox OAuth 2.0 & バックアップAPI仕様 ☁️
 
 ### 🗂️ 旧バージョン・アーカイブ
 - **[zOLD/Equipment_Management_System_Requirements_v1.md](zOLD/Equipment_Management_System_Requirements_v1.md)** - 旧要件定義書 v1.0

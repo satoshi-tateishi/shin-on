@@ -27,16 +27,22 @@
 - [claude/architecture/laravel-best-practices.md](claude/architecture/laravel-best-practices.md) - Laravel開発標準
 - [claude/architecture/laravel-12.md](claude/architecture/laravel-12.md) - Laravel 12固有機能
 
+#### 📋 API仕様書・外部連携
+- [claude/docs/LINE_WORKS_Bot_API_Guide.md](claude/docs/LINE_WORKS_Bot_API_Guide.md) - LINE WORKS Bot API実装ガイド 🤖
+- [claude/docs/LINE_WORKS_SSO_Specification.md](claude/docs/LINE_WORKS_SSO_Specification.md) - LINE WORKS SSO認証仕様 🔐
+- [claude/docs/Dropbox_API_Specification.md](claude/docs/Dropbox_API_Specification.md) - Dropbox OAuth 2.0 & バックアップAPI仕様 ☁️
+
 ## 🚀 利用方法
 1. **[claude/README.md](claude/README.md)** から開始
 2. 目的に応じて各カテゴリのファイルを参照
 3. クイックナビゲーションで効率的にアクセス
 
-## ✅ プロジェクト完成状況（2025年9月29日更新）
+## ✅ プロジェクト完成状況（2025年11月11日更新）
 - ✅ Laravel 12 + MySQL 8.0（Docker） - 基盤完成
 - ✅ Tailwind CSS v4.1.13（CSS-first設定、パフォーマンス改善済み）
 - ✅ Laravel-Boost MCP - AI開発支援環境構築済み
 - ✅ LINE WORKS SSO - 完全統合・認証システム運用中
+- ✅ LINE WORKS Bot API - フェーズPDF送信機能実装完了（2025年11月11日追加）
 - ✅ 機材管理システム - 全7機能実装完了（Phase 1-6完成）
 - ✅ フェーズ間機材継承機能 - 完全実装・運用開始（2025年9月28日追加）
 - ✅ Dropboxバックアップシステム - OAuth 2.0対応、自動アップロード・ログクリーンアップ機能（2025年9月29日追加）
