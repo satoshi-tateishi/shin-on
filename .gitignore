@@ -18,6 +18,11 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/fonts/*.ttf
+/storage/fonts/*.ufm
+/storage/fonts/*.zip
+/storage/fonts/*.json
+/storage/fonts/IPAfont00303/
 /vendor
 Homestead.json
 Homestead.yaml
