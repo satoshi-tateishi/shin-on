@@ -46,6 +46,9 @@ jobs:
             # Dockerコンテナを再起動（PHPコードの変更を反映）
             docker compose -f docker-compose.production.yml restart app
 
+            # フォントがない場合はインストール
+            docker compose -f docker-compose.production.yml exec -T app php artisan dompdf:install-fonts 2>/dev/null || true
+
             # データベースマイグレーション
             docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force
 
