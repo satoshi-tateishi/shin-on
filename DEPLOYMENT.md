@@ -442,6 +442,39 @@ docker compose -f docker-compose.production.yml exec app php artisan route:clear
 docker compose -f docker-compose.production.yml exec app php artisan view:cache
 ```
 
+### CSSが適用されない（iPhoneなど）
+
+ブラウザでCSSが読み込まれず、スタイルなしの白い画面が表示される場合：
+
+**症状**:
+- HTMLソースでCSSが `http://localhost:5174/` を参照している
+- PCでは動作するがiPhoneでは動作しない
+
+**原因**: `public/hot` ファイルが存在すると、Viteは開発モードと判断する
+
+**解決方法**:
+```bash
+cd /var/www/shin-on
+
+# hotファイルを確認・削除
+ls -la public/hot
+rm -f public/hot
+
+# アセットを再ビルド
+npm run build
+
+# キャッシュクリア
+docker compose -f docker-compose.production.yml exec app php artisan view:clear
+```
+
+**確認**:
+```bash
+curl -s http://localhost/login | grep -E "\.css" | head -3
+# /build/assets/app-*.css が表示されればOK
+```
+
+> **注意**: GitHub Actionsワークフロー（`.github/workflows/deploy.yml`）では `npm run build` の前に `rm -f public/hot` を実行して自動的に対処しています。
+
 ### Mixed Content エラー（HTTPS/HTTP混在）
 
 ログイン時に「認証処理中...」で止まり、ブラウザコンソールに以下のエラーが表示される場合：
