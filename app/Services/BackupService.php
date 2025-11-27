@@ -718,14 +718,9 @@ class BackupService
      */
     private function truncateAllTables(\PDO $pdo): void
     {
-        $database = config('database.connections.mysql.database');
         $tables = $pdo->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach ($tables as $table) {
-            // migrations テーブルはスキップ（必要に応じて）
-            if ($table === 'migrations') {
-                continue;
-            }
             $pdo->exec("TRUNCATE TABLE `{$table}`");
             Log::debug("Truncated table: {$table}");
         }
