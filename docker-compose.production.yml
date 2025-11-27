@@ -1,0 +1,99 @@
+# ==============================================================
+# shin-on - Production Docker Compose (Apache Reverse Proxy)
+# ==============================================================
+#
+# This configuration is designed for deployment behind Apache
+# reverse proxy with SSL termination on the host OS.
+#
+# Usage:
+#   docker compose -f docker-compose.production.yml up -d
+#
+# Architecture:
+#   Internet --> Apache (SSL, port 443) --> localhost:8084 --> This container
+#
+# ==============================================================
+
+services:
+  # ==============================================================
+  # Laravel Application (using serversideup/php image)
+  # ==============================================================
+  app:
+    image: 'serversideup/php:8.4-fpm-apache'
+    container_name: shin-on_app
+    restart: unless-stopped
+    ports:
+      - '${APP_PORT:-8084}:8080'
+    environment:
+      SSL_MODE: 'off'
+      APACHE_DOCUMENT_ROOT: '/var/www/html/public'
+      PHP_OPCACHE_ENABLE: '1'
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - shin-on
+    depends_on:
+      mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==============================================================
+  # MySQL Database (Separate from shin-on_wiki)
+  # ==============================================================
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    container_name: shin-on_mysql
+    restart: unless-stopped
+    # Not exposed to host - only accessible from app container
+    # Uncomment for debugging:
+    # ports:
+    #   - '${FORWARD_DB_PORT:-3308}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+    volumes:
+      - 'shin-on-mysql:/var/lib/mysql'
+    networks:
+      - shin-on
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
+      interval: 10s
+      retries: 3
+      timeout: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  shin-on:
+    driver: bridge
+    name: shin-on_network
+
+volumes:
+  shin-on-mysql:
+    driver: local
+    name: shin-on_mysql_data

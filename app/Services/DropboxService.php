@@ -17,9 +17,16 @@ class DropboxService
 
     public function __construct()
     {
-        $this->tokenModel = DropboxToken::getActiveToken();
-        if ($this->tokenModel) {
-            $this->initializeClient();
+        // マイグレーション前はテーブルが存在しないためスキップ
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('dropbox_tokens')) {
+                $this->tokenModel = DropboxToken::getActiveToken();
+                if ($this->tokenModel) {
+                    $this->initializeClient();
+                }
+            }
+        } catch (\Exception $e) {
+            // データベース接続エラーの場合は無視
         }
     }
 

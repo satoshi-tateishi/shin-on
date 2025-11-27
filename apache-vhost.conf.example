@@ -1,0 +1,101 @@
+# ==============================================================
+# shin-on (Equipment Management System) - Apache VirtualHost
+# ==============================================================
+#
+# Domain: db.shin-on1981.com
+# Docker Port: 8084
+#
+# This configuration is for Apache running on the host OS,
+# acting as a reverse proxy to the Docker container.
+#
+# Installation:
+#   1. Copy to /etc/apache2/sites-available/shin-on.conf
+#   2. sudo a2ensite shin-on
+#   3. sudo systemctl reload apache2
+#
+# Required Apache Modules:
+#   sudo a2enmod proxy proxy_http headers ssl rewrite
+#
+# SSL Certificate (Let's Encrypt):
+#   sudo certbot --apache -d db.shin-on1981.com
+#
+# ==============================================================
+
+# ==============================================================
+# HTTP to HTTPS Redirect
+# ==============================================================
+<VirtualHost *:80>
+    ServerName db.shin-on1981.com
+    ServerAdmin admin@shin-on1981.com
+
+    # Redirect all HTTP traffic to HTTPS
+    Redirect permanent / https://db.shin-on1981.com/
+
+    ErrorLog ${APACHE_LOG_DIR}/shin-on-redirect-error.log
+    CustomLog ${APACHE_LOG_DIR}/shin-on-redirect-access.log combined
+</VirtualHost>
+
+# ==============================================================
+# HTTPS Reverse Proxy
+# ==============================================================
+<VirtualHost *:443>
+    ServerName db.shin-on1981.com
+    ServerAdmin admin@shin-on1981.com
+
+    # ----------------------------------------------------------
+    # SSL Configuration (Let's Encrypt)
+    # ----------------------------------------------------------
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/db.shin-on1981.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/db.shin-on1981.com/privkey.pem
+    Include /etc/letsencrypt/options-ssl-apache.conf
+
+    # ----------------------------------------------------------
+    # Reverse Proxy to Docker container on port 8084
+    # ----------------------------------------------------------
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:8084/
+    ProxyPassReverse / http://localhost:8084/
+
+    # ----------------------------------------------------------
+    # Security Headers
+    # ----------------------------------------------------------
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    # ----------------------------------------------------------
+    # Proxy Headers (Important for Laravel)
+    # ----------------------------------------------------------
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
+
+    # ----------------------------------------------------------
+    # Logging
+    # ----------------------------------------------------------
+    ErrorLog ${APACHE_LOG_DIR}/shin-on-ssl-error.log
+    CustomLog ${APACHE_LOG_DIR}/shin-on-ssl-access.log combined
+    LogLevel warn
+</VirtualHost>
+
+# ==============================================================
+# Notes
+# ==============================================================
+#
+# 1. Port Allocation:
+#    - shin-on_wiki: localhost:8083 (wiki.shin-on1981.com)
+#    - shin-on:      localhost:8084 (db.shin-on1981.com)
+#
+# 2. Verify Configuration:
+#    sudo apache2ctl configtest
+#
+# 3. Check Container Status:
+#    docker compose -f docker-compose.production.yml ps
+#
+# 4. View Logs:
+#    sudo tail -f /var/log/apache2/shin-on-ssl-error.log
+#    docker compose -f docker-compose.production.yml logs -f
+#
+# ==============================================================
