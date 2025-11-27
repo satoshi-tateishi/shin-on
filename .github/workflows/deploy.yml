@@ -26,28 +26,16 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
 
-            # パーミッション修正（git resetのため一時的に所有権を変更）
-            sudo chown -R $USER:$USER ${{ secrets.DEPLOY_PATH }}
-
             # 最新のコードを取得（デプロイキーを使用）
             GIT_SSH_COMMAND='ssh -i ~/.ssh/id_ed25519_deploy_shinon -o StrictHostKeyChecking=no' git fetch origin
             git reset --hard origin/release
 
-            # storage と bootstrap/cache の所有者をwww-data(33)に戻す
-            sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache
-
-            # docker-compose.ymlは読み取り可能に
-            sudo chmod 644 ${{ secrets.DEPLOY_PATH }}/docker-compose.production.yml
-
             # 依存関係の更新（Dockerコンテナ内で実行）
             docker compose -f docker-compose.production.yml exec -T app composer install --no-dev --optimize-autoloader
 
-            # NPM依存関係とアセットビルド（ホスト側で実行）
-            npm ci
-            npm run build
-
-            # ビルド後、開発用依存関係を削除
-            npm prune --omit=dev
+            # NPM依存関係とアセットビルド（Dockerコンテナ内で実行）
+            docker compose -f docker-compose.production.yml exec -T app npm ci
+            docker compose -f docker-compose.production.yml exec -T app npm run build
 
             # Dockerコンテナを再起動（PHPコードの変更を反映）
             docker compose -f docker-compose.production.yml restart app
