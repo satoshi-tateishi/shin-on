@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // リバースプロキシの信頼設定（HTTPSの正しい検出に必要）
+        $middleware->prepend(\App\Http\Middleware\TrustProxies::class);
+
         // セキュリティヘッダーミドルウェアをグローバルに適用
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
