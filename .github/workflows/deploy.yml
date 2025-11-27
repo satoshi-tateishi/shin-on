@@ -39,9 +39,9 @@ jobs:
             # 依存関係の更新（Dockerコンテナ内で実行）
             docker compose -f docker-compose.production.yml exec -T app composer install --no-dev --optimize-autoloader
 
-            # NPM依存関係とアセットビルド（Dockerコンテナ内で実行）
-            docker compose -f docker-compose.production.yml exec -T app npm ci
-            docker compose -f docker-compose.production.yml exec -T app npm run build
+            # NPM依存関係とアセットビルド（ホスト側で実行）
+            npm ci
+            npm run build
 
             # Dockerコンテナを再起動（PHPコードの変更を反映）
             docker compose -f docker-compose.production.yml restart app
