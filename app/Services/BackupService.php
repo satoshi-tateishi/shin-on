@@ -205,8 +205,9 @@ class BackupService
 
             if ($whichResult->successful()) {
                 // mysqldump が存在する場合は使用
+                // 警告メッセージをstderrに出力し、ファイルにはstdoutのみを書き込む
                 $command = sprintf(
-                    'mysqldump -h%s -P%s -u%s -p%s %s > %s 2>&1',
+                    'mysqldump -h%s -P%s -u%s -p%s %s 2>/dev/null > %s',
                     escapeshellarg($host),
                     escapeshellarg($port),
                     escapeshellarg($username),
@@ -217,9 +218,9 @@ class BackupService
 
                 $result = Process::run($command);
 
-                if (! $result->successful()) {
-                    $errorOutput = $result->output() ?: $result->errorOutput();
-                    throw new Exception('Database backup failed: ' . $errorOutput);
+                // mysqldump自体のエラーはexit codeで判断
+                if (! File::exists($backupPath) || File::size($backupPath) === 0) {
+                    throw new Exception('Database backup failed: mysqldump produced empty output');
                 }
             } else {
                 // mysqldump が存在しない場合はPHPフォールバックを使用
@@ -676,6 +677,14 @@ class BackupService
     {
         $pdo = DB::connection()->getPdo();
 
+        // システムテーブル（スキップするテーブル）
+        $skipTables = [
+            'dropbox_tokens',  // Dropbox認証トークン
+            'sessions',        // セッション
+            'password_reset_tokens', // パスワードリセット
+            'personal_access_tokens', // API認証トークン
+        ];
+
         // 外部キー制約を一時的に無効化
         $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
 
@@ -685,6 +694,9 @@ class BackupService
 
             $sql = File::get($sqlFilePath);
 
+            // mysqldump警告行を除去（ファイルに含まれている場合）
+            $sql = $this->removeMysqldumpWarnings($sql);
+
             // SQLファイルを個別のステートメントに分割
             // DELIMITERやマルチステートメントに対応
             $statements = $this->parseSqlStatements($sql);
@@ -692,6 +704,14 @@ class BackupService
             foreach ($statements as $statement) {
                 $statement = trim($statement);
                 if (! empty($statement) && ! $this->isCommentOnly($statement)) {
+                    // スキップテーブルへのINSERTをスキップ
+                    if ($this->isStatementForSkipTable($statement, $skipTables)) {
+                        Log::debug('Skipping statement for system table', [
+                            'statement' => substr($statement, 0, 100),
+                        ]);
+                        continue;
+                    }
+
                     try {
                         $pdo->exec($statement);
                     } catch (Exception $e) {
@@ -714,13 +734,46 @@ class BackupService
     }
 
     /**
-     * 全テーブルを TRUNCATE
+     * ステートメントがスキップテーブルに対するものかチェック
+     */
+    private function isStatementForSkipTable(string $statement, array $skipTables): bool
+    {
+        $upperStatement = strtoupper($statement);
+
+        // INSERT INTO `table_name` の形式をチェック
+        if (str_starts_with($upperStatement, 'INSERT INTO')) {
+            foreach ($skipTables as $table) {
+                // バッククォート付きとなしの両方をチェック
+                if (str_contains($statement, "`{$table}`") ||
+                    preg_match('/INSERT\s+INTO\s+' . preg_quote($table, '/') . '\s/i', $statement)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 全テーブルを TRUNCATE（システムテーブルは除外）
      */
     private function truncateAllTables(\PDO $pdo): void
     {
+        // システムテーブル（TRUNCATEしないテーブル）
+        $skipTables = [
+            'dropbox_tokens',  // Dropbox認証トークン
+            'sessions',        // セッション
+            'password_reset_tokens', // パスワードリセット
+            'personal_access_tokens', // API認証トークン
+        ];
+
         $tables = $pdo->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach ($tables as $table) {
+            if (in_array($table, $skipTables)) {
+                Log::debug("Skipping system table: {$table}");
+                continue;
+            }
             $pdo->exec("TRUNCATE TABLE `{$table}`");
             Log::debug("Truncated table: {$table}");
         }
@@ -779,6 +832,27 @@ class BackupService
         return str_starts_with($trimmed, '--') ||
                str_starts_with($trimmed, '#') ||
                (str_starts_with($trimmed, '/*') && str_ends_with($trimmed, '*/'));
+    }
+
+    /**
+     * mysqldumpの警告行を除去
+     */
+    private function removeMysqldumpWarnings(string $sql): string
+    {
+        // 行ごとに処理して警告行を除去
+        $lines = explode("\n", $sql);
+        $filteredLines = [];
+
+        foreach ($lines as $line) {
+            // mysqldump警告行をスキップ
+            if (str_starts_with($line, 'mysqldump:')) {
+                Log::debug('Skipping mysqldump warning line', ['line' => substr($line, 0, 100)]);
+                continue;
+            }
+            $filteredLines[] = $line;
+        }
+
+        return implode("\n", $filteredLines);
     }
 
     /**
@@ -859,17 +933,33 @@ class BackupService
             throw new Exception('SQLファイルが空です');
         }
 
-        // ファイルの先頭を読んで基本的な妥当性をチェック
+        // ファイルの先頭数行を読んで基本的な妥当性をチェック
         $handle = fopen($sqlFilePath, 'r');
         if (! $handle) {
             throw new Exception('SQLファイルを開けません');
         }
 
-        $firstLine = fgets($handle);
+        // 最初の10行をチェック（警告行がある場合を考慮）
+        $isValid = false;
+        for ($i = 0; $i < 10; $i++) {
+            $line = fgets($handle);
+            if ($line === false) {
+                break;
+            }
+            // SQLコメント、CREATE、INSERT、DROP、またはmysqldump関連のコマンドをチェック
+            if (str_contains($line, '--') ||
+                str_contains($line, '/*') ||
+                str_contains(strtoupper($line), 'CREATE') ||
+                str_contains(strtoupper($line), 'INSERT') ||
+                str_contains(strtoupper($line), 'DROP') ||
+                str_contains(strtoupper($line), 'SET ')) {
+                $isValid = true;
+                break;
+            }
+        }
         fclose($handle);
 
-        // SQLファイルの基本的な形式チェック
-        if (! $firstLine || (! str_contains($firstLine, '--') && ! str_contains(strtoupper($firstLine), 'CREATE') && ! str_contains(strtoupper($firstLine), 'INSERT'))) {
+        if (! $isValid) {
             throw new Exception('有効なSQLファイルではありません');
         }
     }
