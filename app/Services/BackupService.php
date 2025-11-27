@@ -200,28 +200,31 @@ class BackupService
         $password = config("database.connections.{$connection}.password");
 
         if ($connection === 'mysql') {
-            // まず mysqldump を試す
-            $command = sprintf(
-                'mysqldump -h%s -P%s -u%s -p%s %s > %s 2>&1',
-                escapeshellarg($host),
-                escapeshellarg($port),
-                escapeshellarg($username),
-                escapeshellarg($password),
-                escapeshellarg($database),
-                escapeshellarg($backupPath)
-            );
+            // まず mysqldump が存在するかチェック
+            $whichResult = Process::run('which mysqldump');
 
-            $result = Process::run($command);
+            if ($whichResult->successful()) {
+                // mysqldump が存在する場合は使用
+                $command = sprintf(
+                    'mysqldump -h%s -P%s -u%s -p%s %s > %s 2>&1',
+                    escapeshellarg($host),
+                    escapeshellarg($port),
+                    escapeshellarg($username),
+                    escapeshellarg($password),
+                    escapeshellarg($database),
+                    escapeshellarg($backupPath)
+                );
 
-            // mysqldump が見つからない場合はフォールバックを使用
-            if (! $result->successful()) {
-                $errorOutput = $result->errorOutput();
-                if (str_contains($errorOutput, 'not found') || str_contains($errorOutput, 'command not found')) {
-                    Log::info('mysqldump not found, using PHP fallback for database backup');
-                    $this->createDatabaseBackupFallback($backupPath);
-                } else {
-                    throw new Exception('Database backup failed: '.$errorOutput);
+                $result = Process::run($command);
+
+                if (! $result->successful()) {
+                    $errorOutput = $result->output() ?: $result->errorOutput();
+                    throw new Exception('Database backup failed: ' . $errorOutput);
                 }
+            } else {
+                // mysqldump が存在しない場合はPHPフォールバックを使用
+                Log::info('mysqldump not found, using PHP fallback for database backup');
+                $this->createDatabaseBackupFallback($backupPath);
             }
         } else {
             // SQLiteや他のデータベースの場合はLaravelのクエリを使用
