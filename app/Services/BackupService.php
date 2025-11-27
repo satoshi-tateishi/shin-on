@@ -680,6 +680,9 @@ class BackupService
         $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
 
         try {
+            // 復元前に全テーブルを TRUNCATE
+            $this->truncateAllTables($pdo);
+
             $sql = File::get($sqlFilePath);
 
             // SQLファイルを個別のステートメントに分割
@@ -707,6 +710,24 @@ class BackupService
         } finally {
             // 外部キー制約を再度有効化
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        }
+    }
+
+    /**
+     * 全テーブルを TRUNCATE
+     */
+    private function truncateAllTables(\PDO $pdo): void
+    {
+        $database = config('database.connections.mysql.database');
+        $tables = $pdo->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($tables as $table) {
+            // migrations テーブルはスキップ（必要に応じて）
+            if ($table === 'migrations') {
+                continue;
+            }
+            $pdo->exec("TRUNCATE TABLE `{$table}`");
+            Log::debug("Truncated table: {$table}");
         }
     }
 
