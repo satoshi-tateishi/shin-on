@@ -69,6 +69,7 @@ Access Token期限切れ → Refresh Token使用 → 新しいAccess Token取得
 | `backup:dropbox` | バックアップ実行 | `artisan backup:dropbox` |
 | `backup:dropbox --test` | 接続テストのみ | `artisan backup:dropbox --test` |
 | `restore:dropbox --list` | バックアップ一覧表示 | `artisan restore:dropbox --list` |
+| `restore:dropbox <backup>` | バックアップ復元 ✅ | `artisan restore:dropbox 2025-10-08_23-05-13` |
 | `logs:clear` | ログクリーンアップ | `artisan logs:clear --days=7` |
 
 ## 認証パラメータ
@@ -457,7 +458,127 @@ private function uploadBackupsToDropbox(array &$results, string $timestamp): voi
 - ✅ After: 0MB ローカル保存 (自動削除)
 - 💾 ディスク使用量 98%削減
 
-## バックアップリストア機能
+## バックアップリストア機能 ✅ **完全実装 (2025年11月27日)**
+
+### 復元コマンド
+
+```bash
+# バックアップ一覧を表示
+php artisan restore:dropbox --list
+
+# 特定のバックアップを復元
+php artisan restore:dropbox 2025-10-08_23-05-13
+```
+
+### 復元フロー
+
+```
+1. Dropboxからバックアップをダウンロード
+2. データベース復元（復元前に自動バックアップ作成）
+3. ファイル復元（ZIPを展開）
+4. 一時ファイルのクリーンアップ
+```
+
+### コマンド出力例
+
+```
+🚨 WARNING: This will restore the backup and may overwrite current data!
+
+ Are you sure you want to continue? (yes/no) [no]:
+ > yes
+
+🔄 Starting restore process for backup: 2025-10-08_23-05-13
+📥 Downloading backup from Dropbox...
+✅ Backup downloaded successfully
+📁 Download directory: /var/www/html/storage/app/restore/2025-10-08_23-05-13
+
+📋 Downloaded files:
+   - database_backup_2025-10-08_23-05-13.sql (1485.23 KB) [database]
+   - files_backup_2025-10-08_23-05-13.zip (3145.67 KB) [files]
+
+🗄️ Restoring database...
+ Do you want to restore the database? (A backup will be created first) (yes/no) [no]:
+ > yes
+✅ Database restored successfully
+
+📂 Restoring files...
+ Do you want to restore files? (This will overwrite existing files) (yes/no) [no]:
+ > yes
+✅ Files restored successfully
+
+🧹 Temporary files cleaned up
+🎉 Restore process completed successfully!
+```
+
+### PDOベースのデータベース復元
+
+**特徴: `mysql` コマンド不要** - PHPのPDOを使用してSQLを実行
+
+```php
+private function restoreDatabaseViaPdo(string $sqlFilePath): void
+{
+    $pdo = DB::connection()->getPdo();
+
+    // 外部キー制約を一時的に無効化
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+
+    try {
+        $sql = File::get($sqlFilePath);
+        $statements = $this->parseSqlStatements($sql);
+
+        foreach ($statements as $statement) {
+            $statement = trim($statement);
+            if (! empty($statement) && ! $this->isCommentOnly($statement)) {
+                $pdo->exec($statement);
+            }
+        }
+    } finally {
+        // 外部キー制約を再度有効化
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+    }
+}
+```
+
+**メリット:**
+- ✅ mysql-client のインストール不要
+- ✅ Docker環境でも動作
+- ✅ 外部キー制約を自動管理
+
+### ファイル復元
+
+```php
+public function restoreFiles(string $zipFilePath): array
+{
+    $zip = new ZipArchive;
+    $zip->open($zipFilePath);
+
+    $extractPath = base_path();
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $filename = $zip->getNameIndex($i);
+        $content = $zip->getFromIndex($i);
+        File::put($extractPath . '/' . $filename, $content);
+    }
+
+    $zip->close();
+    return ['success' => true];
+}
+```
+
+### 復元前の自動バックアップ
+
+復元実行前に、現在のデータベースを自動でバックアップ:
+
+```php
+// 復元前に現在のデータベースをバックアップ
+$timestamp = Carbon::now()->format('Y-m-d_H-i-s');
+$preRestoreBackup = $this->createDatabaseBackup("pre_restore_{$timestamp}");
+
+// Dropboxにもアップロード
+$this->dropboxService->uploadFile(
+    $preRestoreBackup,
+    "/pre_restore_backups/database_backup_pre_restore_{$timestamp}.sql"
+);
+```
 
 ### バックアップフォルダ検索
 
@@ -909,6 +1030,9 @@ Error: request body: expected null, got value
 | 2025/09/29 | ローカル自動削除 | 435MB → 0MB (100%削減) |
 | 2025/09/29 | フラット構造採用 | ディレクトリ階層簡素化 |
 | 2025/09/29 | トークン期限表示機能 | リアルタイム監視・警告システム |
+| 2025/11/27 | **復元機能完全実装** | PDOベース（mysql不要）|
+| 2025/11/27 | ファイル復元機能 | ZIP展開による復元 |
+| 2025/11/27 | GitHub Actions自動デプロイ | release push → 本番反映 |
 
 ## 🎯 実装成果
 
@@ -921,7 +1045,63 @@ Error: request body: expected null, got value
 
 ---
 
-**最終更新日**: 2025年9月29日
-**バージョン**: 2.0 (完全実装版)
-**対象フレームワーク**: Laravel 11+ (OAuth 2.0 + パフォーマンス最適化)
+## 🚀 自動デプロイ (GitHub Actions)
+
+### ワークフロー概要
+
+**ファイル**: `.github/workflows/deploy.yml`
+
+`release` ブランチへの push で本番サーバーへ自動デプロイされます。
+
+```yaml
+name: Deploy to Home Server
+
+on:
+  push:
+    branches:
+      - release  # releaseブランチへのpushでトリガー
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+```
+
+### デプロイフロー
+
+```
+1. git push origin release
+2. GitHub Actions がトリガー
+3. SSH で本番サーバーに接続
+4. git reset --hard origin/release
+5. composer install --no-dev
+6. npm ci && npm run build
+7. docker compose restart app
+8. php artisan migrate --force
+9. キャッシュクリア & 最適化
+```
+
+### 必要な GitHub Secrets
+
+| Secret名 | 説明 |
+|----------|------|
+| `DEPLOY_HOST` | 本番サーバーのホスト名/IP |
+| `DEPLOY_USER` | SSH ユーザー名 |
+| `DEPLOY_KEY` | SSH 秘密鍵 |
+| `DEPLOY_PATH` | デプロイ先パス (例: `/var/www/shin-on`) |
+
+### 手動デプロイ（緊急時）
+
+```bash
+# 本番サーバーで
+cd /var/www/shin-on
+git pull origin release
+docker compose -f docker-compose.production.yml restart app
+```
+
+---
+
+**最終更新日**: 2025年11月27日
+**バージョン**: 3.0 (復元機能完全実装版)
+**対象フレームワーク**: Laravel 12 (OAuth 2.0 + パフォーマンス最適化 + 自動デプロイ)
 **実装状況**: ✅ 本番運用可能
