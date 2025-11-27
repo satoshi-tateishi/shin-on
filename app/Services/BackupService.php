@@ -200,9 +200,9 @@ class BackupService
         $password = config("database.connections.{$connection}.password");
 
         if ($connection === 'mysql') {
-            // MySQLダンプコマンド実行
+            // まず mysqldump を試す
             $command = sprintf(
-                'mysqldump -h%s -P%s -u%s -p%s %s > %s',
+                'mysqldump -h%s -P%s -u%s -p%s %s > %s 2>&1',
                 escapeshellarg($host),
                 escapeshellarg($port),
                 escapeshellarg($username),
@@ -213,8 +213,15 @@ class BackupService
 
             $result = Process::run($command);
 
+            // mysqldump が見つからない場合はフォールバックを使用
             if (! $result->successful()) {
-                throw new Exception('Database backup failed: '.$result->errorOutput());
+                $errorOutput = $result->errorOutput();
+                if (str_contains($errorOutput, 'not found') || str_contains($errorOutput, 'command not found')) {
+                    Log::info('mysqldump not found, using PHP fallback for database backup');
+                    $this->createDatabaseBackupFallback($backupPath);
+                } else {
+                    throw new Exception('Database backup failed: '.$errorOutput);
+                }
             }
         } else {
             // SQLiteや他のデータベースの場合はLaravelのクエリを使用
@@ -593,6 +600,7 @@ class BackupService
             }
 
             // 復元前に現在のデータベースをバックアップ
+            $preRestoreBackup = null;
             if ($createBackupFirst) {
                 $timestamp = Carbon::now(config('backup.timezone', 'Asia/Tokyo'))->format('Y-m-d_H-i-s');
                 $preRestoreBackup = $this->createDatabaseBackup("pre_restore_{$timestamp}");
@@ -632,49 +640,186 @@ class BackupService
             // SQLファイルの妥当性をチェック
             $this->validateSqlFile($sqlFilePath);
 
-            // データベース接続情報取得
-            $connection = config('database.default');
-            $database = config("database.connections.{$connection}.database");
-            $host = config("database.connections.{$connection}.host");
-            $port = config("database.connections.{$connection}.port");
-            $username = config("database.connections.{$connection}.username");
-            $password = config("database.connections.{$connection}.password");
-
-            if ($connection === 'mysql') {
-                // MySQLコマンドで復元実行
-                $command = sprintf(
-                    'mysql -h%s -P%s -u%s -p%s %s < %s',
-                    escapeshellarg($host),
-                    escapeshellarg($port),
-                    escapeshellarg($username),
-                    escapeshellarg($password),
-                    escapeshellarg($database),
-                    escapeshellarg($sqlFilePath)
-                );
-
-                $result = Process::run($command);
-
-                if (! $result->successful()) {
-                    throw new Exception('データベースの復元に失敗しました: '.$result->errorOutput());
-                }
-            } else {
-                throw new Exception('MySQL以外のデータベースの復元は現在サポートされていません');
-            }
+            // PDOベースで復元実行
+            $this->restoreDatabaseViaPdo($sqlFilePath);
 
             Log::info('Database restored successfully', [
                 'sql_file' => $sqlFilePath,
-                'database' => $database,
             ]);
 
             return [
                 'success' => true,
                 'message' => 'データベースの復元が完了しました',
-                'pre_restore_backup' => $createBackupFirst ? $preRestoreBackup : null,
+                'pre_restore_backup' => $preRestoreBackup,
             ];
 
         } catch (Exception $e) {
             Log::error('Database restore failed', [
                 'sql_file' => $sqlFilePath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * PDOを使用してデータベースを復元
+     */
+    private function restoreDatabaseViaPdo(string $sqlFilePath): void
+    {
+        $pdo = DB::connection()->getPdo();
+
+        // 外部キー制約を一時的に無効化
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+
+        try {
+            $sql = File::get($sqlFilePath);
+
+            // SQLファイルを個別のステートメントに分割
+            // DELIMITERやマルチステートメントに対応
+            $statements = $this->parseSqlStatements($sql);
+
+            foreach ($statements as $statement) {
+                $statement = trim($statement);
+                if (! empty($statement) && ! $this->isCommentOnly($statement)) {
+                    try {
+                        $pdo->exec($statement);
+                    } catch (Exception $e) {
+                        // DROP TABLE や CREATE TABLE のエラーは警告として記録
+                        if (str_contains($statement, 'DROP TABLE') || str_contains($statement, 'CREATE TABLE')) {
+                            Log::warning('SQL statement warning', [
+                                'statement' => substr($statement, 0, 100),
+                                'error' => $e->getMessage(),
+                            ]);
+                        } else {
+                            throw $e;
+                        }
+                    }
+                }
+            }
+        } finally {
+            // 外部キー制約を再度有効化
+            $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        }
+    }
+
+    /**
+     * SQLをステートメントに分割
+     */
+    private function parseSqlStatements(string $sql): array
+    {
+        $statements = [];
+        $currentStatement = '';
+        $inString = false;
+        $stringChar = '';
+        $length = strlen($sql);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $sql[$i];
+
+            // 文字列内かどうかをチェック
+            if (! $inString && ($char === '"' || $char === "'")) {
+                $inString = true;
+                $stringChar = $char;
+            } elseif ($inString && $char === $stringChar && ($i === 0 || $sql[$i - 1] !== '\\')) {
+                $inString = false;
+            }
+
+            // セミコロンでステートメントを分割（文字列外の場合）
+            if (! $inString && $char === ';') {
+                $currentStatement = trim($currentStatement);
+                if (! empty($currentStatement)) {
+                    $statements[] = $currentStatement;
+                }
+                $currentStatement = '';
+            } else {
+                $currentStatement .= $char;
+            }
+        }
+
+        // 最後のステートメント
+        $currentStatement = trim($currentStatement);
+        if (! empty($currentStatement)) {
+            $statements[] = $currentStatement;
+        }
+
+        return $statements;
+    }
+
+    /**
+     * コメントのみの行かどうかをチェック
+     */
+    private function isCommentOnly(string $statement): bool
+    {
+        $trimmed = trim($statement);
+
+        return str_starts_with($trimmed, '--') ||
+               str_starts_with($trimmed, '#') ||
+               (str_starts_with($trimmed, '/*') && str_ends_with($trimmed, '*/'));
+    }
+
+    /**
+     * ファイルを復元
+     */
+    public function restoreFiles(string $zipFilePath): array
+    {
+        try {
+            if (! File::exists($zipFilePath)) {
+                throw new Exception("バックアップファイルが見つかりません: {$zipFilePath}");
+            }
+
+            $zip = new ZipArchive;
+            if ($zip->open($zipFilePath) !== true) {
+                throw new Exception("ZIPファイルを開けません: {$zipFilePath}");
+            }
+
+            $extractPath = base_path();
+            $restoredFiles = [];
+
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $filename = $zip->getNameIndex($i);
+                $targetPath = $extractPath . '/' . $filename;
+
+                // ディレクトリの場合はスキップ
+                if (str_ends_with($filename, '/')) {
+                    if (! File::exists($targetPath)) {
+                        File::makeDirectory($targetPath, 0755, true);
+                    }
+                    continue;
+                }
+
+                // ファイルを展開
+                $content = $zip->getFromIndex($i);
+                $targetDir = dirname($targetPath);
+
+                if (! File::exists($targetDir)) {
+                    File::makeDirectory($targetDir, 0755, true);
+                }
+
+                File::put($targetPath, $content);
+                $restoredFiles[] = $filename;
+            }
+
+            $zip->close();
+
+            Log::info('Files restored successfully', [
+                'zip_file' => $zipFilePath,
+                'files_count' => count($restoredFiles),
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'ファイルの復元が完了しました',
+                'restored_files' => $restoredFiles,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Files restore failed', [
+                'zip_file' => $zipFilePath,
                 'error' => $e->getMessage(),
             ]);
 

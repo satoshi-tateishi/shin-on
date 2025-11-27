@@ -41,11 +41,98 @@ class RestoreDropboxCommand extends Command
 
             $this->info("🔄 Starting restore process for backup: {$backupName}");
 
-            // TODO: Implement restore logic
-            $this->error('❌ Restore functionality is not yet implemented');
-            $this->info('💡 This feature will be available in a future update');
+            // Step 1: Dropboxからバックアップをダウンロード
+            $this->info('📥 Downloading backup from Dropbox...');
+            $downloadResult = $backupService->downloadBackupFromDropbox($backupName);
 
-            return Command::FAILURE;
+            if (! $downloadResult['success']) {
+                $this->error("❌ Failed to download backup: {$downloadResult['error']}");
+
+                return Command::FAILURE;
+            }
+
+            $this->info('✅ Backup downloaded successfully');
+            $this->info("📁 Download directory: {$downloadResult['download_dir']}");
+
+            // ダウンロードしたファイルを表示
+            $this->newLine();
+            $this->info('📋 Downloaded files:');
+            foreach ($downloadResult['files'] as $file) {
+                $sizeKb = round($file['size'] / 1024, 2);
+                $this->line("   - {$file['filename']} ({$sizeKb} KB) [{$file['type']}]");
+            }
+
+            // Step 2: データベース復元
+            $sqlFile = null;
+            foreach ($downloadResult['files'] as $file) {
+                if ($file['type'] === 'database') {
+                    $sqlFile = $file['local_path'];
+                    break;
+                }
+            }
+
+            if ($sqlFile) {
+                $this->newLine();
+                $this->info('🗄️ Restoring database...');
+
+                if (! $this->confirm('Do you want to restore the database? (A backup will be created first)')) {
+                    $this->info('⏭️ Skipping database restore');
+                } else {
+                    $restoreResult = $backupService->restoreDatabase($sqlFile, true);
+
+                    if (! $restoreResult['success']) {
+                        $this->error("❌ Database restore failed: {$restoreResult['error']}");
+
+                        return Command::FAILURE;
+                    }
+
+                    $this->info('✅ Database restored successfully');
+                }
+            } else {
+                $this->warn('⚠️ No database backup file found in this backup');
+            }
+
+            // Step 3: ファイル復元
+            $filesZip = null;
+            foreach ($downloadResult['files'] as $file) {
+                if ($file['type'] === 'files') {
+                    $filesZip = $file['local_path'];
+                    break;
+                }
+            }
+
+            if ($filesZip) {
+                $this->newLine();
+                $this->info('📂 Restoring files...');
+
+                if (! $this->confirm('Do you want to restore files? (This will overwrite existing files)')) {
+                    $this->info('⏭️ Skipping files restore');
+                } else {
+                    $filesRestoreResult = $backupService->restoreFiles($filesZip);
+
+                    if (! $filesRestoreResult['success']) {
+                        $this->error("❌ Files restore failed: {$filesRestoreResult['error']}");
+
+                        return Command::FAILURE;
+                    }
+
+                    $this->info('✅ Files restored successfully');
+                }
+            } else {
+                $this->warn('⚠️ No files backup found in this backup');
+            }
+
+            // Step 4: クリーンアップ
+            $this->newLine();
+            if ($this->confirm('Do you want to clean up temporary restore files?', true)) {
+                $backupService->cleanupRestoreFiles($backupName);
+                $this->info('🧹 Temporary files cleaned up');
+            }
+
+            $this->newLine();
+            $this->info('🎉 Restore process completed successfully!');
+
+            return Command::SUCCESS;
 
         } catch (Exception $e) {
             $this->error("❌ Restore process failed: {$e->getMessage()}");
