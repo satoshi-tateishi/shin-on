@@ -1,390 +1,494 @@
-# 🚀 shin-on 本番環境デプロイメントガイド
+# shin-on 本番環境デプロイメントガイド
 
-## 📋 前提条件
+## 概要
 
-### 1. ドメインとDNS設定
-- [ ] ドメイン名を取得済み（例: shin-on.example.com）
-- [ ] DNSのAレコードを自宅サーバーのグローバルIPに設定済み
-- [ ] DNS設定が反映されていることを確認（`nslookup YOUR_DOMAIN`）
+shin-on（機材管理システム）を本番サーバーにデプロイする手順です。
 
-### 2. ネットワーク設定
-- [ ] ルーターでポート80と443を自宅サーバーにポートフォワーディング設定済み
-- [ ] ファイアウォールでポート80と443を開放済み
+### アーキテクチャ
 
-### 3. サーバー環境
-- [ ] Docker と Docker Compose がインストール済み
-- [ ] Git がインストール済み
-- [ ] 十分なディスク容量（最低10GB以上推奨）
+```
+Internet --> Apache (SSL終端, port 443)
+                |
+                +-- db.shin-on1981.com --> localhost:8084 --> Docker (shin-on)
+                |
+                +-- wiki.shin-on1981.com --> localhost:8083 --> Docker (shin-on_wiki)
+```
+
+| 項目 | 値 |
+|------|-----|
+| ドメイン | db.shin-on1981.com |
+| Dockerポート | 8084 (ホスト) → 8080 (コンテナ) |
+| SSL | Apache + Let's Encrypt |
+| データベース | MySQL 8.0（個別コンテナ） |
+| PHPイメージ | serversideup/php:8.4-fpm-apache |
 
 ---
 
-## 🔧 初回デプロイ手順
+## 前提条件
 
-### Step 1: リポジトリのクローン
+### サーバー環境
+- [ ] Ubuntu Server（Apache2インストール済み）
+- [ ] Docker と Docker Compose がインストール済み
+- [ ] 十分なディスク容量（最低10GB以上推奨）
 
+### Apache モジュール
 ```bash
-cd /path/to/your/projects
-git clone https://github.com/YOUR_GITHUB_USERNAME/shin-on.git
-cd shin-on
+sudo a2enmod proxy proxy_http headers ssl rewrite
+sudo systemctl restart apache2
 ```
 
-### Step 2: 本番環境変数の設定
+### DNS設定（MyDNS.jp）
+- [ ] `db` サブドメインのAレコードをサーバーIPに設定
+- [ ] DNS反映確認: `nslookup db.shin-on1981.com`
+
+### ネットワーク設定
+- [ ] ポート80, 443がサーバーに転送されている
+- [ ] ファイアウォールでポート80, 443を開放
+
+---
+
+## デプロイ手順
+
+### Step 1: サーバー側でディレクトリ作成
+
+**サーバーで実行：**
+```bash
+sudo mkdir -p /var/www/shin-on
+sudo chown $USER:$USER /var/www/shin-on
+```
+
+### Step 2: 開発マシンからファイル転送
+
+**開発マシン（Mac）で実行：**
 
 ```bash
-# .env.production.example をコピー
-cp .env.production.example .env
+# SSHポートがデフォルト(22)の場合
+rsync -avz --exclude='vendor' --exclude='node_modules' --exclude='.env' --exclude='storage/app/lineworks/private_key.pem' /Users/satoshi/Laravel/shin-on/ satoshi@サーバーIP:/var/www/shin-on/
 
-# .envファイルを編集
+# SSHポートを変更している場合（例: 56834）
+rsync -avz -e 'ssh -p 56834' --exclude='vendor' --exclude='node_modules' --exclude='.env' --exclude='storage/app/lineworks/private_key.pem' /Users/satoshi/Laravel/shin-on/ satoshi@サーバーIP:/var/www/shin-on/
+```
+
+### Step 3: 環境変数の設定
+
+**サーバーで実行：**
+```bash
+cd /var/www/shin-on
+cp .env.production.example .env
 nano .env
 ```
 
 **必須項目を編集：**
 ```bash
-APP_KEY=                                    # php artisan key:generate で生成
-APP_URL=https://YOUR_DOMAIN_HERE           # 実際のドメイン名に変更
-SESSION_DOMAIN=YOUR_DOMAIN_HERE            # 実際のドメイン名に変更
+# データベース認証情報（必ず変更すること）
+DB_DATABASE=shin_on
+DB_USERNAME=shin_on_user
+DB_PASSWORD=安全なパスワード
 
-# データベース認証情報
-DB_USERNAME=your_secure_username
-DB_PASSWORD=your_secure_password
+# リバースプロキシ設定（HTTPS強制に必要）
+TRUSTED_PROXIES=*
 
-# LINE WORKS設定（開発環境の値をコピー）
+# LINE WORKS設定（開発環境の.envからコピー）
 LINEWORKS_CLIENT_ID=...
 LINEWORKS_CLIENT_SECRET=...
+LINEWORKS_REDIRECT_URI=https://db.shin-on1981.com/auth/lineworks/callback
 LINEWORKS_BOT_ID=...
 LINEWORKS_BOT_SECRET=...
 LINEWORKS_DB_CLIENT_ID=...
 LINEWORKS_DB_CLIENT_SECRET=...
 LINEWORKS_SERVICE_ACCOUNT=...
 
-# Dropbox設定（開発環境の値をコピー）
+# Dropbox設定（開発環境の.envからコピー）
 DROPBOX_CLIENT_ID=...
 DROPBOX_CLIENT_SECRET=...
-
-# メール設定（必要に応じて）
-MAIL_HOST=...
-MAIL_USERNAME=...
-MAIL_PASSWORD=...
+DROPBOX_REDIRECT_URI=https://db.shin-on1981.com/auth/dropbox/callback
 ```
 
-### Step 3: Nginx設定ファイルの編集
+> **重要**: `.env` の設定はDockerコンテナ起動前に完了させてください。MySQLコンテナは初回起動時に `.env` の値でデータベースとユーザーを作成します。
 
+### Step 4: LINE WORKS秘密鍵の配置
+
+**開発マシン（Mac）で実行：**
 ```bash
-# YOUR_DOMAIN_HERE を実際のドメイン名に置換
-nano nginx/default.conf
+rsync -avz -e 'ssh -p 56834' /Users/satoshi/Laravel/shin-on/storage/app/lineworks/private_key.pem satoshi@サーバーIP:/var/www/shin-on/storage/app/lineworks/
 ```
 
-以下の3箇所を置換：
-```nginx
-server_name YOUR_DOMAIN_HERE;  # 2箇所
-ssl_certificate /etc/letsencrypt/live/YOUR_DOMAIN_HERE/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN_HERE/privkey.pem;
-ssl_trusted_certificate /etc/letsencrypt/live/YOUR_DOMAIN_HERE/chain.pem;
-```
-
-### Step 4: Let's Encrypt 証明書の初回取得
-
-**4-1. 一時的にHTTP用Nginx設定を作成**
-
+**サーバーで実行：**
 ```bash
-# Nginx設定をHTTPのみに一時変更
-cat > nginx/default.conf << 'EOF'
-server {
-    listen 80;
-    listen [::]:80;
-    server_name YOUR_DOMAIN_HERE;
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
-    location / {
-        proxy_pass http://laravel.test:80;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-EOF
+chmod 600 /var/www/shin-on/storage/app/lineworks/private_key.pem
 ```
 
-**4-2. Dockerコンテナを起動**
+### Step 5: パーミッション設定
 
+**サーバーで実行：**
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+# vendorディレクトリを作成（Composer用）
+mkdir -p /var/www/shin-on/vendor
+
+# 所有者をwww-dataに変更
+sudo chown -R www-data:www-data /var/www/shin-on
+sudo chmod -R 775 /var/www/shin-on
+
+# docker-compose.ymlは読み取り可能に（docker composeコマンド実行に必要）
+sudo chmod 644 /var/www/shin-on/docker-compose.production.yml
 ```
 
-**4-3. Let's Encrypt証明書を取得**
+### Step 6: Dockerコンテナの起動
 
+**サーバーで実行：**
 ```bash
-docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-  --webroot \
-  --webroot-path=/var/www/certbot \
-  -d YOUR_DOMAIN_HERE \
-  --email YOUR_EMAIL@example.com \
-  --agree-tos \
-  --no-eff-email
+cd /var/www/shin-on
+
+# コンテナを起動
+docker compose -f docker-compose.production.yml up -d
+
+# 起動確認（MySQLがHealthyになるまで待つ）
+docker compose -f docker-compose.production.yml ps
+
+# 接続テスト
+curl -I http://localhost:8084
 ```
 
-成功すると以下のメッセージが表示されます：
-```
-Successfully received certificate.
-Certificate is saved at: /etc/letsencrypt/live/YOUR_DOMAIN_HERE/fullchain.pem
-Key is saved at: /etc/letsencrypt/live/YOUR_DOMAIN_HERE/privkey.pem
-```
+### Step 7: Laravel初期設定
 
-**4-4. 正式なNginx設定（HTTPS対応）に戻す**
-
+**サーバーで実行：**
 ```bash
-# Step 3で編集した元の設定に戻す
-git restore nginx/default.conf
-nano nginx/default.conf  # YOUR_DOMAIN_HERE を置換
+# Composerインストール
+docker compose -f docker-compose.production.yml exec app composer install --optimize-autoloader --no-dev
 
-# Nginxを再起動
-docker compose -f docker-compose.prod.yml restart nginx
-```
-
-### Step 5: Laravel初期設定
-
-```bash
-# Composerの依存関係をインストール
-docker compose -f docker-compose.prod.yml exec laravel.test composer install --optimize-autoloader --no-dev
-
-# アプリケーションキーを生成（.envに未設定の場合）
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan key:generate
+# アプリケーションキー生成（--forceで確認プロンプトをスキップ）
+docker compose -f docker-compose.production.yml exec app php artisan key:generate --force
 
 # データベースマイグレーション
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan migrate --force
+docker compose -f docker-compose.production.yml exec app php artisan migrate --force
+
+# ストレージリンク作成（既に存在する場合はエラーになるが無視してOK）
+docker compose -f docker-compose.production.yml exec app php artisan storage:link
 
 # キャッシュ最適化
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan config:cache
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan route:cache
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan view:cache
-
-# ストレージリンク作成
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan storage:link
+docker compose -f docker-compose.production.yml exec app php artisan config:cache
+docker compose -f docker-compose.production.yml exec app php artisan route:cache
+docker compose -f docker-compose.production.yml exec app php artisan view:cache
 ```
 
-### Step 6: LINE WORKS秘密鍵のアップロード
+### Step 8: SSL証明書の取得とApache設定
+
+**サーバーで実行：**
+```bash
+# 一時的なHTTP用Apache設定を作成
+sudo nano /etc/apache2/sites-available/shin-on-temp.conf
+```
+
+以下の内容を貼り付け：
+```apache
+<VirtualHost *:80>
+    ServerName db.shin-on1981.com
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:8084/
+    ProxyPassReverse / http://localhost:8084/
+</VirtualHost>
+```
 
 ```bash
-# 開発環境からコピー、または直接配置
-mkdir -p storage/app/lineworks
-# private_key.pem をこのディレクトリにコピー
-chmod 600 storage/app/lineworks/private_key.pem
+# 一時設定を有効化
+sudo a2ensite shin-on-temp
+sudo systemctl reload apache2
+
+# SSL証明書を取得（CertbotがSSL設定を自動作成）
+sudo certbot --apache -d db.shin-on1981.com
 ```
 
-### Step 7: 動作確認
+### Step 9: Apache設定の整理
+
+Certbotが作成した設定ファイルを整理します。
 
 ```bash
-# HTTPSでアクセス
-curl -I https://YOUR_DOMAIN_HERE
+# 一時設定を無効化
+sudo a2dissite shin-on-temp
+sudo a2dissite shin-on-temp-le-ssl
 
-# ログ確認
-docker compose -f docker-compose.prod.yml logs -f
+# ファイル名を本番用にリネーム
+sudo mv /etc/apache2/sites-available/shin-on-temp-le-ssl.conf /etc/apache2/sites-available/shin-on-le-ssl.conf
+sudo mv /etc/apache2/sites-available/shin-on-temp.conf /etc/apache2/sites-available/shin-on.conf
+
+# 本番設定を有効化
+sudo a2ensite shin-on
+sudo a2ensite shin-on-le-ssl
+
+# 設定テスト
+sudo apache2ctl configtest
+
+# Apache再読み込み
+sudo systemctl reload apache2
 ```
 
-ブラウザで `https://YOUR_DOMAIN_HERE` にアクセスして動作を確認。
+### Step 10: 動作確認
+
+```bash
+# HTTPSアクセス確認
+curl -I https://db.shin-on1981.com
+```
+
+ブラウザで https://db.shin-on1981.com にアクセスしてログインページが表示されることを確認。
 
 ---
 
-## 🔄 アップデート手順
+## OAuth設定の更新
 
-```bash
-# 最新コードを取得
-git pull origin main
-
-# Composerの依存関係を更新
-docker compose -f docker-compose.prod.yml exec laravel.test composer install --optimize-autoloader --no-dev
-
-# データベースマイグレーション
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan migrate --force
-
-# キャッシュクリア＆再生成
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan config:clear
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan config:cache
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan route:cache
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan view:cache
-
-# コンテナ再起動
-docker compose -f docker-compose.prod.yml restart
+### LINE WORKS Developer Console
+リダイレクトURIを追加：
+```
+https://db.shin-on1981.com/auth/lineworks/callback
 ```
 
----
-
-## 🔐 SSL証明書の自動更新
-
-Certbotコンテナが**3時間ごと**に証明書の更新をチェックします。
-
-> **📌 2025年対応**
-> Let's Encryptは2025年内に最短6日間の証明書発行を開始予定です。3時間ごとのチェック頻度により、短期証明書にも対応できます。
-
-### 自動更新のタイミング
-
-Certbotは以下のロジックで更新を判断します：
-
-| 証明書タイプ | 有効期限 | 実際の更新タイミング | 理由 |
-|------------|---------|-------------------|------|
-| 標準証明書 | 90日 | 発行から**60日後**（残り30日） | 有効期限の1/3を切った時点 |
-| 短期証明書 | 6日 | 発行から**4日後**（残り2日） | 有効期限の1/3を切った時点 |
-
-**重要なポイント：**
-- ✅ 「有効期限30日以内」という条件は初期チェックの目安
-- ✅ 実際には**有効期限の1/3を切るまで更新しない**
-- ✅ 6日間証明書でも、発行直後から4日間は「更新不要」と判断される
-- ✅ エンドレスで更新が発生することはありません
-
-**3時間ごとのチェックの実際の動作：**
+### Dropbox App Console
+リダイレクトURIを追加：
 ```
-0日目: 証明書発行 ✅
-3時間後: certbot renew → "Cert not yet due for renewal" (スキップ)
-6時間後: certbot renew → "Cert not yet due for renewal" (スキップ)
-...
-4日目以降: certbot renew → 更新実行 ✅ → Nginx自動リロード
-```
-
-### 手動で更新する場合
-
-**手動更新コマンド：**
-```bash
-docker compose -f docker-compose.prod.yml exec certbot certbot renew
-docker compose -f docker-compose.prod.yml restart nginx
-```
-
-**証明書の有効期限確認：**
-```bash
-docker compose -f docker-compose.prod.yml exec certbot certbot certificates
+https://db.shin-on1981.com/auth/dropbox/callback
 ```
 
 ---
 
-## 📊 運用コマンド
+## 自動デプロイ（GitHub Actions）
 
-### コンテナの起動・停止
+`release`ブランチにpushすると、GitHub Actionsが自動的に本番サーバーへデプロイします。
+
+### ワークフローの動作
+
+1. SSHでサーバーに接続
+2. 最新コードを`git fetch`＆`git reset --hard`
+3. Composerの依存関係を更新
+4. NPMビルド（Vite）
+5. Dockerコンテナ再起動
+6. マイグレーション実行
+7. キャッシュ最適化
+
+### GitHub Secretsの設定
+
+| Secret名 | 説明 |
+|----------|------|
+| `DEPLOY_HOST` | DDNSホスト名（shin-on.mydns.jp） |
+| `DEPLOY_USER` | SSHユーザー名（satoshi） |
+| `DEPLOY_KEY` | SSH秘密鍵（shin-on_wikiと共通） |
+| `DEPLOY_PATH` | デプロイ先パス（/var/www/shin-on） |
+
+### デプロイキーの設定
+
+サーバーには2つのキーが必要：
+
+1. **SSH接続用**: `~/.ssh/id_ed25519_deploy`（authorized_keysに登録済み）
+2. **GitHub接続用**: `~/.ssh/id_ed25519_deploy_shinon`（GitHubリポジトリのDeploy keysに登録）
+
+### 手動でワークフローを再実行
+
+GitHub → Actions → 該当ワークフロー → Re-run all jobs
+
+---
+
+## 運用コマンド
+
+### コンテナ操作
 
 ```bash
+cd /var/www/shin-on
+
 # 起動
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.production.yml up -d
 
 # 停止
-docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.production.yml down
 
 # 再起動
-docker compose -f docker-compose.prod.yml restart
+docker compose -f docker-compose.production.yml restart
 
 # 状態確認
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.production.yml ps
+
+# ログ確認
+docker compose -f docker-compose.production.yml logs -f
 ```
 
-### ログ確認
+### アップデート
 
+**1. サーバーで実行（転送前にパーミッション変更）：**
 ```bash
-# 全コンテナのログ
-docker compose -f docker-compose.prod.yml logs -f
-
-# 特定コンテナのログ
-docker compose -f docker-compose.prod.yml logs -f laravel.test
-docker compose -f docker-compose.prod.yml logs -f nginx
-docker compose -f docker-compose.prod.yml logs -f certbot
+sudo chown -R $USER:$USER /var/www/shin-on
 ```
 
-### データベース操作
+**2. 開発マシン（Mac）で実行：**
+```bash
+rsync -avz -e 'ssh -p 56834' --exclude='vendor' --exclude='node_modules' --exclude='.env' --exclude='storage/app/lineworks/private_key.pem' /Users/satoshi/Laravel/shin-on/ satoshi@サーバーIP:/var/www/shin-on/
+```
+
+**3. サーバーで実行（転送後の設定）：**
+```bash
+cd /var/www/shin-on
+
+# パーミッションをwww-dataに戻す
+sudo chown -R www-data:www-data /var/www/shin-on
+sudo chmod -R 775 /var/www/shin-on
+sudo chmod 644 /var/www/shin-on/docker-compose.production.yml
+
+# 依存関係を更新
+docker compose -f docker-compose.production.yml exec app composer install --optimize-autoloader --no-dev
+
+# マイグレーション
+docker compose -f docker-compose.production.yml exec app php artisan migrate --force
+
+# キャッシュ再生成
+docker compose -f docker-compose.production.yml exec app php artisan config:clear
+docker compose -f docker-compose.production.yml exec app php artisan config:cache
+docker compose -f docker-compose.production.yml exec app php artisan route:cache
+docker compose -f docker-compose.production.yml exec app php artisan view:cache
+
+# 再起動
+docker compose -f docker-compose.production.yml restart
+```
+
+### データベースバックアップ
 
 ```bash
-# MySQLに接続
-docker compose -f docker-compose.prod.yml exec mysql mysql -u root -p
+# 手動バックアップ
+docker compose -f docker-compose.production.yml exec mysql mysqldump -u shin_on_user -p shin_on > backup_$(date +%Y%m%d_%H%M%S).sql
 
-# データベースバックアップ
-docker compose -f docker-compose.prod.yml exec mysql mysqldump -u root -p laravel > backup_$(date +%Y%m%d).sql
+# Dropboxへのバックアップ（アプリ内機能）
+docker compose -f docker-compose.production.yml exec app php artisan backup:dropbox
 ```
 
 ---
 
-## 🔧 トラブルシューティング
+## SSL証明書の更新
 
-### 証明書取得に失敗する場合
-
-**原因チェックリスト：**
-1. DNS設定が正しいか確認
-   ```bash
-   nslookup YOUR_DOMAIN_HERE
-   # 自宅サーバーのグローバルIPが返ってくるか確認
-   ```
-
-2. ポート80が外部からアクセス可能か確認
-   ```bash
-   # 外部ネットワークから実行
-   curl -I http://YOUR_DOMAIN_HERE
-   ```
-
-3. Nginxが正常に起動しているか確認
-   ```bash
-   docker compose -f docker-compose.prod.yml logs nginx
-   ```
-
-4. Let's Encryptのレート制限に達していないか確認
-   - 同一ドメインで1週間に5回まで
-   - テスト時は `--staging` オプションを使用
-
-### Nginxが起動しない場合
+Let's Encryptの証明書はCertbotが自動更新します。
 
 ```bash
-# 設定ファイルの構文チェック
-docker compose -f docker-compose.prod.yml exec nginx nginx -t
+# 自動更新の確認
+sudo systemctl status certbot.timer
 
-# 詳細ログを確認
-docker compose -f docker-compose.prod.yml logs nginx
-```
+# 手動更新（テスト）
+sudo certbot renew --dry-run
 
-### Laravelアプリケーションが動作しない場合
-
-```bash
-# .envファイルが正しく読み込まれているか確認
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan config:show
-
-# キャッシュをクリア
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan cache:clear
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan config:clear
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan route:clear
-docker compose -f docker-compose.prod.yml exec laravel.test php artisan view:clear
-
-# ストレージ権限を確認
-docker compose -f docker-compose.prod.yml exec laravel.test ls -la storage/
-```
-
-### HTTPSでアクセスできない場合
-
-```bash
-# SSL証明書が正しく配置されているか確認
-docker compose -f docker-compose.prod.yml exec nginx ls -la /etc/letsencrypt/live/YOUR_DOMAIN_HERE/
-
-# Nginx設定でドメイン名が正しく設定されているか確認
-docker compose -f docker-compose.prod.yml exec nginx cat /etc/nginx/conf.d/default.conf | grep server_name
+# 証明書の有効期限確認
+sudo certbot certificates
 ```
 
 ---
 
-## 🔒 セキュリティチェックリスト
+## トラブルシューティング
+
+### MySQLコンテナの再作成が必要な場合
+
+`.env` の設定を変更した後にMySQLを再作成する場合：
+
+```bash
+docker compose -f docker-compose.production.yml down -v
+docker compose -f docker-compose.production.yml up -d
+```
+
+> **注意**: `-v` オプションはデータベースのデータも削除します。
+
+### 502 Bad Gateway
+
+```bash
+# Dockerコンテナが起動しているか確認
+docker compose -f docker-compose.production.yml ps
+
+# ポート8084で応答があるか確認
+curl -I http://localhost:8084
+
+# コンテナログを確認
+docker compose -f docker-compose.production.yml logs app --tail=50
+```
+
+### データベース接続エラー
+
+```bash
+# MySQLコンテナのログを確認
+docker compose -f docker-compose.production.yml logs mysql
+
+# .envの設定を確認
+grep -E '^DB_' /var/www/shin-on/.env
+
+# データベース接続テスト
+docker compose -f docker-compose.production.yml exec app php artisan db:show
+```
+
+### パーミッションエラー（rsync転送時）
+
+www-data所有のファイルはrsyncで上書きできないため、転送前にパーミッションを変更：
+
+```bash
+# 転送前
+sudo chown -R $USER:$USER /var/www/shin-on
+
+# 転送後
+sudo chown -R www-data:www-data /var/www/shin-on
+sudo chmod -R 775 /var/www/shin-on
+sudo chmod 644 /var/www/shin-on/docker-compose.production.yml
+```
+
+### docker compose コマンドが permission denied
+
+```bash
+sudo chmod 644 /var/www/shin-on/docker-compose.production.yml
+```
+
+### キャッシュ関連の問題
+
+```bash
+docker compose -f docker-compose.production.yml exec app php artisan cache:clear
+docker compose -f docker-compose.production.yml exec app php artisan config:clear
+docker compose -f docker-compose.production.yml exec app php artisan route:clear
+docker compose -f docker-compose.production.yml exec app php artisan view:cache
+```
+
+### Mixed Content エラー（HTTPS/HTTP混在）
+
+ログイン時に「認証処理中...」で止まり、ブラウザコンソールに以下のエラーが表示される場合：
+
+```
+Mixed Content: The page at 'https://...' was loaded over HTTPS,
+but requested an insecure resource 'http://...'
+```
+
+**原因**: Laravelがリバースプロキシ経由であることを認識していない
+
+**解決方法**:
+
+1. `.env`に`TRUSTED_PROXIES=*`を設定（Step 3参照）
+
+2. `app/Providers/AppServiceProvider.php`の`boot()`メソッドに以下を追加：
+
+```php
+public function boot(): void
+{
+    // 本番環境でHTTPSを強制
+    if (config('app.env') === 'production') {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
+    }
+
+    // 既存のコード...
+}
+```
+
+3. キャッシュクリアとコンテナ再起動：
+
+```bash
+docker compose -f docker-compose.production.yml exec app php artisan config:clear
+docker compose -f docker-compose.production.yml restart app
+```
+
+---
+
+## セキュリティチェックリスト
 
 - [ ] `.env` ファイルのパーミッションを600に設定
 - [ ] データベースパスワードを強固なものに変更
+- [ ] `APP_DEBUG=false` を確認
 - [ ] SSH接続に公開鍵認証を使用
 - [ ] 不要なポートをファイアウォールで閉じる
-- [ ] 定期的なバックアップを設定（Dropbox連携済み）
-- [ ] アプリケーションとOSのセキュリティアップデートを定期実行
-- [ ] ログの定期的な監視
+- [ ] 定期的なバックアップを設定
 
 ---
 
-## 📚 参考リンク
-
-- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
-- [Certbot User Guide](https://eff-certbot.readthedocs.io/)
-- [Nginx Configuration](https://nginx.org/en/docs/)
-- [Laravel Deployment](https://laravel.com/docs/12.x/deployment)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-
----
-
-**デプロイに関する質問は、GitHubのIssuesでお問い合わせください。**
+**最終更新: 2025年11月28日**

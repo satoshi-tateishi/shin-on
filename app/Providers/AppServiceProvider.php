@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\ViewComposers\EquipmentViewComposer;
 use App\Http\ViewComposers\PerformanceViewComposer;
 use App\Socialite\LineWorksProvider;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Facades\Socialite;
@@ -24,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 本番環境でHTTPSを強制（リバースプロキシ対応）
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         // LINE WORKS Socialite provider registration
         Socialite::extend('lineworks', function ($app) {
             $config = $app['config']['services.lineworks'];
