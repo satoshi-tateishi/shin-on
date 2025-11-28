@@ -3,14 +3,13 @@
 @section('title', '会社設定')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h1 class="text-2xl font-bold text-gray-900">会社設定</h1>
-            <p class="text-gray-600 text-sm mt-1">会社の基本情報とロゴを管理します</p>
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">会社設定</h1>
         </div>
 
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
             <!-- 会社基本情報フォーム -->
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">会社基本情報</h2>
@@ -92,14 +91,14 @@
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">会社ロゴ</h2>
                 @if($logo)
-                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between">
+                    <div class="bg-gray-50 rounded-lg p-4 sm:p-6 mb-4">
                         <div class="flex items-center space-x-4">
                             <img src="{{ $logo->url }}"
                                  alt="会社ロゴ"
-                                 class="h-16 w-auto object-contain border border-gray-200 rounded bg-white p-2">
-                            <div>
-                                <p class="font-medium text-gray-900">{{ $logo->file_name }}</p>
-                                <p class="text-sm text-gray-600">
+                                 class="h-14 sm:h-16 w-auto object-contain border border-gray-200 rounded bg-white p-2">
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium text-gray-900 text-sm sm:text-base truncate">{{ $logo->file_name }}</p>
+                                <p class="text-xs sm:text-sm text-gray-600">
                                     {{ number_format($logo->file_size / 1024, 1) }} KB
                                     • {{ strtoupper(pathinfo($logo->file_name, PATHINFO_EXTENSION)) }}
                                 </p>
@@ -108,13 +107,14 @@
                                 </p>
                             </div>
                         </div>
+                    </div>
+                    <div class="flex justify-end">
                         <form method="POST" action="{{ route('admin.company-info.destroy') }}"
-                              class="inline"
                               onsubmit="return confirm('現在のロゴを削除してもよろしいですか？')">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
-                                    class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+                                    class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
                                 削除
                             </button>
                         </form>

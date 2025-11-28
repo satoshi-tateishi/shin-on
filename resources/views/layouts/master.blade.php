@@ -24,29 +24,29 @@
     <div class="min-h-screen bg-gray-100">
         <!-- Navigation -->
         <nav class="bg-white shadow">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <a href="{{ route('dashboard') }}" class="text-xl font-semibold text-gray-900 hover:text-gray-700">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-14 sm:h-16">
+                    <div class="flex items-center min-w-0 flex-1">
+                        <a href="{{ route('dashboard') }}" class="text-lg sm:text-xl font-semibold text-gray-900 hover:text-gray-700 flex-shrink-0">
                             {{ config('app.name') }}
                         </a>
                         @hasSection('breadcrumb')
-                            <div class="ml-4 text-gray-500">
+                            <div class="ml-2 sm:ml-4 text-xs sm:text-sm text-gray-500 truncate hidden sm:block">
                                 @yield('breadcrumb')
                             </div>
                         @endif
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+                        <div class="flex items-center space-x-1 sm:space-x-2">
                             @if(auth()->user()->icon)
-                                <img src="{{ auth()->user()->icon }}" alt="Icon" class="w-8 h-8 rounded-full">
+                                <img src="{{ auth()->user()->icon }}" alt="Icon" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full">
                             @endif
-                            <span class="text-gray-700">{{ auth()->user()->name }}</span>
-                            <span class="text-xs px-2 py-1 bg-gray-200 rounded">{{ auth()->user()->role_label }}</span>
+                            <span class="text-sm sm:text-base text-gray-700 hidden sm:inline">{{ auth()->user()->name }}</span>
+                            <span class="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-200 rounded">{{ auth()->user()->role_label }}</span>
                         </div>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <button type="submit" class="text-gray-500 hover:text-gray-700">
+                            <button type="submit" class="text-sm sm:text-base text-gray-500 hover:text-gray-700">
                                 ログアウト
                             </button>
                         </form>
@@ -111,7 +111,7 @@
 
                 <!-- Page Header -->
                 @hasSection('header')
-                    <div class="mb-6 flex items-center justify-between">
+                    <div class="mb-4 sm:mb-6 px-3 sm:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                         @yield('header')
                     </div>
                 @endif

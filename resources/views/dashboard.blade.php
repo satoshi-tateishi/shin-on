@@ -90,7 +90,7 @@
                         <div class="w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full mr-4"></div>
                         <h2 class="text-2xl font-bold text-gray-900">機材管理</h2>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <!-- 公演管理 -->
                         <a href="{{ route('performances.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-indigo-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
@@ -196,7 +196,7 @@
                         <div class="w-1 h-6 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full mr-4"></div>
                         <h2 class="text-2xl font-bold text-gray-900">マスタ管理</h2>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- 機材マスタ -->
                         <a href="{{ route('master.equipments.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-teal-200">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
@@ -358,7 +358,7 @@
                         <div class="w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full mr-4"></div>
                         <h2 class="text-2xl font-bold text-gray-900">システム管理</h2>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-12">
                         <!-- 会社設定 -->
                         <a href="{{ route('admin.company-info.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">

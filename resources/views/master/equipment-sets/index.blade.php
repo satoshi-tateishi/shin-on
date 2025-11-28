@@ -3,73 +3,65 @@
 @section('title', '機材セットマスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材セットマスタ</span>
+    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材セットマスタ 一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材セットマスタ</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">機材セットマスタ</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-        <div class="flex space-x-3">
-            <!-- CSV Functions -->
-            <div class="flex space-x-2">
-                <a href="{{ route('master.equipment-sets.export-csv') }}"
-                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    CSVエクスポート
-                </a>
-
-                <button type="button" onclick="showImportModal('{{ route('master.equipment-sets.import-csv') }}')"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    CSVインポート
-                </button>
-
-                <a href="{{ route('master.equipment-sets.template-csv') }}"
-                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    CSVテンプレート
-                </a>
-            </div>
-
+        <div class="flex gap-2 sm:gap-3 ml-auto">
             <a href="{{ route('master.equipment-sets.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 新規作成
             </a>
+
+            <!-- CSV Menu (Dropdown) -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" type="button"
+                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition
+                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div class="py-1">
+                        <a href="{{ route('master.equipment-sets.export-csv') }}"
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            CSVエクスポート
+                        </a>
+                        <button type="button" @click="open = false; showImportModal('{{ route('master.equipment-sets.import-csv') }}')"
+                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            CSVインポート
+                        </button>
+                        <a href="{{ route('master.equipment-sets.template-csv') }}"
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            CSVテンプレート
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     @endif
 @endsection
 
 @section('content')
-    <div class="p-6">
-        <!-- Status Filter Buttons -->
-        <div class="mb-6">
-            <div class="flex space-x-4">
-                <a href="{{ route('master.equipment-sets.index', ['is_active' => '1']) }}"
-                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active', '1') == '1' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
-                    有効
-                </a>
-                <a href="{{ route('master.equipment-sets.index', ['is_active' => '0']) }}"
-                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active') == '0' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
-                    無効
-                </a>
-                <a href="{{ route('master.equipment-sets.index') }}"
-                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active') === null ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
-                    すべて
-                </a>
-            </div>
-        </div>
+    <div class="p-3 sm:p-6">
 
         <!-- Results Table -->
         @if($equipmentSets->count() > 0)
@@ -77,54 +69,42 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null)
-                                <th class="pl-6 pr-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">順序</th>
+                            @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                                <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">順序</th>
                             @endif
-                            @if(request('is_active') === null)
-                                <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                    ソート
-                                </th>
-                            @endif
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-16">
+                                No.
+                            </th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 セット名
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">
                                 状態
                             </th>
                         </tr>
                     </thead>
                     <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
                         @foreach($equipmentSets as $equipmentSet)
-                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null) sortable-row @endif @if(!$equipmentSet->is_active) bg-red-50 opacity-75 @endif"
+                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif @if(!$equipmentSet->is_active) bg-red-50 opacity-75 @endif"
                                 data-id="{{ $equipmentSet->id }}"
-                                @if(!in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" style="cursor: pointer;" @endif>
-                                @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null)
-                                    <td class="pl-6 pr-2 py-2 whitespace-nowrap text-center">
-                                        <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
+                                @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                                    <td class="pl-4 sm:pl-6 pr-2 py-2 whitespace-nowrap text-center">
+                                        <svg class="drag-handle w-4 h-4 sm:w-5 sm:h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                @if(request('is_active') === null)
-                                    <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
-                                        @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
-                                        {{ $equipmentSet->sort ?? '-' }}
-                                    </td>
-                                @endif
-                                <td class="px-6 py-2 whitespace-nowrap @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
-                                    @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                    {{ $equipmentSet->sort ?? '-' }}
+                                </td>
+                                <td class="px-2 sm:px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
                                     <div class="text-sm font-medium text-gray-900 @if(!$equipmentSet->is_active) line-through text-gray-500 @endif">
                                         {{ $equipmentSet->name }}
                                     </div>
-                                    @if($equipmentSet->description)
-                                        <div class="text-sm text-gray-500">
-                                            {{ Str::limit($equipmentSet->description, 50) }}
-                                        </div>
-                                    @endif
                                 </td>
-                                <td class="px-6 py-2 whitespace-nowrap @if(in_array(auth()->user()->role, ['editor', 'admin'])) cursor-pointer @endif"
-                                    @if(in_array(auth()->user()->role, ['editor', 'admin'])) onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                <td class="px-2 sm:px-4 py-2 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                    <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full
                                         {{ $equipmentSet->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $equipmentSet->is_active ? '有効' : '無効' }}
                                     </span>
@@ -141,8 +121,8 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">機材セットが見つかりません</h3>
-                <p class="mt-1 text-sm text-gray-500">フィルター条件を変更するか、新しい機材セットを作成してください。</p>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">データがありません</h3>
+                <p class="mt-1 text-sm text-gray-500">新しい機材セットを作成してください。</p>
                 @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
                     <div class="mt-6">
                         <a href="{{ route('master.equipment-sets.create') }}"
@@ -158,7 +138,7 @@
         @endif
     </div>
 
-    @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('is_active') === null)
+    @if(in_array(auth()->user()->role, ['editor', 'admin']))
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const tbody = document.getElementById('sortable-tbody');
@@ -236,7 +216,7 @@
                             if (data.success) {
                                 // ソート番号の表示を更新
                                 tbody.querySelectorAll('.sortable-row').forEach((row, index) => {
-                                    const sortCell = row.querySelector('td:nth-child(2)');
+                                    const sortCell = row.querySelector('td:nth-child({{ in_array(auth()->user()->role, ["editor", "admin"]) ? "2" : "1" }})');
                                     if (sortCell) {
                                         sortCell.textContent = index + 1;
                                     }

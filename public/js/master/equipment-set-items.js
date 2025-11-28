@@ -100,12 +100,6 @@ class EquipmentSetItems {
                                 </label>
                             </div>
 
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">備考</label>
-                                <textarea id="edit-equipment-notes" rows="3"
-                                          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
-                            </div>
-
                             <div class="flex items-center justify-end pt-4 border-t border-gray-200">
                                 <button type="button" onclick="equipmentSetItems.hideEditEquipmentModal()"
                                         class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 mr-3">
@@ -315,7 +309,6 @@ class EquipmentSetItems {
         document.getElementById('edit-equipment-name').textContent = equipmentItem.equipment.name;
         document.getElementById('edit-equipment-quantity').value = 1;
         document.getElementById('edit-equipment-required').checked = equipmentItem.is_required;
-        document.getElementById('edit-equipment-notes').value = equipmentItem.notes || '';
 
         document.getElementById('edit-equipment-modal').classList.remove('hidden');
     }
@@ -377,7 +370,6 @@ class EquipmentSetItems {
         const equipmentId = document.getElementById('edit-equipment-id').value;
         const quantity = document.getElementById('edit-equipment-quantity').value;
         const isRequired = document.getElementById('edit-equipment-required').checked;
-        const notes = document.getElementById('edit-equipment-notes').value;
 
         try {
             const response = await fetch(`/master/equipment-sets/${this.equipmentSetId}/items/${equipmentId}`, {
@@ -388,8 +380,7 @@ class EquipmentSetItems {
                 },
                 body: JSON.stringify({
                     quantity: parseInt(quantity),
-                    is_required: isRequired,
-                    notes: notes
+                    is_required: isRequired
                 })
             });
 

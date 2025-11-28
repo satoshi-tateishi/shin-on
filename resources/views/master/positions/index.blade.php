@@ -8,62 +8,70 @@
 
 @section('header')
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">ポジションマスタ</h1>
-        <p class="mt-1 text-sm text-gray-600">公演での役割・ポジションを管理します。</p>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">ポジションマスタ</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-        <div class="flex space-x-3">
-            <!-- CSV Functions -->
-            <div class="flex space-x-2">
-                <a href="{{ route('master.positions.export-csv') }}"
-                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    CSVエクスポート
-                </a>
-
-                <a href="{{ route('master.positions.template-csv') }}"
-                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    CSVテンプレート
-                </a>
-
-                <button onclick="document.getElementById('csv-import-modal').classList.remove('hidden')"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                    CSVインポート
-                </button>
-            </div>
-
+        <div class="flex gap-2 sm:gap-3 ml-auto">
             <a href="{{ route('master.positions.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 新規作成
             </a>
+
+            <!-- CSV Menu (Dropdown) -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" type="button"
+                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition
+                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div class="py-1">
+                        <a href="{{ route('master.positions.export-csv') }}"
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            CSVエクスポート
+                        </a>
+                        <button type="button" @click="open = false; showImportModal('{{ route('master.positions.import-csv') }}')"
+                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            CSVインポート
+                        </button>
+                        <a href="{{ route('master.positions.template-csv') }}"
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            CSVテンプレート
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     @endif
 @endsection
 
 @section('content')
-    <div class="p-6">
+    <div class="p-3 sm:p-6">
         <!-- Status Filter Buttons -->
-        <div class="mb-6">
-            <div class="flex space-x-4">
+        <div class="mb-4 sm:mb-6">
+            <div class="flex space-x-2 sm:space-x-4">
                 <a href="{{ route('master.positions.index', ['is_active' => '1']) }}"
-                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active', '1') == '1' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
-                    アクティブ
+                   class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors {{ request('is_active', '1') == '1' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
+                    有効
                 </a>
                 <a href="{{ route('master.positions.index', ['is_active' => '0']) }}"
-                   class="px-4 py-2 rounded-lg font-medium transition-colors {{ request('is_active') == '0' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
-                    無効化
+                   class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors {{ request('is_active') == '0' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' }}">
+                    無効
                 </a>
             </div>
         </div>
@@ -75,12 +83,12 @@
                     <thead class="bg-gray-50">
                         <tr>
                             @if(in_array(auth()->user()->role, ['editor', 'admin']))
-                                <th class="pl-6 pr-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">順序</th>
+                                <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">順序</th>
                             @endif
-                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                ソート
+                            <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">
+                                No.
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 ポジション名
                             </th>
                         </tr>
@@ -89,17 +97,17 @@
                         @foreach($positions as $position)
                             <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $position->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.positions.show', $position) }}'" @endif>
                                 @if(in_array(auth()->user()->role, ['editor', 'admin']))
-                                    <td class="pl-6 pr-2 py-2 whitespace-nowrap text-center">
-                                        <svg class="drag-handle w-5 h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
+                                    <td class="pl-4 sm:pl-6 pr-2 py-2 whitespace-nowrap text-center">
+                                        <svg class="drag-handle w-4 h-4 sm:w-5 sm:h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.positions.show', $position) }}'" @endif>
+                                <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.positions.show', $position) }}'" @endif>
                                     {{ $position->sort }}
                                 </td>
-                                <td class="px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.positions.show', $position) }}'" @endif>
-                                    <div class="text-sm font-medium text-gray-900 truncate">
+                                <td class="px-3 sm:px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.positions.show', $position) }}'" @endif>
+                                    <div class="text-sm font-medium text-gray-900">
                                         {{ $position->name }}
                                     </div>
                                 </td>
@@ -131,59 +139,6 @@
             </div>
         @endif
     </div>
-
-    @if(in_array(auth()->user()->role, ['editor', 'admin']))
-        <!-- CSV Import Modal -->
-        <div id="csv-import-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">CSVインポート</h3>
-                        <button onclick="document.getElementById('csv-import-modal').classList.add('hidden')"
-                                class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <form action="{{ route('master.positions.import-csv') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">CSVファイル</label>
-                            <input type="file" name="csv_file" accept=".csv,.txt" required
-                                   class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="mt-1 text-sm text-gray-500">
-                                ※ まずテンプレートをダウンロードしてご利用ください
-                            </p>
-                        </div>
-
-                        <div class="bg-blue-50 p-3 rounded-md mb-4">
-                            <h4 class="text-sm font-medium text-blue-800 mb-2">インポート仕様</h4>
-                            <ul class="text-sm text-blue-700 space-y-1">
-                                <li>• name は必須項目です</li>
-                                <li>• is_active: 1, true, はい, Yes で有効</li>
-                                <li>• 同じnameのポジションは更新されます</li>
-                                <li>• ヘッダーはpositionsテーブルのカラム名と一致します</li>
-                            </ul>
-                        </div>
-
-                        <div class="flex justify-end space-x-3">
-                            <button type="button"
-                                    onclick="document.getElementById('csv-import-modal').classList.add('hidden')"
-                                    class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                キャンセル
-                            </button>
-                            <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
-                                インポート実行
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    @endif
 
     @if(in_array(auth()->user()->role, ['editor', 'admin']))
         <script>
