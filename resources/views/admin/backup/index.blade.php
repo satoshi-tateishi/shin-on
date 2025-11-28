@@ -6,26 +6,26 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
     <div class="max-w-6xl mx-auto">
         <!-- ヘッダー -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div class="flex items-center justify-between">
+        <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
                         <i class="fas fa-cloud-upload-alt text-blue-600 mr-2"></i>
                         バックアップ管理
                     </h1>
-                    <p class="text-gray-600">データベースとファイルのDropboxバックアップを管理します</p>
+                    <p class="text-sm sm:text-base text-gray-600">データベースとファイルのDropboxバックアップを管理します</p>
                 </div>
-                <div class="text-right">
-                    <div class="text-sm text-gray-500">管理者専用機能</div>
+                <div class="text-left sm:text-right">
+                    <div class="text-xs sm:text-sm text-gray-500">管理者専用機能</div>
                     <div class="text-xs text-gray-400">{{ now()->format('Y-m-d H:i:s') }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <!-- Dropbox認証状態 -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
                     <i class="fab fa-dropbox text-blue-600 mr-2"></i>
                     Dropbox認証状態
                 </h2>
@@ -124,15 +124,15 @@
                             </div>
                         @endif
 
-                        <div class="flex space-x-3">
-                            <button id="test-connection" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-link mr-2"></i>接続テスト
+                        <div class="grid grid-cols-3 gap-2 sm:flex sm:space-x-3">
+                            <button id="test-connection" class="px-2 sm:px-4 py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-link sm:mr-2"></i><span class="hidden sm:inline">接続テスト</span><span class="sm:hidden">テスト</span>
                             </button>
-                            <button id="refresh-token" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                <i class="fas fa-sync mr-2"></i>トークン更新
+                            <button id="refresh-token" class="px-2 sm:px-4 py-2 bg-green-600 text-white text-xs sm:text-sm rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-sync sm:mr-2"></i><span class="hidden sm:inline">トークン更新</span><span class="sm:hidden">更新</span>
                             </button>
-                            <button id="revoke-auth" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                <i class="fas fa-sign-out-alt mr-2"></i>認証解除
+                            <button id="revoke-auth" class="px-2 sm:px-4 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-sign-out-alt sm:mr-2"></i><span class="hidden sm:inline">認証解除</span><span class="sm:hidden">解除</span>
                             </button>
                         </div>
                     @else
@@ -154,8 +154,8 @@
             </div>
 
             <!-- バックアップ実行 -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
                     <i class="fas fa-play-circle text-green-600 mr-2"></i>
                     バックアップ実行
                 </h2>
@@ -198,25 +198,25 @@
         <!-- タブナビゲーション -->
         <div class="bg-white rounded-lg shadow-lg mt-6">
             <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8 px-6">
-                    <button id="backup-tab" class="tab-button active py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600">
-                        <i class="fas fa-cloud-upload-alt mr-2"></i>バックアップ履歴
+                <nav class="-mb-px flex space-x-4 sm:space-x-8 px-4 sm:px-6">
+                    <button id="backup-tab" class="tab-button active py-3 sm:py-4 px-1 border-b-2 border-blue-500 font-medium text-xs sm:text-sm text-blue-600 whitespace-nowrap">
+                        <i class="fas fa-cloud-upload-alt mr-1 sm:mr-2"></i>バックアップ履歴
                     </button>
-                    <button id="restore-tab" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        <i class="fas fa-cloud-download-alt mr-2"></i>データ復元
+                    <button id="restore-tab" class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent font-medium text-xs sm:text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-cloud-download-alt mr-1 sm:mr-2"></i>データ復元
                     </button>
                 </nav>
             </div>
 
             <!-- バックアップ履歴タブ -->
-            <div id="backup-content" class="tab-content p-6">
+            <div id="backup-content" class="tab-content p-4 sm:p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900">
-                        <i class="fas fa-history text-indigo-600 mr-2"></i>
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">
+                        <i class="fas fa-history text-indigo-600 mr-1 sm:mr-2"></i>
                         バックアップ履歴
                     </h2>
-                    <button id="refresh-backups" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i class="fas fa-sync mr-2"></i>更新
+                    <button id="refresh-backups" class="px-3 sm:px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-sync mr-1 sm:mr-2"></i>更新
                     </button>
                 </div>
 
@@ -229,14 +229,14 @@
             </div>
 
             <!-- データ復元タブ -->
-            <div id="restore-content" class="tab-content p-6 hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900">
-                        <i class="fas fa-cloud-download-alt text-red-600 mr-2"></i>
+            <div id="restore-content" class="tab-content p-4 sm:p-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">
+                        <i class="fas fa-cloud-download-alt text-red-600 mr-1 sm:mr-2"></i>
                         データ復元
                     </h2>
-                    <button id="refresh-restorable" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        <i class="fas fa-sync mr-2"></i>復元可能なバックアップを更新
+                    <button id="refresh-restorable" class="px-3 sm:px-4 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap">
+                        <i class="fas fa-sync mr-1 sm:mr-2"></i><span class="hidden sm:inline">復元可能なバックアップを更新</span><span class="sm:hidden">更新</span>
                     </button>
                 </div>
 
@@ -317,8 +317,8 @@
     </div>
 
     <!-- 環境設定(.env)バックアップセクション -->
-    <div class="env-backup-card bg-red-50 border-2 border-red-200 rounded-lg p-6 mt-8">
-        <h3 class="text-lg font-semibold text-red-800 mb-4">
+    <div class="env-backup-card bg-red-50 border-2 border-red-200 rounded-lg p-4 sm:p-6 mt-8">
+        <h3 class="text-base sm:text-lg font-semibold text-red-800 mb-4">
             <i class="fas fa-lock mr-2"></i>環境設定(.env)の暗号化バックアップ
         </h3>
 
@@ -547,14 +547,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.success && data.backups.length > 0) {
                 listContainer.innerHTML = data.backups.map(backup => `
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                        <div>
-                            <div class="font-medium text-gray-900">${backup.name}</div>
-                            <div class="text-sm text-gray-600">${backup.full_path}</div>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            <i class="fas fa-calendar mr-1"></i>
-                            ${formatBackupDate(backup.name)}
+                    <div class="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg border">
+                        <div class="font-medium text-gray-900 text-sm sm:text-base">
+                            <i class="fas fa-folder text-blue-500 mr-2"></i>${backup.name}
                         </div>
                     </div>
                 `).join('');
@@ -860,27 +855,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.success && data.backups.length > 0) {
                 listContainer.innerHTML = data.backups.map(backup => `
-                    <div class="p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-medium text-gray-900">${backup.name}</div>
-                                <div class="text-sm text-gray-600">${backup.date || backup.name}</div>
+                    <div class="p-3 sm:p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 text-sm sm:text-base">
+                                    <i class="fas fa-folder text-blue-500 mr-2"></i>${backup.name}
+                                </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    ${backup.files && backup.files.length > 0 ? backup.files.map(file => `${file.type}: ${(file.size / 1024 / 1024).toFixed(2)} MB`).join(' | ') : 'ファイル情報なし'}
+                                    ${backup.files && backup.files.length > 0 ? backup.files.map(file => `${file.type}: ${(file.size / 1024 / 1024).toFixed(2)} MB`).join(' | ') : ''}
                                 </div>
                             </div>
-                            <div class="flex space-x-2">
+                            <div class="flex-shrink-0">
                                 ${(backup.files && backup.files.some(f => f.type === 'database')) ? `
-                                    <button class="restore-button px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                    <button class="restore-button px-3 sm:px-4 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition-colors"
                                             data-timestamp="${backup.name}">
-                                        <i class="fas fa-download mr-2"></i>復元
+                                        <i class="fas fa-download mr-1 sm:mr-2"></i>復元
                                     </button>
                                 ` : `
-                                    <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
-                                        復元不可（DBファイルなし）
+                                    <span class="px-3 sm:px-4 py-2 bg-gray-300 text-gray-500 text-xs sm:text-sm rounded-lg cursor-not-allowed">
+                                        復元不可
                                     </span>
                                 `}
-                                ${backup.error ? `<span class="text-xs text-red-500">Error: ${backup.error}</span>` : ''}
                             </div>
                         </div>
                     </div>

@@ -16,9 +16,12 @@
 - **OKLCH色空間**: より正確な色表現
 
 ## 🌐 アクセス情報
-- **アプリケーション**: http://localhost:8081
-- **Vite開発サーバー**: http://localhost:5174
-- **MySQL**: localhost:3307
+| 環境 | URL |
+|------|-----|
+| **本番サーバー** | https://db.shin-on1981.com |
+| 開発アプリ | http://localhost:8081 |
+| Vite開発サーバー | http://localhost:5174 |
+| MySQL | localhost:3307 |
 
 ## 📚 ドキュメント ナビゲーション
 

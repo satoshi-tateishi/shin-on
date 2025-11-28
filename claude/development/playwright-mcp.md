@@ -192,6 +192,47 @@ https://example.com を開いて
 }
 ```
 
+## 📱 モバイルデバイス表示テスト
+
+### デバイスサイズプリセット
+
+| デバイス | 幅 (px) | 高さ (px) | 備考 |
+|----------|---------|-----------|------|
+| **iPhone 14/15 Pro** | 390 | 844 | 推奨テストサイズ |
+| iPhone 14/15 Pro Max | 430 | 932 | 大画面iPhone |
+| iPhone SE | 375 | 667 | 小画面iPhone |
+| iPad Mini | 768 | 1024 | タブレット |
+| iPad Pro 12.9" | 1024 | 1366 | 大型タブレット |
+
+### iPhone表示テスト用コマンド
+
+Claude Codeで以下のように指示してください：
+
+```
+# ブラウザをiPhoneサイズに変更
+ブラウザを390x844にリサイズして
+
+# 特定のページをiPhoneサイズで確認
+http://localhost:8081/dashboard をiPhoneサイズ（390x844）で開いて
+```
+
+### ブラウザリサイズ用MCPツール
+
+```javascript
+// 現在のブラウザサイズを取得
+mcp__playwright__browser_evaluate
+function: () => ({ width: window.innerWidth, height: window.innerHeight })
+
+// ブラウザをリサイズ
+mcp__playwright__browser_resize
+width: 390, height: 844
+```
+
+### shin-on プロジェクトでのテスト実績
+
+- **ダッシュボード** (`/dashboard`) - iPhone最適化完了
+- **バックアップ管理** (`/admin/backup`) - iPhone最適化完了
+
 ## 🔍 利用可能なMCPツール
 
 Playwright MCPサーバーは以下のツールを提供します：
@@ -240,4 +281,4 @@ Playwright MCPサーバーは以下のツールを提供します：
 
 ---
 
-**最終更新**: 2025年10月10日
+**最終更新**: 2025年11月28日

@@ -48,6 +48,14 @@
 - ✅ Dropboxバックアップシステム - OAuth 2.0対応、自動アップロード・ログクリーンアップ機能（2025年9月29日追加）
 - ✅ ポート設定（HTTP:8081, Vite:5174, MySQL:3307）
 
+## 🌐 サーバー情報
+| 環境 | URL |
+|------|-----|
+| **本番サーバー** | https://db.shin-on1981.com |
+| 開発アプリ | http://localhost:8081 |
+| Vite開発サーバー | http://localhost:5174 |
+| MySQL | localhost:3307 |
+
 ## 🚀 開発環境起動コマンド
 ```bash
 # Laravel + Vite を同時起動
