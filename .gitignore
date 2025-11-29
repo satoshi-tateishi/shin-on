@@ -18,11 +18,14 @@
 /public/storage
 /storage/*.key
 /storage/pail
-/storage/fonts/*.ttf
+# Fonts - exclude generated files but keep essential TTF fonts
 /storage/fonts/*.ufm
 /storage/fonts/*.zip
 /storage/fonts/*.json
 /storage/fonts/IPAfont00303/
+# Keep ipag.ttf and ipam.ttf for Japanese PDF support
+!/storage/fonts/ipag.ttf
+!/storage/fonts/ipam.ttf
 /vendor
 Homestead.json
 Homestead.yaml
