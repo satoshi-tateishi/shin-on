@@ -38,9 +38,11 @@ class PhaseEquipmentInheritanceController extends Controller
             ], 400);
         }
 
-        // 同一公演内の他フェーズ
+        // 同一公演内の他フェーズ（完了フェーズを除外）
+        $today = now()->toDateString();
         $samePerformancePhases = Phase::where('performance_id', $sourcePhase->performance_id)
             ->where('id', '!=', $sourcePhase->id)
+            ->where('end_date', '>=', $today) // 完了フェーズを除外
             ->whereHas('performance', function ($query) {
                 $query->whereIn('status', ['preparing', 'in_progress']);
             })
@@ -60,8 +62,9 @@ class PhaseEquipmentInheritanceController extends Controller
                 return [
                     'id' => $phase->id,
                     'name' => $phase->name,
-                    'start_date' => $phase->start_date,
-                    'end_date' => $phase->end_date,
+                    'start_date' => $phase->start_date->format('Y-m-d'),
+                    'end_date' => $phase->end_date->format('Y-m-d'),
+                    'phase_status' => $phase->phase_status,
                     'performance' => [
                         'id' => $phase->performance->id,
                         'title' => $phase->performance->title,
@@ -71,12 +74,13 @@ class PhaseEquipmentInheritanceController extends Controller
             }),
         ];
 
-        // 他公演フェーズ
+        // 他公演フェーズ（完了フェーズを除外）
         if ($includeOtherPerformances) {
-            $otherPerformancePhases = Phase::whereHas('performance', function ($query) use ($sourcePhase) {
-                $query->where('id', '!=', $sourcePhase->performance_id)
-                    ->whereIn('status', ['preparing', 'in_progress']);
-            })
+            $otherPerformancePhases = Phase::where('end_date', '>=', $today) // 完了フェーズを除外
+                ->whereHas('performance', function ($query) use ($sourcePhase) {
+                    $query->where('id', '!=', $sourcePhase->performance_id)
+                        ->whereIn('status', ['preparing', 'in_progress']);
+                })
                 ->with('performance')
                 ->orderBy('performance_id')
                 ->orderBy('start_date', 'desc')
@@ -86,8 +90,9 @@ class PhaseEquipmentInheritanceController extends Controller
                 return [
                     'id' => $phase->id,
                     'name' => $phase->name,
-                    'start_date' => $phase->start_date,
-                    'end_date' => $phase->end_date,
+                    'start_date' => $phase->start_date->format('Y-m-d'),
+                    'end_date' => $phase->end_date->format('Y-m-d'),
+                    'phase_status' => $phase->phase_status,
                     'performance' => [
                         'id' => $phase->performance->id,
                         'title' => $phase->performance->title,

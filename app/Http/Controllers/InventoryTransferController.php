@@ -689,4 +689,40 @@ class InventoryTransferController extends Controller
             'days_ago' => Carbon::parse($lastMovement->moved_at)->diffInDays($asOfDate),
         ];
     }
+
+    /**
+     * フェーズ情報取得API
+     *
+     * @param int $phase フェーズID
+     * @return JsonResponse
+     */
+    public function getPhaseInfo(int $phase): JsonResponse
+    {
+        try {
+            $phaseModel = \App\Models\Phase::with(['performance', 'location'])->findOrFail($phase);
+
+            return response()->json([
+                'success' => true,
+                'phase' => [
+                    'id' => $phaseModel->id,
+                    'name' => $phaseModel->name,
+                    'start_date' => $phaseModel->start_date->format('Y/m/d'),
+                    'end_date' => $phaseModel->end_date->format('Y/m/d'),
+                    'location' => $phaseModel->location ? [
+                        'id' => $phaseModel->location->id,
+                        'name' => $phaseModel->location->name,
+                    ] : null,
+                    'performance' => [
+                        'id' => $phaseModel->performance->id,
+                        'title' => $phaseModel->performance->title,
+                    ],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'フェーズ情報の取得に失敗しました: '.$e->getMessage(),
+            ], 404);
+        }
+    }
 }

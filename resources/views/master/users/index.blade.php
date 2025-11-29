@@ -100,7 +100,7 @@
                             <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 氏名
                             </th>
-                            <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 年齢
                             </th>
                             <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
@@ -120,7 +120,7 @@
                                         {{ $user->name }}
                                     </div>
                                 </td>
-                                <td class="px-3 sm:px-6 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">
+                                <td class="px-2 sm:px-6 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                                     @if($user->birthday)
                                         {{ \Carbon\Carbon::parse($user->birthday)->age }}歳
                                     @else

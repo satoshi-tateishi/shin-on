@@ -277,6 +277,7 @@ Route::middleware('auth')->group(function () {
         Route::post('api/bulk-transfer', [InventoryTransferController::class, 'bulkTransferEquipment'])->name('api.bulk-transfer');
         Route::post('api/bulk-return', [InventoryTransferController::class, 'bulkReturn'])->name('api.bulk-return');
         Route::post('api/return/{equipment}', [InventoryTransferController::class, 'returnEquipmentToBase'])->name('api.return');
+        Route::get('api/phase/{phase}', [InventoryTransferController::class, 'getPhaseInfo'])->name('api.phase');
     });
 
     // 短縮形ルート（ダッシュボードから直接アクセス用）

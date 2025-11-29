@@ -31,8 +31,19 @@
 @endphp
 
 <{{ $tag }} {{ $attributes->merge(['class' => "$baseClasses $activeClasses"]) }}>
-    <div class="p-5">
-        <div class="flex items-center">
+    <div class="p-3 sm:p-5">
+        <!-- モバイル: 2行表示 -->
+        <div class="flex flex-col items-center text-center sm:hidden">
+            <svg class="h-5 w-5 {{ $iconColor }} mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {!! $icon !!}
+            </svg>
+            <div class="text-xs">
+                <span class="font-medium text-gray-500">{{ $title }}</span>
+                <span class="font-medium {{ $textColor }} ml-1">{{ $count }}</span>
+            </div>
+        </div>
+        <!-- デスクトップ: 横並び -->
+        <div class="hidden sm:flex sm:items-center">
             <div class="flex-shrink-0">
                 <svg class="h-6 w-6 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {!! $icon !!}

@@ -7,8 +7,8 @@
 @endsection
 
 @section('header')
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">倉庫別 在庫表示</h1>
+    <div class="w-full">
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">倉庫別 在庫表示</h1>
     </div>
 @endsection
 
@@ -26,63 +26,65 @@
 
 @section('content')
     {{-- 在庫管理画面: is_inventory_visible=1の倉庫のみを対象にした機材在庫表示 --}}
-    <div x-data="inventoryDashboard()" x-init="init()" class="p-6">
+    <div x-data="inventoryDashboard()" x-init="init()" class="p-3 sm:p-6">
 
         <!-- Loading Spinner -->
         <div x-show="loading" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3 text-center">
-                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-cyan-100">
-                        <svg class="animate-spin h-6 w-6 text-cyan-600" fill="none" viewBox="0 0 24 24">
+            <div class="relative top-10 sm:top-20 mx-3 sm:mx-auto p-3 sm:p-5 border w-auto sm:w-96 max-w-sm shadow-lg rounded-md bg-white">
+                <div class="mt-2 sm:mt-3 text-center">
+                    <div class="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-cyan-100">
+                        <svg class="animate-spin h-5 w-5 sm:h-6 sm:w-6 text-cyan-600" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">データを読み込み中...</h3>
-                    <p class="text-sm text-gray-500 mt-1">在庫データを計算しています</p>
+                    <h3 class="text-base sm:text-lg leading-6 font-medium text-gray-900 mt-2">データを読み込み中...</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">在庫データを計算しています</p>
                 </div>
             </div>
         </div>
 
         <!-- Error Message -->
-        <div x-show="error" x-transition class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+        <div x-show="error" x-transition class="mb-4">
+            <div class="bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
                 <div class="flex">
-                    <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">エラーが発生しました</h3>
-                        <p class="mt-1 text-sm text-red-700" x-text="error"></p>
+                    <div class="ml-2 sm:ml-3">
+                        <h3 class="text-xs sm:text-sm font-medium text-red-800">エラーが発生しました</h3>
+                        <p class="mt-1 text-xs sm:text-sm text-red-700" x-text="error"></p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div x-show="!loading && !error">
-
+        <div x-show="!loading && !error" class="space-y-4 sm:space-y-6">
 
             <!-- Filters and Controls -->
-            <div class="bg-white shadow rounded-lg mb-6">
-                <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white border border-gray-200 rounded-lg">
+                <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900">検索条件</h3>
+                </div>
+                <div class="px-4 sm:px-6 py-3 sm:py-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                         <!-- 基準日選択 -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">基準日</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">基準日</label>
                             <input
                                 type="date"
                                 id="asOfDate"
                                 x-model="asOfDate"
                                 @change="loadInventoryData()"
-                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                                class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             >
                         </div>
 
                         <!-- 倉庫フィルタ -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">倉庫</label>
-                            <select x-model="filters.location_id" @change="filters.category_id = ''; loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">倉庫</label>
+                            <select x-model="filters.location_id" @change="filters.category_id = ''; loadInventoryData()" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <template x-for="location in locations" :key="location.id">
                                     <option :value="location.id" :selected="location.id == 92" x-text="location.name"></option>
                                 </template>
@@ -91,9 +93,9 @@
 
                         <!-- カテゴリフィルタ -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">カテゴリ</label>
-                            <select x-model="filters.category_id" @change="loadInventoryData()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm">
-                                <option value="">全てのカテゴリ</option>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
+                            <select x-model="filters.category_id" @change="loadInventoryData()" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">全て</option>
                                 <template x-for="category in categories" :key="category.id">
                                     <option :value="category.id" x-text="category.name"></option>
                                 </template>
@@ -102,107 +104,133 @@
 
                         <!-- 検索 -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">機材名検索</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">機材名</label>
                             <input
                                 type="text"
                                 x-model="filters.search"
                                 @input.debounce.500ms="loadInventoryData()"
-                                placeholder="機材名を入力..."
-                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                                placeholder="検索..."
+                                class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             >
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Summary -->
-            <div class="flex justify-between items-center mb-6">
-                <div class="text-sm text-gray-500">
-                    表示件数: <span x-text="inventoryData.length"></span>件
+            <!-- Summary and PDF Buttons -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div class="text-xs sm:text-sm text-gray-500">
+                    表示件数: <span x-text="inventoryData.length" class="font-medium"></span>件
                 </div>
-                <div class="flex space-x-3">
+                <div class="flex flex-wrap gap-2">
                     <!-- 選択中の倉庫のPDF出力 -->
-                    <a :href="`/inventory/export-pdf?as_of_date=${asOfDate}&location_id=${filters.location_id}`"
-                       class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a :href="`{{ route('inventory.export-pdf') }}?as_of_date=${asOfDate}&location_id=${filters.location_id}`"
+                       target="_blank"
+                       class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-sm">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        この倉庫をPDF出力
+                        <span class="hidden sm:inline">この倉庫を</span>PDF
                     </a>
 
                     <!-- 全倉庫のPDF出力 -->
-                    <a :href="`/inventory/export-pdf?as_of_date=${asOfDate}&all_locations=1`"
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a :href="`{{ route('inventory.export-pdf') }}?as_of_date=${asOfDate}&all_locations=1`"
+                       target="_blank"
+                       class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-sm">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                         </svg>
-                        全倉庫をPDF出力
+                        <span class="hidden sm:inline">全倉庫を</span>PDF
                     </a>
                 </div>
             </div>
 
             <!-- Inventory Table -->
-            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
-                                カテゴリ
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                                機材名
-                            </th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                                在庫数量
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                新音番号
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="item in inventoryData" :key="item.equipment_id">
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <!-- カテゴリ（縦並び） -->
-                                <td class="px-4 py-4">
-                                    <div class="text-xs text-gray-500" x-text="item.equipment?.subcategory?.category?.name || '未設定'"></div>
-                                    <div class="text-xs text-gray-500" x-text="item.equipment?.subcategory?.name || '未設定'"></div>
-                                </td>
+                                <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    機材
+                                </th>
+                                <th class="px-3 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-14 sm:w-20">
+                                    数量
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="item in inventoryData" :key="item.equipment_id">
+                                <tr @click="openDetailModal(item)" class="cursor-pointer hover:bg-gray-50 active:bg-gray-100">
+                                    <!-- カテゴリ・機材名 -->
+                                    <td class="px-3 sm:px-4 py-2 sm:py-4">
+                                        <div class="text-xs text-gray-500" x-text="(item.equipment?.subcategory?.category?.name || '') + (item.equipment?.subcategory?.name ? ' > ' + item.equipment?.subcategory?.name : '')"></div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-900" x-text="item.equipment?.name || '機材名不明'"></div>
+                                    </td>
 
-                                <!-- 機材名 -->
-                                <td class="px-4 py-4">
-                                    <div class="text-sm font-medium text-gray-900" x-text="item.equipment?.name || '機材名不明'"></div>
-                                </td>
+                                    <!-- 在庫数量 -->
+                                    <td class="px-3 sm:px-4 py-2 sm:py-4 text-center">
+                                        <div class="text-base sm:text-lg font-bold text-gray-900">
+                                            <span x-text="item.quantity || 0"></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
 
-                                <!-- 在庫数量 -->
-                                <td class="px-4 py-4 text-center">
-                                    <div class="text-lg font-bold text-gray-900">
-                                        <span x-text="item.quantity || 0"></span>
-                                    </div>
-                                </td>
-
-                                <!-- 新音番号 -->
-                                <td class="px-4 py-4">
-                                    <div class="text-sm text-gray-900 break-words leading-relaxed" x-text="(item.quantity > 0) ? (item.equipment?.company_number || '-') : '-'"></div>
+                            <!-- Empty State Row -->
+                            <tr x-show="inventoryData.length === 0">
+                                <td colspan="2" class="px-4 sm:px-6 py-8 sm:py-12 text-center">
+                                    <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
+                                    </svg>
+                                    <h3 class="mt-2 text-xs sm:text-sm font-medium text-gray-900">在庫データがありません</h3>
+                                    <p class="mt-1 text-xs sm:text-sm text-gray-500">検索条件を変更してください。</p>
                                 </td>
                             </tr>
-                        </template>
-
-                        <!-- Empty State Row -->
-                        <tr x-show="inventoryData.length === 0">
-                            <td colspan="4" class="px-6 py-12 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5v4M15 5v4M9 15v4M15 15v4"></path>
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">在庫データがありません</h3>
-                                <p class="mt-1 text-sm text-gray-500">検索条件を変更するか、データを再計算してください。</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
+        <!-- 詳細モーダル -->
+        <div x-show="showDetailModal" x-transition class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="closeDetailModal()">
+            <div class="relative top-10 sm:top-20 mx-3 sm:mx-auto p-4 sm:p-6 border w-auto sm:w-96 max-w-md shadow-lg rounded-lg bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900">機材詳細</h3>
+                    <button @click="closeDetailModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <template x-if="selectedItem">
+                    <div class="space-y-3">
+                        <div>
+                            <div class="text-xs text-gray-500">カテゴリ</div>
+                            <div class="text-sm text-gray-900" x-text="(selectedItem.equipment?.subcategory?.category?.name || '') + (selectedItem.equipment?.subcategory?.name ? ' > ' + selectedItem.equipment?.subcategory?.name : '')"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">機材名</div>
+                            <div class="text-sm font-medium text-gray-900" x-text="selectedItem.equipment?.name || '機材名不明'"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">在庫数量</div>
+                            <div class="text-lg font-bold text-gray-900" x-text="selectedItem.quantity || 0"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">新音番号</div>
+                            <div class="text-sm text-gray-900 break-words" x-text="(selectedItem.quantity > 0) ? (selectedItem.equipment?.company_number || '-') : '-'"></div>
+                        </div>
+                    </div>
+                </template>
+                <div class="mt-5">
+                    <button @click="closeDetailModal()" class="w-full px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </div>
 @endsection
@@ -222,6 +250,18 @@
                     category_id: '',
                     location_id: 92, // デフォルトはすみだ倉庫
                     search: ''
+                },
+                showDetailModal: false,
+                selectedItem: null,
+
+                openDetailModal(item) {
+                    this.selectedItem = item;
+                    this.showDetailModal = true;
+                },
+
+                closeDetailModal() {
+                    this.showDetailModal = false;
+                    this.selectedItem = null;
                 },
 
                 async init() {
