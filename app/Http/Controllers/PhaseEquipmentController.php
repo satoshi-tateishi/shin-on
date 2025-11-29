@@ -68,8 +68,9 @@ class PhaseEquipmentController extends Controller
             ->orderBy('sort')
             ->get();
 
-        // フェーズに登録済みの機材一覧を取得
+        // フェーズに登録済みの機材一覧を取得（予約済み・出庫中のみ、返却済みは除外）
         $phaseEquipments = PhaseEquipment::where('phase_id', $phase->id)
+            ->whereIn('status', ['reserved', 'checked_out'])
             ->with(['equipment.subcategory.category'])
             ->orderBy('status')
             ->orderBy('created_at', 'desc')
