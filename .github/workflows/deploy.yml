@@ -36,16 +36,17 @@ jobs:
             # storage と bootstrap/cache の所有者をwww-data(33)に戻す
             sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache
 
-            # 依存関係の更新（Dockerコンテナ内で実行）
+            # Dockerイメージを再ビルドしてコンテナを再起動（Dockerfile変更時に必要）
+            docker compose -f docker-compose.production.yml build app
+            docker compose -f docker-compose.production.yml up -d app
+
+            # 依存関係の更新（新しいコンテナ内で実行）
             docker compose -f docker-compose.production.yml exec -T app composer install --no-dev --optimize-autoloader
 
             # NPM依存関係とアセットビルド（ホスト側で実行）
             npm ci
             rm -f public/hot
             npm run build
-
-            # Dockerコンテナを再起動（PHPコードの変更を反映）
-            docker compose -f docker-compose.production.yml restart app
 
             # フォントがない場合はインストール
             docker compose -f docker-compose.production.yml exec -T app php artisan dompdf:install-fonts 2>/dev/null || true

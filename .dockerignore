@@ -1,0 +1,36 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Cache & Logs
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+
+# Development files
+.env
+.env.local
+.env.*.local
+*.log
+
+# Test
+tests/
+phpunit.xml
+
+# Documentation
+*.md
+claude/
+
+# Build artifacts
+public/build/
+public/hot

@@ -15,10 +15,12 @@
 
 services:
   # ==============================================================
-  # Laravel Application (using serversideup/php image)
+  # Laravel Application (custom image with GD extension)
   # ==============================================================
   app:
-    image: 'serversideup/php:8.4-fpm-apache'
+    build:
+      context: .
+      dockerfile: docker/production/Dockerfile
     container_name: shin-on_app
     restart: unless-stopped
     ports:
