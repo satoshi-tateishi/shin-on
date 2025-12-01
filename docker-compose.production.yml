@@ -26,6 +26,7 @@ services:
     ports:
       - '${APP_PORT:-8084}:8080'
     environment:
+      TZ: 'Asia/Tokyo'
       SSL_MODE: 'off'
       APACHE_DOCUMENT_ROOT: '/var/www/html/public'
       PHP_OPCACHE_ENABLE: '1'
