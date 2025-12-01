@@ -13,6 +13,8 @@ use App\Http\Controllers\Master\LocationController;
 use App\Http\Controllers\Master\PositionController;
 use App\Http\Controllers\Master\ProductionController;
 use App\Http\Controllers\Master\UserController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PhaseEquipmentController;
@@ -46,10 +48,8 @@ Route::prefix('two-factor')->name('two-factor.')->group(function () {
 
 // 認証が必要なルート
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        $companyLogo = \App\Models\CompanyLogo::getActiveLogo();
-        return view('dashboard', ['companyLogo' => $companyLogo?->file_path]);
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
     Route::post('/logout', [LineWorksController::class, 'logout'])->name('logout');
 

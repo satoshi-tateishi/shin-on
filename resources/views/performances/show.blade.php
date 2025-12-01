@@ -37,9 +37,8 @@
 <div class="p-3 sm:p-6 space-y-4 sm:space-y-6">
     <!-- 基本情報 -->
     <div class="bg-white border border-gray-200 rounded-lg">
-        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 class="text-base sm:text-lg font-medium text-gray-900">基本情報</h3>
-            <x-status-badge :status="$performance->status" type="performance" />
         </div>
         <div class="px-4 sm:px-6 py-3 sm:py-4">
             <table class="w-full text-xs sm:text-sm">

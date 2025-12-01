@@ -400,6 +400,62 @@
                 </div>
                 @endif
 
+                <!-- Activity Log Section -->
+                <div class="mb-12">
+                    <div class="flex items-center mb-6">
+                        <div class="w-1 h-6 bg-gradient-to-b from-gray-500 to-gray-600 rounded-full mr-4"></div>
+                        <h2 class="text-2xl font-bold text-gray-900">アクティビティ</h2>
+                    </div>
+                    <a href="{{ route('activity-logs.index') }}" class="block group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200">
+                        <div class="p-6">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
+                                        <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-gray-700 transition-colors">操作履歴</h3>
+                                        <p class="text-sm text-gray-500">
+                                            全 {{ number_format($activityStats['total']) }} 件
+                                            @if($activityStats['today'] > 0)
+                                                <span class="text-blue-600">（本日 {{ $activityStats['today'] }} 件）</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                                <svg class="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+
+                            <!-- Recent Activities Preview -->
+                            @if($recentActivities->count() > 0)
+                                <div class="space-y-2">
+                                    @foreach($recentActivities as $activity)
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $activity->action_color }} whitespace-nowrap flex-shrink-0">
+                                                {{ $activity->action_label }}
+                                            </span>
+                                            <span class="text-gray-600 truncate">{{ $activity->user?->name ?? '不明' }} - {{ Str::limit($activity->description, 30) }}</span>
+                                            <span class="text-gray-400 text-xs whitespace-nowrap ml-auto">{{ $activity->relative_time }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-gray-100 text-center">
+                                    <span class="text-sm text-blue-600 group-hover:text-blue-700 font-medium">すべてのアクティビティを見る →</span>
+                                </div>
+                            @else
+                                <div class="text-center text-gray-500 py-4">
+                                    <p class="text-sm">まだアクティビティがありません</p>
+                                </div>
+                            @endif
+                        </div>
+                    </a>
+                </div>
+
             </div>
         </div>
     </div>

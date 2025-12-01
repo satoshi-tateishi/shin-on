@@ -66,8 +66,25 @@ class PerformanceService
             $query->where('performances.performance_type', $filters['performance_type']);
         }
 
-        if (!empty($filters['status'])) {
-            $query->where('performances.status', $filters['status']);
+        if (!empty($filters['phase_status'])) {
+            $today = now()->toDateString();
+
+            if ($filters['phase_status'] === 'completed') {
+                // 完了：すべてのフェーズが完了している公演のみ
+                $query->whereHas('phases', function ($q) use ($today) {
+                    $q->where('end_date', '<', $today);
+                })->whereDoesntHave('phases', function ($q) use ($today) {
+                    $q->where('end_date', '>=', $today);
+                });
+            } else {
+                $query->whereHas('phases', function ($q) use ($filters, $today) {
+                    match ($filters['phase_status']) {
+                        'in_progress' => $q->where('start_date', '<=', $today)->where('end_date', '>=', $today),
+                        'upcoming' => $q->where('start_date', '>', $today),
+                        default => null,
+                    };
+                });
+            }
         }
     }
 
@@ -78,7 +95,7 @@ class PerformanceService
             'short_name' => $data['short_name'] ?? null,
             'performance_type' => $data['performance_type'],
             'director' => $data['director'] ?? null,
-            'status' => $data['status'],
+            'status' => $data['status'] ?? 'in_progress',
             'note' => $data['note'] ?? null,
             'is_active' => $data['is_active'] ?? true,
         ];

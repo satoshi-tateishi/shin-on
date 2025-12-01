@@ -7,6 +7,7 @@ use App\Models\CompanyLogo;
 use App\Models\Location;
 use App\Models\Performance;
 use App\Models\Phase;
+use App\Services\ActivityLogService;
 use App\Services\LineWorksBotService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,10 @@ use Illuminate\View\View;
 
 class PhaseController extends Controller
 {
+    public function __construct(
+        private ActivityLogService $activityLogService
+    ) {}
+
     public function index(Performance $performance): RedirectResponse
     {
         return redirect()->route('performances.show', $performance);
@@ -34,6 +39,10 @@ class PhaseController extends Controller
         $validated['performance_id'] = $performance->id;
 
         $phase = Phase::create($validated);
+
+        // アクティビティログ記録
+        $phase->load('performance');
+        $this->activityLogService->logPhaseCreate($phase);
 
         return redirect()->route('phases.show', $phase)
             ->with('success', 'フェーズが正常に作成されました。');
@@ -59,6 +68,10 @@ class PhaseController extends Controller
     public function update(PhaseRequest $request, Phase $phase): RedirectResponse
     {
         $phase->update($request->validated());
+
+        // アクティビティログ記録
+        $phase->load('performance');
+        $this->activityLogService->logPhaseUpdate($phase);
 
         return redirect()->route('phases.show', $phase)
             ->with('success', 'フェーズが正常に更新されました。');

@@ -7,6 +7,7 @@ use App\Models\EquipmentMovement;
 use App\Models\Location;
 use App\Models\Phase;
 use App\Models\PhaseEquipment;
+use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,10 @@ use Illuminate\Support\Facades\DB;
  */
 class PhaseEquipmentCheckoutController extends Controller
 {
+    public function __construct(
+        private ActivityLogService $activityLogService
+    ) {}
+
     /**
      * Checkout equipment (change status to checked_out)
      *
@@ -68,6 +73,9 @@ class PhaseEquipmentCheckoutController extends Controller
                 $validated['from_location_id'] ?? null,
                 $validated['note'] ?? null
             );
+
+            // アクティビティログ記録
+            $this->activityLogService->logEquipmentCheckout($phaseEquipment, $phase, $phaseEquipment->quantity);
 
             DB::commit();
 
@@ -154,6 +162,9 @@ class PhaseEquipmentCheckoutController extends Controller
                 $toLocationId,
                 $validated['note'] ?? null
             );
+
+            // アクティビティログ記録
+            $this->activityLogService->logEquipmentCheckin($phaseEquipment, $phase, $phaseEquipment->quantity);
 
             DB::commit();
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\TwoFactorLog;
+use App\Services\ActivityLogService;
 use App\Services\LineWorksBotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -119,6 +120,9 @@ class TwoFactorController extends Controller
         // ログイン処理
         auth()->login($user);
         session()->forget('two_factor:user_id');
+
+        // アクティビティログ記録
+        app(ActivityLogService::class)->logUserLogin($user);
 
         return redirect()->intended(route('dashboard'))
             ->with('status', 'ログインしました。');

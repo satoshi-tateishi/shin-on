@@ -43,25 +43,6 @@
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <!-- ステータス -->
-                    <div>
-                        <label for="status" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                            ステータス <span class="text-red-500">*</span>
-                        </label>
-                        <select name="status" id="status" required
-                                class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('status') border-red-300 @enderror">
-                            <option value="">選択してください</option>
-                            <option value="planning" {{ old('status', $performance->status) === 'planning' ? 'selected' : '' }}>企画中</option>
-                            <option value="preparation" {{ old('status', $performance->status) === 'preparation' ? 'selected' : '' }}>準備中</option>
-                            <option value="in_progress" {{ old('status', $performance->status) === 'in_progress' ? 'selected' : '' }}>進行中</option>
-                            <option value="completed" {{ old('status', $performance->status) === 'completed' ? 'selected' : '' }}>完了</option>
-                            <option value="cancelled" {{ old('status', $performance->status) === 'cancelled' ? 'selected' : '' }}>キャンセル</option>
-                        </select>
-                        @error('status')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <!-- 公演種別 -->
                     <div>
                         <label for="performance_type" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -210,7 +191,7 @@
                                 </select>
                                 <button type="button" class="remove-sound-designer inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
@@ -225,7 +206,7 @@
                             </select>
                             <button type="button" class="remove-sound-designer inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                                 <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
@@ -278,7 +259,7 @@
                                     </select>
                                     <button type="button" class="remove-staff inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
                                 </div>
@@ -301,7 +282,7 @@
                                 </select>
                                 <button type="button" class="remove-staff inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
@@ -452,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </select>
                 <button type="button" class="remove-sound-designer inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             `;
@@ -546,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </select>
                     <button type="button" class="remove-staff inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\TwoFactorLog;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use App\Services\LineWorksBotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -194,6 +195,9 @@ class LineWorksController extends Controller
                 // OTP送信失敗時は通常ログインにフォールバック
                 Auth::login($user);
                 \Log::warning("User logged in without 2FA due to OTP send failure: {$user->id}");
+
+                // アクティビティログ記録
+                app(ActivityLogService::class)->logUserLogin($user);
 
                 return redirect()->intended('/dashboard')
                     ->with('warning', '認証コードの送信に失敗しましたが、ログインしました。');

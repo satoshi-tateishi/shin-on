@@ -42,10 +42,7 @@ class PhaseEquipmentInheritanceController extends Controller
         $today = now()->toDateString();
         $samePerformancePhases = Phase::where('performance_id', $sourcePhase->performance_id)
             ->where('id', '!=', $sourcePhase->id)
-            ->where('end_date', '>=', $today) // 完了フェーズを除外
-            ->whereHas('performance', function ($query) {
-                $query->whereIn('status', ['preparing', 'in_progress']);
-            })
+            ->where('end_date', '>=', $today) // 完了フェーズを除外（フェーズの日付ベース）
             ->with('performance')
             ->orderBy('start_date')
             ->get();
@@ -68,18 +65,16 @@ class PhaseEquipmentInheritanceController extends Controller
                     'performance' => [
                         'id' => $phase->performance->id,
                         'title' => $phase->performance->title,
-                        'status' => $phase->performance->status,
                     ],
                 ];
             }),
         ];
 
-        // 他公演フェーズ（完了フェーズを除外）
+        // 他公演フェーズ（完了フェーズを除外 - フェーズの日付ベース）
         if ($includeOtherPerformances) {
             $otherPerformancePhases = Phase::where('end_date', '>=', $today) // 完了フェーズを除外
                 ->whereHas('performance', function ($query) use ($sourcePhase) {
-                    $query->where('id', '!=', $sourcePhase->performance_id)
-                        ->whereIn('status', ['preparing', 'in_progress']);
+                    $query->where('id', '!=', $sourcePhase->performance_id);
                 })
                 ->with('performance')
                 ->orderBy('performance_id')
@@ -96,7 +91,6 @@ class PhaseEquipmentInheritanceController extends Controller
                     'performance' => [
                         'id' => $phase->performance->id,
                         'title' => $phase->performance->title,
-                        'status' => $phase->performance->status,
                     ],
                 ];
             });
@@ -117,10 +111,10 @@ class PhaseEquipmentInheritanceController extends Controller
         $sourcePhase = Phase::with('performance')->findOrFail($phaseId);
         $targetPhase = Phase::findOrFail($validated['target_phase_id']);
 
-        // 継承先公演ステータスチェック
-        if (! in_array($targetPhase->performance->status, ['preparing', 'in_progress'])) {
+        // 継承先フェーズステータスチェック（完了フェーズへの継承は不可）
+        if ($targetPhase->phase_status === 'completed') {
             return response()->json([
-                'error' => '準備中または進行中の公演のみ継承可能です',
+                'error' => '完了したフェーズへは継承できません',
             ], 400);
         }
 
@@ -219,10 +213,10 @@ class PhaseEquipmentInheritanceController extends Controller
         $sourcePhase = Phase::with('performance')->findOrFail($phaseId);
         $targetPhase = Phase::findOrFail($validated['target_phase_id']);
 
-        // 継承先公演ステータスチェック
-        if (! in_array($targetPhase->performance->status, ['preparing', 'in_progress'])) {
+        // 継承先フェーズステータスチェック（完了フェーズへの継承は不可）
+        if ($targetPhase->phase_status === 'completed') {
             return response()->json([
-                'error' => '準備中または進行中の公演のみ継承可能です',
+                'error' => '完了したフェーズへは継承できません',
             ], 400);
         }
 

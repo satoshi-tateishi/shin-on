@@ -7,6 +7,7 @@ use App\Models\Performance;
 use App\Models\Position;
 use App\Models\Production;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use App\Services\PerformanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,12 +16,13 @@ use Illuminate\View\View;
 class PerformanceController extends Controller
 {
     public function __construct(
-        private PerformanceService $performanceService
+        private PerformanceService $performanceService,
+        private ActivityLogService $activityLogService
     ) {}
 
     public function index(Request $request): View
     {
-        $filters = $request->only(['search', 'performance_type', 'status']);
+        $filters = $request->only(['search', 'performance_type', 'phase_status']);
         $performances = $this->performanceService->getFilteredPerformances($filters);
 
         return view('performances.index', compact('performances'));
@@ -39,6 +41,9 @@ class PerformanceController extends Controller
     public function store(PerformanceRequest $request): RedirectResponse
     {
         $performance = $this->performanceService->createPerformance($request->validated());
+
+        // アクティビティログ記録
+        $this->activityLogService->logPerformanceCreate($performance);
 
         return redirect()->route('performances.show', $performance)
             ->with('success', '公演が正常に作成されました。');
@@ -65,6 +70,9 @@ class PerformanceController extends Controller
     public function update(PerformanceRequest $request, Performance $performance): RedirectResponse
     {
         $performance = $this->performanceService->updatePerformance($performance, $request->validated());
+
+        // アクティビティログ記録
+        $this->activityLogService->logPerformanceUpdate($performance);
 
         return redirect()->route('performances.show', $performance)
             ->with('success', '公演が正常に更新されました。');

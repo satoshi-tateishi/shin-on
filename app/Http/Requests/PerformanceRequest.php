@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PerformanceStatus;
 use App\Enums\PerformanceType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -17,7 +16,6 @@ class PerformanceRequest extends FormRequest
     public function rules(): array
     {
         $performanceTypes = array_column(PerformanceType::cases(), 'value');
-        $statuses = array_column(PerformanceStatus::cases(), 'value');
 
         return [
             'title' => 'required|string|max:255',
@@ -27,10 +25,6 @@ class PerformanceRequest extends FormRequest
                 Rule::in($performanceTypes)
             ],
             'director' => 'nullable|string|max:255',
-            'status' => [
-                'required',
-                Rule::in($statuses)
-            ],
             'note' => 'nullable|string',
             'is_active' => 'boolean',
             'production_ids' => 'nullable|array',
@@ -56,8 +50,6 @@ class PerformanceRequest extends FormRequest
             'performance_type.required' => '公演種別を選択してください。',
             'performance_type.in' => '有効な公演種別を選択してください。',
             'director.max' => '演出者名は255文字以内で入力してください。',
-            'status.required' => 'ステータスを選択してください。',
-            'status.in' => '有効なステータスを選択してください。',
             'production_ids.*.exists' => '選択されたプロダクションが存在しません。',
             'staff.*.user_id.exists' => '選択されたスタッフが存在しません。',
             'staff.*.position_id.exists' => '選択されたポジションが存在しません。',
@@ -76,7 +68,6 @@ class PerformanceRequest extends FormRequest
             'short_name' => '略称',
             'performance_type' => '公演種別',
             'director' => '演出',
-            'status' => 'ステータス',
             'note' => '備考',
             'production_ids' => 'プロダクション',
             'staff' => 'スタッフ',

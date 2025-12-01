@@ -96,25 +96,6 @@
                         @enderror
                     </div>
 
-                    <!-- ステータス -->
-                    <div>
-                        <label for="status" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                            ステータス <span class="text-red-500">*</span>
-                        </label>
-                        <select name="status" id="status" required
-                                class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('status') border-red-300 @enderror">
-                            <option value="">選択してください</option>
-                            <option value="planning" {{ old('status') === 'planning' ? 'selected' : '' }}>企画中</option>
-                            <option value="preparation" {{ old('status') === 'preparation' ? 'selected' : '' }}>準備中</option>
-                            <option value="in_progress" {{ old('status') === 'in_progress' ? 'selected' : '' }}>進行中</option>
-                            <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>完了</option>
-                            <option value="cancelled" {{ old('status') === 'cancelled' ? 'selected' : '' }}>キャンセル</option>
-                        </select>
-                        @error('status')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <!-- 説明文 -->
                     <div class="sm:col-span-2">
                         <div class="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
