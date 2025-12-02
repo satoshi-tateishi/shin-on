@@ -168,17 +168,20 @@
         <!-- Results Table -->
         @if($equipments->count() > 0)
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
                             @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
                                 <th class="pl-3 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-16">順序</th>
                             @endif
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider @if(request('sort_mode') === 'all') hidden sm:table-cell @endif">
-                                分類
+                            <th class="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-auto">
+                                カテゴリ
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 機材名
+                            </th>
+                            <th class="px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-14 sm:w-auto">
+                                新音番号
                             </th>
                             <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                                 数量
@@ -203,26 +206,24 @@
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 @if(request('sort_mode') === 'all') hidden sm:table-cell @endif">
-                                    <div class="text-xs text-gray-500">{{ $equipment->category->name ?? '---' }}</div>
+                                <td class="px-1 sm:px-3 py-2 text-[10px] sm:text-xs text-gray-500 align-top">
+                                    <div class="truncate max-w-[80px] sm:max-w-none">{{ $equipment->category->name ?? '---' }}</div>
                                     @if($equipment->subcategory)
-                                        <div class="text-xs text-gray-400">{{ $equipment->subcategory->name }}</div>
+                                        <div class="text-gray-400 truncate max-w-[80px] sm:max-w-none">{{ $equipment->subcategory->name }}</div>
                                     @endif
                                 </td>
-                                <td class="px-2 sm:px-4 py-2">
+                                <td class="px-1 sm:px-3 py-2 text-[10px] sm:text-xs text-gray-500 align-top max-w-0">
                                     @if($equipment->manufacturer)
-                                        <div class="text-xs text-gray-400">{{ $equipment->manufacturer }}</div>
+                                        <div class="truncate">{{ $equipment->manufacturer }}</div>
                                     @endif
-                                    <div class="flex items-center">
-                                        <div class="text-xs sm:text-sm font-medium text-gray-900 whitespace-pre-line leading-tight">
-                                            {{ $equipment->name }}
-                                        </div>
-                                        @if($equipment->company_number)
-                                            <div class="ml-1 sm:ml-2 px-1 sm:px-2 py-0.5 border border-gray-300 rounded text-xs text-gray-600 flex-shrink-0">
-                                                {{ $equipment->company_number }}
-                                            </div>
-                                        @endif
-                                    </div>
+                                    <div class="text-gray-900 truncate">{{ $equipment->name }}</div>
+                                </td>
+                                <td class="px-1 py-2 whitespace-nowrap text-left align-middle">
+                                    @if($equipment->company_number)
+                                        <span class="px-1 py-0.5 border border-gray-300 rounded text-xs text-gray-600">
+                                            {{ $equipment->company_number }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">
                                     {{ $equipment->quantity }}{{ $equipment->unit }}
