@@ -8,6 +8,7 @@
     <title>{{ config('app.name', 'Laravel') }} - ダッシュボード</title>
 
     <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('icon-512.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icon-192.png') }}">
     <link rel="icon" type="image/png" sizes="180x180" href="{{ asset('icon-180.png') }}">
