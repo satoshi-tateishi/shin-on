@@ -52,6 +52,15 @@
                 <div x-show="open" @click.away="open = false" x-transition
                      class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                     <div class="py-1">
+                        <a href="{{ route('master.equipments.export-pdf', request()->query()) }}"
+                           target="_blank"
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            PDF出力
+                        </a>
+                        <div class="border-t border-gray-100 my-1"></div>
                         <a href="{{ route('master.equipments.export-csv') }}"
                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,7 +221,7 @@
                                         <div class="text-gray-400 truncate max-w-[80px] sm:max-w-none">{{ $equipment->subcategory->name }}</div>
                                     @endif
                                 </td>
-                                <td class="px-1 sm:px-3 py-2 text-[10px] sm:text-xs text-gray-500 align-top max-w-0">
+                                <td class="px-1 sm:px-3 py-2 text-xs sm:text-sm text-gray-500 align-top max-w-0">
                                     @if($equipment->manufacturer)
                                         <div class="truncate">{{ $equipment->manufacturer }}</div>
                                     @endif

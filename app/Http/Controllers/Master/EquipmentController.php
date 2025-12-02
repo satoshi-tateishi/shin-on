@@ -6,10 +6,12 @@ use App\Http\Controllers\Concerns\HasCsvOperations;
 use App\Http\Controllers\Concerns\HasMasterOperations;
 use App\Http\Controllers\Concerns\HasSortableRecords;
 use App\Http\Controllers\Controller;
+use App\Models\CompanyLogo;
 use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentSubcategory;
 use App\Models\Location;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -565,6 +567,105 @@ class EquipmentController extends Controller
                 'success' => false,
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * 機材マスタ一覧をPDF出力
+     */
+    public function exportPdf(Request $request)
+    {
+        // PDF生成は時間がかかるため、実行時間を延長
+        set_time_limit(120);
+
+        try {
+            // PDF出力用：同じ機材をグループ化（manufacturer + name + subcategory）
+            $query = Equipment::select([
+                'subcategory_id',
+                'manufacturer', 'name',
+            ])
+            ->selectRaw('GROUP_CONCAT(company_number ORDER BY sort SEPARATOR ", ") as company_numbers')
+            ->selectRaw('SUM(quantity) as total_quantity')
+            ->with([
+                'subcategory:id,category_id,name',
+                'subcategory.category:id,name',
+            ])
+            ->groupBy('manufacturer', 'name', 'subcategory_id');
+
+            // フィルター適用（グループ化前のカラムのみ）
+            if ($request->filled('category_id')) {
+                $query->whereHas('subcategory', fn ($q) => $q->where('category_id', $request->category_id));
+            }
+            if ($request->filled('subcategory_id')) {
+                $query->where('subcategory_id', $request->subcategory_id);
+            }
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('manufacturer', 'like', "%{$search}%")
+                      ->orWhere('company_number', 'like', "%{$search}%");
+                });
+            }
+
+            $equipments = $query->orderBy('subcategory_id')->orderBy('name')->get();
+
+            // カテゴリ別にグループ化
+            $groupedEquipments = $equipments->groupBy(function ($equipment) {
+                return $equipment->subcategory->category->name ?? '未分類';
+            });
+
+            // アクティブなロゴを取得
+            $companyLogo = CompanyLogo::getActiveLogo();
+            $logoPath = $companyLogo ? public_path('storage/'.$companyLogo->file_path) : null;
+
+            // フィルター情報を取得
+            $filterInfo = [];
+            if ($request->filled('category_id')) {
+                $category = EquipmentCategory::find($request->category_id);
+                $filterInfo['カテゴリ'] = $category?->name ?? '不明';
+            }
+            if ($request->filled('subcategory_id')) {
+                $subcategory = EquipmentSubcategory::find($request->subcategory_id);
+                $filterInfo['サブカテゴリ'] = $subcategory?->name ?? '不明';
+            }
+            if ($request->filled('location_id')) {
+                $location = Location::find($request->location_id);
+                $filterInfo['基本倉庫'] = $location?->name ?? '不明';
+            }
+            if ($request->filled('status')) {
+                $statusLabels = [
+                    'available' => '利用可能',
+                    'in_use' => '使用中',
+                    'broken' => '故障',
+                    'retired' => '廃止',
+                ];
+                $filterInfo['状態'] = $statusLabels[$request->status] ?? $request->status;
+            }
+            if ($request->filled('search')) {
+                $filterInfo['検索'] = $request->search;
+            }
+
+            $pdf = Pdf::loadView('master.equipments.pdf', [
+                'groupedEquipments' => $groupedEquipments,
+                'totalCount' => $equipments->count(),
+                'filterInfo' => $filterInfo,
+                'exportDate' => now()->format('Y年m月d日 H:i'),
+                'logoPath' => $logoPath,
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = '機材マスタ一覧_'.now()->format('Ymd_His').'.pdf';
+
+            // TODO: 本番では download に戻す
+            return $pdf->stream($filename);
+        } catch (\Exception $e) {
+            \Log::error('PDF出力エラー: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->back()->with('error', 'PDF出力中にエラーが発生しました: '.$e->getMessage());
         }
     }
 }

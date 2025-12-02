@@ -109,8 +109,9 @@ return [
 
         /**
          * Whether to enable font subsetting or not.
+         * true: 使用文字のみフォント埋め込み（軽量化）
          */
-        'enable_font_subsetting' => false,
+        'enable_font_subsetting' => true,
 
         /**
          * The PDF rendering backend to use
