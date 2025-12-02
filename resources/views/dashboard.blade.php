@@ -9,6 +9,15 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('icon-180.png') }}">
+
+    <!-- PWA -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="dB">
+    <meta name="theme-color" content="#3B82F6">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -378,6 +387,7 @@
                             </div>
                         </a>
 
+                        @if(auth()->user()->role === 'admin')
                         <!-- バックアップ管理 -->
                         <a href="{{ route('admin.backup.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
@@ -396,10 +406,12 @@
                                 </div>
                             </div>
                         </a>
+                        @endif
                     </div>
                 </div>
                 @endif
 
+                @if(auth()->user()->role === 'admin')
                 <!-- Activity Log Section -->
                 <div class="mb-12">
                     <div class="flex items-center mb-6">
@@ -431,30 +443,10 @@
                                 </svg>
                             </div>
 
-                            <!-- Recent Activities Preview -->
-                            @if($recentActivities->count() > 0)
-                                <div class="space-y-2">
-                                    @foreach($recentActivities as $activity)
-                                        <div class="flex items-center gap-2 text-sm">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $activity->action_color }} whitespace-nowrap flex-shrink-0">
-                                                {{ $activity->action_label }}
-                                            </span>
-                                            <span class="text-gray-600 truncate">{{ $activity->user?->name ?? '不明' }} - {{ Str::limit($activity->description, 30) }}</span>
-                                            <span class="text-gray-400 text-xs whitespace-nowrap ml-auto">{{ $activity->relative_time }}</span>
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <div class="mt-4 pt-3 border-t border-gray-100 text-center">
-                                    <span class="text-sm text-blue-600 group-hover:text-blue-700 font-medium">すべてのアクティビティを見る →</span>
-                                </div>
-                            @else
-                                <div class="text-center text-gray-500 py-4">
-                                    <p class="text-sm">まだアクティビティがありません</p>
-                                </div>
-                            @endif
                         </div>
                     </a>
                 </div>
+                @endif
 
             </div>
         </div>
