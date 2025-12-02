@@ -17,6 +17,10 @@
         body { font-family: "IPAGothic", sans-serif; font-size: 10pt; line-height: 1.4; margin: 5mm 10mm; }
 
         .page-header { margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 8px; }
+        .page-header-row { display: table; width: 100%; }
+        .page-header-left { display: table-cell; width: 70%; vertical-align: middle; }
+        .page-header-right { display: table-cell; width: 30%; text-align: right; vertical-align: middle; }
+        .page-header-right img { max-height: 40px; vertical-align: middle; }
         .page-title { font-size: 14pt; font-weight: bold; }
         .page-subtitle { font-size: 9pt; color: #555; }
 
@@ -32,22 +36,56 @@
         td { border: 1px solid #ccc; padding: 1px 8px; font-size: 8pt; }
         tr { page-break-inside: avoid; }
 
-        .col-subcategory { width: 15%; font-size: 7pt; color: #666; }
-        .col-manufacturer { width: 15%; font-size: 8pt; }
-        .col-equipment { width: auto; }
-        .col-company-number { width: 32%; }
+        .col-subcategory { width: 15%; font-size: 6pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 20mm; }
+        .col-manufacturer { width: 20mm; font-size: 8pt; }
+        .col-equipment { width: 55mm; }
+        .col-company-number { width: 55mm; }
         .col-quantity { width: 12mm; text-align: center; }
 
         .equipment-name { font-weight: bold; font-size: 9pt; }
         .quantity { font-size: 11pt; font-weight: bold; text-align: center; }
 
         .no-data { text-align: center; padding: 30px; color: #999; }
+
+        /* 固定フッター（ページ番号表示用） */
+        .page-footer {
+            position: fixed;
+            bottom: 10mm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+        }
     </style>
 </head>
 <body>
+    <!-- 固定フッター（ページ番号） -->
+    <div class="page-footer">
+        <script type="text/php">
+            if (isset($pdf)) {
+                $font = $fontMetrics->getFont("IPAGothic");
+                $text = "ページ {PAGE_NUM}";
+                $pageWidth = $pdf->get_width();
+                $textWidth = $fontMetrics->getTextWidth($text, $font, 8);
+                $x = ($pageWidth - $textWidth) / 2;
+                $pdf->page_text($x, 820, $text, $font, 8, array(0.4, 0.4, 0.4));
+            }
+        </script>
+    </div>
+
     <div class="page-header">
-        <div class="page-title">機材マスタ一覧</div>
-        <div class="page-subtitle">出力日時: {{ $exportDate }}</div>
+        <div class="page-header-row">
+            <div class="page-header-left">
+                <div class="page-title">機材マスタ一覧</div>
+                <div class="page-subtitle">出力日時: {{ $exportDate }}</div>
+            </div>
+            <div class="page-header-right">
+                @if($logoPath && file_exists($logoPath))
+                    <img src="{{ $logoPath }}" alt="Company Logo">
+                @endif
+            </div>
+        </div>
     </div>
 
     @if(count($filterInfo) > 0)

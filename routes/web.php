@@ -133,6 +133,7 @@ Route::middleware('auth')->group(function () {
         Route::post('equipments/bulk-delete', [EquipmentController::class, 'bulkDelete'])->name('equipments.bulk-delete');
         Route::get('equipments/export-csv', [EquipmentController::class, 'exportCsv'])->name('equipments.export-csv');
         Route::get('equipments/export-pdf', [EquipmentController::class, 'exportPdf'])->name('equipments.export-pdf');
+        Route::post('equipments/send-lineworks', [EquipmentController::class, 'sendPdfToLineWorks'])->name('equipments.send-lineworks');
         Route::get('equipments/template-csv', [EquipmentController::class, 'templateCsv'])->name('equipments.template-csv');
         Route::post('equipments/import-csv', [EquipmentController::class, 'importCsv'])->name('equipments.import-csv');
         Route::get('equipments/subcategories', [EquipmentController::class, 'getSubcategories'])->name('equipments.subcategories');

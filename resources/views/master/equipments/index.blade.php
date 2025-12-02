@@ -52,15 +52,24 @@
                 <div x-show="open" @click.away="open = false" x-transition
                      class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                     <div class="py-1">
+                        <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">PDF出力</div>
                         <a href="{{ route('master.equipments.export-pdf', request()->query()) }}"
                            target="_blank"
                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            PDF出力
+                            ダウンロード
                         </a>
+                        <button type="button" onclick="showLineWorksConfirmation()"
+                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            LINE WORKSに送信
+                        </button>
                         <div class="border-t border-gray-100 my-1"></div>
+                        <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">CSV</div>
                         <a href="{{ route('master.equipments.export-csv') }}"
                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,6 +331,66 @@
     </div>
     @endif
 
+    <!-- LINE WORKS送信確認モーダル -->
+    <div id="lineworksModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-blue-100 rounded-full mb-3 sm:mb-4">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+            </div>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 text-center mb-2">LINE WORKSに送信</h3>
+            <div class="bg-gray-50 rounded-md p-3 sm:p-4 mb-3 sm:mb-4">
+                <div class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
+                    <div class="flex justify-between">
+                        <span class="font-medium">送信先:</span>
+                        <span>{{ auth()->user()->name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium">内容:</span>
+                        <span>機材マスタ一覧PDF</span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs sm:text-sm text-gray-500 text-center mb-3 sm:mb-4">
+                機材マスタ一覧のPDFファイルをあなたのLINE WORKSアカウントに送信します。
+            </p>
+            <form method="POST" action="{{ route('master.equipments.send-lineworks', request()->query()) }}" id="lineworksSendForm">
+                @csrf
+                <div class="flex space-x-2 sm:space-x-3">
+                    <button type="button" onclick="hideLineWorksConfirmation()"
+                            class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        キャンセル
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-3 sm:px-4 py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                        送信
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 機材マスタ専用JavaScript -->
     <script src="{{ asset('js/master/equipment-index.js') }}"></script>
+
+    <!-- LINE WORKS送信確認モーダル関数 -->
+    <script>
+        function showLineWorksConfirmation() {
+            document.getElementById('lineworksModal').classList.remove('hidden');
+            document.getElementById('lineworksModal').classList.add('flex');
+        }
+
+        function hideLineWorksConfirmation() {
+            document.getElementById('lineworksModal').classList.add('hidden');
+            document.getElementById('lineworksModal').classList.remove('flex');
+        }
+
+        // Escapeキーでモーダルを閉じる
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideLineWorksConfirmation();
+            }
+        });
+    </script>
 @endsection

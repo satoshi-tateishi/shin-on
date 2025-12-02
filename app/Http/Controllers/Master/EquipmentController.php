@@ -11,10 +11,13 @@ use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentSubcategory;
 use App\Models\Location;
+use App\Services\LineWorksBotService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class EquipmentController extends Controller
@@ -666,6 +669,126 @@ class EquipmentController extends Controller
             ]);
 
             return redirect()->back()->with('error', 'PDF出力中にエラーが発生しました: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * 機材マスタ一覧PDFをLINE WORKSに送信
+     */
+    public function sendPdfToLineWorks(Request $request): RedirectResponse
+    {
+        $tempFilePath = null;
+
+        try {
+            $user = auth()->user();
+
+            if (! $user->lineworks_id) {
+                return redirect()->route('master.equipments.index')
+                    ->with('error', 'LINE WORKS IDが設定されていません。');
+            }
+
+            // PDF出力用：同じ機材をグループ化（manufacturer + name + subcategory）
+            $query = Equipment::select([
+                'subcategory_id',
+                'manufacturer', 'name',
+            ])
+            ->selectRaw('GROUP_CONCAT(company_number ORDER BY sort SEPARATOR ", ") as company_numbers')
+            ->selectRaw('SUM(quantity) as total_quantity')
+            ->with([
+                'subcategory:id,category_id,name',
+                'subcategory.category:id,name',
+            ])
+            ->groupBy('manufacturer', 'name', 'subcategory_id');
+
+            // フィルター適用
+            if ($request->filled('category_id')) {
+                $query->whereHas('subcategory', fn ($q) => $q->where('category_id', $request->category_id));
+            }
+            if ($request->filled('subcategory_id')) {
+                $query->where('subcategory_id', $request->subcategory_id);
+            }
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('manufacturer', 'like', "%{$search}%")
+                      ->orWhere('company_number', 'like', "%{$search}%");
+                });
+            }
+
+            $equipments = $query->orderBy('subcategory_id')->orderBy('name')->get();
+
+            // カテゴリ別にグループ化
+            $groupedEquipments = $equipments->groupBy(function ($equipment) {
+                return $equipment->subcategory->category->name ?? '未分類';
+            });
+
+            // アクティブなロゴを取得
+            $companyLogo = CompanyLogo::getActiveLogo();
+            $logoPath = $companyLogo ? public_path('storage/'.$companyLogo->file_path) : null;
+
+            // フィルター情報
+            $filterInfo = [];
+            if ($request->filled('category_id')) {
+                $category = EquipmentCategory::find($request->category_id);
+                $filterInfo['カテゴリ'] = $category?->name ?? '不明';
+            }
+            if ($request->filled('subcategory_id')) {
+                $subcategory = EquipmentSubcategory::find($request->subcategory_id);
+                $filterInfo['サブカテゴリ'] = $subcategory?->name ?? '不明';
+            }
+            if ($request->filled('search')) {
+                $filterInfo['検索'] = $request->search;
+            }
+
+            $pdf = Pdf::loadView('master.equipments.pdf', [
+                'groupedEquipments' => $groupedEquipments,
+                'totalCount' => $equipments->count(),
+                'filterInfo' => $filterInfo,
+                'exportDate' => now()->format('Y年m月d日 H:i'),
+                'logoPath' => $logoPath,
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = '機材マスタ一覧_'.now()->format('Ymd_His').'.pdf';
+
+            // 一時ディレクトリに保存
+            $tempDir = 'temp';
+            if (! Storage::exists($tempDir)) {
+                Storage::makeDirectory($tempDir);
+            }
+
+            $tempFileName = uniqid('equipment_pdf_').'.pdf';
+            $tempFilePath = storage_path("app/{$tempDir}/{$tempFileName}");
+
+            file_put_contents($tempFilePath, $pdf->output());
+
+            // LINE WORKSに送信
+            $botService = app(LineWorksBotService::class);
+            $botService->sendPdfToUser($user->lineworks_id, $tempFilePath, $filename);
+
+            Log::info('Equipment PDF sent to LINE WORKS', [
+                'user_id' => $user->id,
+                'lineworks_id' => $user->lineworks_id,
+                'filename' => $filename,
+            ]);
+
+            return redirect()->route('master.equipments.index')
+                ->with('success', 'PDFファイルをLINE WORKSに送信しました。');
+        } catch (\Exception $e) {
+            Log::error('Failed to send Equipment PDF to LINE WORKS', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->route('master.equipments.index')
+                ->with('error', 'PDFの送信に失敗しました: '.$e->getMessage());
+        } finally {
+            if ($tempFilePath && file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
         }
     }
 }
