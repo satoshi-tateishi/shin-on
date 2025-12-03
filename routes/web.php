@@ -252,6 +252,7 @@ Route::middleware('auth')->group(function () {
     Route::get('api/schedule/categories', [\App\Http\Controllers\ScheduleController::class, 'getCategories'])->name('api.schedule.categories');
     Route::get('api/schedule/subcategories', [\App\Http\Controllers\ScheduleController::class, 'getSubcategories'])->name('api.schedule.subcategories');
     Route::get('api/schedule/equipments', [\App\Http\Controllers\ScheduleController::class, 'getEquipments'])->name('api.schedule.equipments');
+    Route::get('api/schedule/performances', [\App\Http\Controllers\ScheduleController::class, 'getPerformances'])->name('api.schedule.performances');
 
     // スケジュールセルメモAPI
     Route::get('api/schedule/cell-memos', [\App\Http\Controllers\Api\ScheduleCellMemoController::class, 'index'])->name('api.schedule.cell-memos.index');

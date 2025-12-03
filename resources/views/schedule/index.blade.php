@@ -159,115 +159,136 @@
 @endpush
 
 @section('header')
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">機材スケジュール表</h1>
-        <p class="text-sm text-gray-500 mt-1">機材の使用状況をExcel風のスケジュール表で確認できます</p>
+    <div class="w-full">
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">機材スケジュール表</h1>
     </div>
 @endsection
 
 @section('content')
 
-    <div class="p-6" x-data="scheduleManager()">
-        <!-- フィルター -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
-            <div class="space-y-4">
-                <!-- フォーム全体でEnterキー対応 -->
-                <form @submit.prevent="loadScheduleData()" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <!-- 期間選択 -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">開始日</label>
-                        <input type="date" x-model="filters.start_date" @keydown.enter="loadScheduleData()"
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">終了日</label>
-                        <input type="date" x-model="filters.end_date" @keydown.enter="loadScheduleData()"
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+    <div class="p-3 sm:p-6 space-y-4 sm:space-y-6" x-data="scheduleManager()">
+        <!-- 検索・フィルター -->
+        <div class="bg-white border border-gray-200 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900">検索条件</h3>
+            </div>
+            <div class="px-4 sm:px-6 py-3 sm:py-4">
+                <form @submit.prevent="loadScheduleData()" class="space-y-3 sm:space-y-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                        <!-- 期間選択 -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">開始日</label>
+                            <input type="date" x-model="filters.start_date" @keydown.enter="loadScheduleData()"
+                                   class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">終了日</label>
+                            <input type="date" x-model="filters.end_date" @keydown.enter="loadScheduleData()"
+                                   class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+
+                        <!-- カテゴリ選択 -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
+                            <select x-model="filters.category_id" @change="onCategoryChange()" @keydown.enter="loadScheduleData()"
+                                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">全てのカテゴリ</option>
+                                <template x-for="category in categories" :key="category.id">
+                                    <option :value="category.id" x-text="category.name"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- サブカテゴリ選択 -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">サブカテゴリ</label>
+                            <select x-model="filters.subcategory_id" @keydown.enter="loadScheduleData()"
+                                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">全てのサブカテゴリ</option>
+                                <template x-for="subcategory in subcategories" :key="subcategory.id">
+                                    <option :value="subcategory.id" x-text="subcategory.name"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- 機材名検索 -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">機材名</label>
+                            <input type="text" x-model="filters.equipment_name" @keydown.enter="loadScheduleData()"
+                                   placeholder="機材名で検索"
+                                   class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+
+                        <!-- 公演名選択 -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">公演名</label>
+                            <select x-model="filters.performance_id" @keydown.enter="loadScheduleData()"
+                                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">全ての公演</option>
+                                <template x-for="performance in performances" :key="performance.id">
+                                    <option :value="performance.id" x-text="performance.display_name"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- 表示件数 -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">表示件数</label>
+                            <select x-model="filters.per_page" @keydown.enter="loadScheduleData()"
+                                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="10">10件</option>
+                                <option value="20">20件</option>
+                                <option value="50">50件</option>
+                                <option value="100" selected>100件</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- カテゴリ選択 -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-                        <select x-model="filters.category_id" @change="onCategoryChange()" @keydown.enter="loadScheduleData()"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                            <option value="">全てのカテゴリ</option>
-                            <template x-for="category in categories" :key="category.id">
-                                <option :value="category.id" x-text="category.name"></option>
-                            </template>
-                        </select>
+                    <!-- アクションボタン -->
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" @click="resetFilters()"
+                                class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 min-w-[70px]">
+                            リセット
+                        </button>
+                        <button type="submit"
+                                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 min-w-[70px]">
+                            <span x-show="!loading">表示</span>
+                            <span x-show="loading">読込中...</span>
+                        </button>
                     </div>
-
-                    <!-- サブカテゴリ選択 -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">サブカテゴリ</label>
-                        <select x-model="filters.subcategory_id" @keydown.enter="loadScheduleData()"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                            <option value="">全てのサブカテゴリ</option>
-                            <template x-for="subcategory in subcategories" :key="subcategory.id">
-                                <option :value="subcategory.id" x-text="subcategory.name"></option>
-                            </template>
-                        </select>
-                    </div>
-
-                    <!-- 表示件数 -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">表示件数</label>
-                        <select x-model="filters.per_page" @keydown.enter="loadScheduleData()"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                            <option value="10">10件</option>
-                            <option value="20">20件</option>
-                            <option value="50">50件</option>
-                            <option value="100" selected>100件</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- アクションボタン -->
-                <div class="flex space-x-3">
-                    <button type="submit"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
-                        <span x-show="!loading">表示</span>
-                        <span x-show="loading">読込中...</span>
-                    </button>
-                    <button type="button" @click="resetFilters()"
-                            class="bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-600">
-                        リセット
-                    </button>
-                </div>
                 </form>
             </div>
         </div>
 
         <!-- ローディング -->
-        <div x-show="loading" class="bg-white shadow-sm rounded-lg p-8 text-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-gray-600">データを読み込み中...</p>
+        <div x-show="loading" class="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 text-center">
+            <div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+            <p class="text-sm sm:text-base text-gray-600">データを読み込み中...</p>
         </div>
 
         <!-- エラー表示 -->
-        <div x-show="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div x-show="error" class="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
             <div class="flex">
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">エラーが発生しました</h3>
-                    <div class="mt-2 text-sm text-red-700" x-text="error"></div>
+                <div class="ml-2 sm:ml-3">
+                    <h3 class="text-xs sm:text-sm font-medium text-red-800">エラーが発生しました</h3>
+                    <div class="mt-1 sm:mt-2 text-xs sm:text-sm text-red-700" x-text="error"></div>
                 </div>
             </div>
         </div>
 
         <!-- スケジュール表 -->
-        <div x-show="!loading && !error && scheduleData.length > 0" class="bg-white shadow-sm rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-gray-900">
+        <div x-show="!loading && !error && scheduleData.length > 0" class="bg-white border border-gray-200 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-900">
                         スケジュール表
-                        <span class="text-sm font-normal text-gray-600">
+                        <span class="text-xs sm:text-sm font-normal text-gray-600">
                             (<span x-text="scheduleData.length"></span>件表示)
                         </span>
                     </h2>
 
                     <!-- ページネーション情報 -->
-                    <div x-show="pagination" class="text-sm text-gray-600">
+                    <div x-show="pagination" class="text-xs sm:text-sm text-gray-600">
                         <span x-text="pagination?.from || 0"></span>-<span x-text="pagination?.to || 0"></span>
                         / <span x-text="pagination?.total || 0"></span>件
                     </div>
@@ -275,23 +296,23 @@
             </div>
 
             <!-- ステータス凡例 -->
-            <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
-                <h3 class="text-sm font-medium text-gray-700 mb-2">ステータス凡例</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div class="px-4 sm:px-6 py-2 sm:py-3 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">ステータス凡例</h3>
+                <div class="flex flex-wrap gap-3 sm:gap-4">
                     <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-green-500 rounded"></div>
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded"></div>
                         <span class="text-xs">利用可能</span>
                     </div>
                     <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-blue-500 rounded"></div>
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-blue-500 rounded"></div>
                         <span class="text-xs">予約済み</span>
                     </div>
                     <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-orange-500 rounded"></div>
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-orange-500 rounded"></div>
                         <span class="text-xs">使用中</span>
                     </div>
                     <div class="flex items-center space-x-1">
-                        <div class="w-3 h-3 bg-red-500 rounded"></div>
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded"></div>
                         <span class="text-xs">修理中</span>
                     </div>
                 </div>
@@ -387,24 +408,24 @@
                 </div>
 
             <!-- ページネーション -->
-            <div x-show="pagination.last_page > 1" class="px-6 py-4 border-t border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-600">
+            <div x-show="pagination.last_page > 1" class="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <div class="text-xs sm:text-sm text-gray-600">
                         <span x-text="pagination.from"></span>-<span x-text="pagination.to"></span>
                         / <span x-text="pagination.total"></span>件
                     </div>
                     <div class="flex space-x-2">
                         <button @click="loadPage(pagination.current_page - 1)"
                                 :disabled="pagination.current_page <= 1"
-                                class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="px-2 sm:px-3 py-1 text-xs sm:text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                             前へ
                         </button>
-                        <span class="px-3 py-1 text-sm">
+                        <span class="px-2 sm:px-3 py-1 text-xs sm:text-sm">
                             <span x-text="pagination.current_page"></span> / <span x-text="pagination.last_page"></span>
                         </span>
                         <button @click="loadPage(pagination.current_page + 1)"
                                 :disabled="pagination.current_page >= pagination.last_page"
-                                class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="px-2 sm:px-3 py-1 text-xs sm:text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                             次へ
                         </button>
                     </div>
@@ -413,8 +434,8 @@
         </div>
 
         <!-- データなし -->
-        <div x-show="!loading && !error && scheduleData.length === 0" class="bg-white shadow-sm rounded-lg p-8 text-center">
-            <p class="text-gray-600">該当するデータがありません。フィルター条件を変更してください。</p>
+        <div x-show="!loading && !error && scheduleData.length === 0" class="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 text-center">
+            <p class="text-sm sm:text-base text-gray-600">該当するデータがありません。フィルター条件を変更してください。</p>
         </div>
 
         <!-- メモ入力モーダル -->
@@ -422,35 +443,35 @@
              x-cloak
              class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
              @click.self="closeMemoModal()">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">セルの編集</h3>
+            <div class="relative top-10 sm:top-20 mx-3 sm:mx-auto p-4 sm:p-5 border max-w-sm sm:w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-2 sm:mt-3">
+                    <h3 class="text-base sm:text-lg font-medium leading-6 text-gray-900 mb-3 sm:mb-4">セルの編集</h3>
 
                     <!-- 機材・日付情報 -->
-                    <div class="mb-4 p-3 bg-gray-50 rounded text-sm">
+                    <div class="mb-3 sm:mb-4 p-2 sm:p-3 bg-gray-50 rounded text-xs sm:text-sm">
                         <div class="font-medium text-gray-700" x-text="currentCell.equipmentName"></div>
                         <div class="text-gray-500 text-xs" x-text="currentCell.date"></div>
                     </div>
 
                     <!-- メモ入力 -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">メモ</label>
+                    <div class="mb-3 sm:mb-4">
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">メモ</label>
                         <textarea
                             x-model="currentCell.memo"
                             rows="3"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full border border-gray-300 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="メモを入力してください"
                         ></textarea>
                     </div>
 
                     <!-- 色選択 -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">背景色</label>
-                        <div class="grid grid-cols-6 gap-2">
+                    <div class="mb-3 sm:mb-4">
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">背景色</label>
+                        <div class="grid grid-cols-6 gap-1.5 sm:gap-2">
                             <button
                                 type="button"
                                 @click="currentCell.customColor = ''"
-                                class="w-full h-8 border-2 rounded"
+                                class="w-full h-7 sm:h-8 border-2 rounded"
                                 :class="currentCell.customColor === '' ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'"
                                 title="デフォルト">
                                 <span class="text-xs">デフォ</span>
@@ -459,7 +480,7 @@
                                 <button
                                     type="button"
                                     @click="currentCell.customColor = color.value"
-                                    class="w-full h-8 border-2 rounded"
+                                    class="w-full h-7 sm:h-8 border-2 rounded"
                                     :style="`background-color: ${color.value}`"
                                     :class="currentCell.customColor === color.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'"
                                     :title="color.name">
@@ -469,23 +490,23 @@
                     </div>
 
                     <!-- ボタン -->
-                    <div class="flex justify-end space-x-3 mt-6">
+                    <div class="flex justify-end space-x-2 sm:space-x-3 mt-4 sm:mt-6">
                         <button
                             type="button"
                             @click="clearCellData()"
-                            class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600">
+                            class="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-500 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-red-600">
                             クリア
                         </button>
                         <button
                             type="button"
                             @click="closeMemoModal()"
-                            class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300">
+                            class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-800 text-xs sm:text-sm font-medium rounded-md hover:bg-gray-300">
                             キャンセル
                         </button>
                         <button
                             type="button"
                             @click="saveCellData()"
-                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+                            class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-blue-700">
                             保存
                         </button>
                     </div>
@@ -503,6 +524,7 @@
                 scheduleData: [],
                 categories: [],
                 subcategories: [],
+                performances: [],
                 dateRange: [],
                 pagination: {
                     current_page: 1,
@@ -523,6 +545,8 @@
                     end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     category_id: '',
                     subcategory_id: '',
+                    equipment_name: '',
+                    performance_id: '',
                     per_page: 100
                 },
 
@@ -552,6 +576,7 @@
                 init() {
                     this.loadCategories();
                     this.loadSubcategories();
+                    this.loadPerformances();
                     this.loadScheduleData();
                 },
 
@@ -775,6 +800,22 @@
                     }
                 },
 
+                async loadPerformances() {
+                    try {
+                        const response = await fetch('/api/schedule/performances', {
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.performances = data.performances;
+                        }
+                    } catch (error) {
+                        console.error('Failed to load performances:', error);
+                    }
+                },
+
                 onCategoryChange() {
                     this.filters.subcategory_id = ''; // サブカテゴリをリセット
                     this.loadSubcategories(this.filters.category_id);
@@ -796,6 +837,14 @@
                             params.append('subcategory_id', this.filters.subcategory_id);
                         } else if (this.filters.category_id) {
                             params.append('category_id', this.filters.category_id);
+                        }
+
+                        if (this.filters.equipment_name) {
+                            params.append('equipment_name', this.filters.equipment_name);
+                        }
+
+                        if (this.filters.performance_id) {
+                            params.append('performance_id', this.filters.performance_id);
                         }
 
                         const response = await fetch(`/api/schedule/equipment?${params}`, {
@@ -835,6 +884,8 @@
                         end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                         category_id: '',
                         subcategory_id: '',
+                        equipment_name: '',
+                        performance_id: '',
                         per_page: 100
                     };
                     this.loadSubcategories(); // サブカテゴリもリセット（全て表示）

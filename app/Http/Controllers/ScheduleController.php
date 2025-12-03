@@ -32,6 +32,8 @@ class ScheduleController extends Controller
                 'category_id' => 'nullable|exists:equipment_categories,id',
                 'subcategory_id' => 'nullable|exists:equipment_subcategories,id',
                 'equipment_ids' => 'nullable|string',
+                'equipment_name' => 'nullable|string|max:255',
+                'performance_id' => 'nullable|exists:performances,id',
                 'page' => 'nullable|integer|min:1',
                 'per_page' => 'nullable|integer|min:1|max:500',
             ]);
@@ -68,6 +70,18 @@ class ScheduleController extends Controller
 
             if ($equipmentIds) {
                 $equipmentQuery->whereIn('id', $equipmentIds);
+            }
+
+            // 機材名で検索
+            if ($request->equipment_name) {
+                $equipmentQuery->where('name', 'like', "%{$request->equipment_name}%");
+            }
+
+            // 公演でフィルタ（その公演のフェーズに紐づく機材のみ表示）
+            if ($request->performance_id) {
+                $equipmentQuery->whereHas('phaseEquipments.phase', function ($query) use ($request) {
+                    $query->where('performance_id', $request->performance_id);
+                });
             }
 
             $equipmentQuery->orderBy('sort')
@@ -446,6 +460,39 @@ class ScheduleController extends Controller
             ->get(['id', 'name', 'company_number']);
 
         return response()->json(['equipments' => $equipments]);
+    }
+
+    /**
+     * 公演一覧を取得（予定・進行中のフェーズを含む公演のみ）
+     */
+    public function getPerformances()
+    {
+        $today = now()->toDateString();
+
+        $performances = \App\Models\Performance::whereHas('phases', function ($query) use ($today) {
+            // 予定(upcoming): start_date > today
+            // 進行中(in_progress): start_date <= today AND end_date >= today
+            $query->where(function ($q) use ($today) {
+                $q->where('start_date', '>', $today) // 予定
+                    ->orWhere(function ($sub) use ($today) {
+                        $sub->where('start_date', '<=', $today)
+                            ->where('end_date', '>=', $today); // 進行中
+                    });
+            });
+        })
+            ->orderBy('title')
+            ->get(['id', 'title', 'short_name'])
+            ->map(function ($performance) {
+                return [
+                    'id' => $performance->id,
+                    'display_name' => $performance->display_name,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'performances' => $performances,
+        ]);
     }
 
 }
