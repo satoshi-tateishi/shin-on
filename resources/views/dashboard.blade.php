@@ -212,7 +212,7 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- 機材マスタ -->
-                        <a href="{{ route('master.equipments.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-teal-200">
+                        <a href="{{ route('master.equipments.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-teal-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -231,7 +231,7 @@
                         </a>
 
                         <!-- 機材セット -->
-                        <a href="{{ route('master.equipment-sets.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-pink-200">
+                        <a href="{{ route('master.equipment-sets.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-pink-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -250,7 +250,7 @@
                         </a>
 
                         <!-- カテゴリマスタ -->
-                        <a href="{{ route('master.equipment-categories.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-blue-200">
+                        <a href="{{ route('master.equipment-categories.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -269,7 +269,7 @@
                         </a>
 
                         <!-- サブカテゴリマスタ -->
-                        <a href="{{ route('master.equipment-subcategories.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-indigo-200">
+                        <a href="{{ route('master.equipment-subcategories.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-indigo-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -288,7 +288,7 @@
                         </a>
 
                         <!-- ユーザーマスタ -->
-                        <a href="{{ route('master.users.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-purple-200">
+                        <a href="{{ route('master.users.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -307,7 +307,7 @@
                         </a>
 
                         <!-- ポジションマスタ -->
-                        <a href="{{ route('master.positions.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-amber-200">
+                        <a href="{{ route('master.positions.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-amber-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -326,7 +326,7 @@
                         </a>
 
                         <!-- 使用場所マスタ -->
-                        <a href="{{ route('master.locations.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-green-200">
+                        <a href="{{ route('master.locations.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -346,7 +346,7 @@
                         </a>
 
                         <!-- プロダクションマスタ -->
-                        <a href="{{ route('master.productions.index') }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-orange-200">
+                        <a href="{{ route('master.productions.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-orange-200 hover:-translate-y-1">
                             <div class="px-6 py-2 sm:px-8 sm:py-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-3">
@@ -443,7 +443,7 @@
                         <div class="w-1 h-6 bg-gradient-to-b from-gray-500 to-gray-600 rounded-full mr-4"></div>
                         <h2 class="text-2xl font-bold text-gray-900">アクティビティ</h2>
                     </div>
-                    <a href="{{ route('activity-logs.index') }}" class="block group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200">
+                    <a href="{{ route('activity-logs.index') }}" class="block group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200 hover:-translate-y-1">
                         <div class="p-6">
                             <!-- Header -->
                             <div class="flex items-center justify-between mb-4">
