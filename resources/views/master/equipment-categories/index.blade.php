@@ -21,7 +21,8 @@
                 新規作成
             </a>
 
-            <!-- CSV Menu (Dropdown) -->
+            @if(auth()->user()->role === 'admin')
+            <!-- CSV Menu (Dropdown) - Admin Only -->
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" type="button"
                         class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
@@ -56,6 +57,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     @endif
 @endsection

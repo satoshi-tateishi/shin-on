@@ -46,12 +46,14 @@
 - **[operations/documentation.md](operations/documentation.md)** - API仕様書・ドキュメント管理
 - **[operations/backup-system.md](operations/backup-system.md)** - Dropboxバックアップシステム ☁️
 - **[operations/log-maintenance.md](operations/log-maintenance.md)** - ログ管理・メンテナンスシステム 🗂️
+- **[docs/GitHub_Actions_Deploy_Specification.md](docs/GitHub_Actions_Deploy_Specification.md)** - GitHub Actions デプロイ仕様 🚀
 
 ### 📋 システム仕様書・設計書
 - **[docs/Equipment_Management_System_Requirements_v2.md](docs/Equipment_Management_System_Requirements_v2.md)** - 機材管理システム要件定義書 v2.0 ✨
 - **[docs/Equipment_Management_Database_Design_v2.md](docs/Equipment_Management_Database_Design_v2.md)** - データベース設計書 v2.0 ✨
 - **[docs/Phase_6_Inventory_Management_Specification.md](docs/Phase_6_Inventory_Management_Specification.md)** - Phase 6 在庫管理システム詳細仕様書 🎯
 - **[docs/Phase_Equipment_Inheritance_Specification.md](docs/Phase_Equipment_Inheritance_Specification.md)** - フェーズ間機材継承機能 詳細仕様書 🆕
+- **[docs/Role_Permission_Specification.md](docs/Role_Permission_Specification.md)** - Role権限設計仕様書 🔐
 
 ### 🔌 API仕様書・外部連携
 - **[docs/LINE_WORKS_Bot_API_Guide.md](docs/LINE_WORKS_Bot_API_Guide.md)** - LINE WORKS Bot API実装ガイド 🤖

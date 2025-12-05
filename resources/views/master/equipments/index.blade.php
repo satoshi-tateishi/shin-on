@@ -11,8 +11,8 @@
         <h1 class="text-xl sm:text-3xl font-bold text-gray-900">機材マスタ 一覧</h1>
     </div>
 
-    @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-        <div class="flex gap-2 sm:gap-3 ml-auto">
+    <div class="flex gap-2 sm:gap-3 ml-auto">
+        @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
             @if(request('sort_mode') === 'all')
                 <a href="{{ route('master.equipments.index', array_merge(request()->query(), ['sort_mode' => null])) }}"
                    class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-gray-700">
@@ -40,62 +40,78 @@
                 </svg>
                 新規作成
             </a>
+        @endif
 
-            <!-- CSV Menu (Dropdown) -->
-            <div x-data="{ open: false }" class="relative">
-                <button @click="open = !open" type="button"
-                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-                <div x-show="open" @click.away="open = false" x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                    <div class="py-1">
-                        <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">PDF出力</div>
-                        <a href="{{ route('master.equipments.export-pdf', request()->query()) }}"
-                           target="_blank"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            ダウンロード
-                        </a>
-                        <button type="button" onclick="showLineWorksConfirmation()"
-                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
-                            LINE WORKSに送信
-                        </button>
-                        <div class="border-t border-gray-100 my-1"></div>
-                        <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">CSV</div>
-                        <a href="{{ route('master.equipments.export-csv') }}"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            CSVエクスポート
-                        </a>
-                        <button type="button" @click="open = false; document.getElementById('csv-import-modal').classList.remove('hidden')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            CSVインポート
-                        </button>
-                        <a href="{{ route('master.equipments.template-csv') }}"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            CSVテンプレート
-                        </a>
-                    </div>
+        <!-- PDF Menu (All roles) -->
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" type="button"
+                    class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+            </button>
+            <div x-show="open" @click.away="open = false" x-transition
+                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                <div class="py-1">
+                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">PDF出力</div>
+                    <a href="{{ route('master.equipments.export-pdf', request()->query()) }}"
+                       target="_blank"
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        ダウンロード
+                    </a>
+                    <button type="button" onclick="showLineWorksConfirmation()"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        LINE WORKSに送信
+                    </button>
                 </div>
             </div>
         </div>
-    @endif
+
+        @if(auth()->user()->role === 'admin')
+        <!-- CSV Menu (Admin Only) -->
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" type="button"
+                    class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <div x-show="open" @click.away="open = false" x-transition
+                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                <div class="py-1">
+                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">CSV</div>
+                    <a href="{{ route('master.equipments.export-csv') }}"
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        CSVエクスポート
+                    </a>
+                    <button type="button" @click="open = false; document.getElementById('csv-import-modal').classList.remove('hidden')"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        CSVインポート
+                    </button>
+                    <a href="{{ route('master.equipments.template-csv') }}"
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        CSVテンプレート
+                    </a>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
 @endsection
 
 @section('content')

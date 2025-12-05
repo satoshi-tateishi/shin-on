@@ -2,226 +2,39 @@
 
 ## 概要
 
-shin-onアプリケーションは、LINE WORKS OAuth 2.0 OpenID Connect Implicit Flowを使用してシングルサインオン（SSO）認証を実装します。
+LINE WORKS OAuth 2.0 OpenID Connect Implicit Flowを使用したシングルサインオン（SSO）認証 + アプリ内2段階認証（OTP）。
 
-## 認証フロー
-
-### 1. Implicit Flow (OpenID Connect)
-
-LINE WORKSでは、セキュリティとパフォーマンスの観点から **Implicit Flow** を採用しています。
+### 認証フロー
 
 ```
-ユーザー → 認証URL → LINE WORKS → コールバック(id_token) → JavaScript処理 → サーバー検証 → ログイン
+ユーザー → LINE WORKS認証 → ID Token検証 → OTP生成・Bot送信 → OTP入力画面 → OTP検証 → ログイン完了
 ```
+
+---
 
 ## エンドポイント
 
-### LINE WORKS OAuth 2.0 エンドポイント
+### LINE WORKS OAuth 2.0
 
 | 項目 | URL |
 |------|-----|
-| 認証エンドポイント | `https://auth.worksmobile.com/oauth2/v2.0/authorize` |
-| トークンエンドポイント | `https://auth.worksmobile.com/oauth2/v2.0/token` |
+| 認証 | `https://auth.worksmobile.com/oauth2/v2.0/authorize` |
+| トークン | `https://auth.worksmobile.com/oauth2/v2.0/token` |
 
-### アプリケーション内エンドポイント
+### アプリケーション
 
-| 項目 | URL | 説明 |
-|------|-----|------|
-| 認証開始 | `/auth/lineworks` | LINE WORKS認証画面へリダイレクト |
-| コールバック | `/auth/lineworks/callback` | LINE WORKSからの認証結果を受信 |
-| ID Token処理 | `/auth/lineworks/process-token` | JavaScript経由でID Tokenを処理 |
-| ログアウト | `/auth/lineworks/logout` | ログアウト処理 |
+| URL | 説明 |
+|-----|------|
+| `/auth/lineworks` | LINE WORKS認証開始 |
+| `/auth/lineworks/callback` | コールバック（id_token受信） |
+| `/auth/lineworks/process-token` | ID Token処理 → OTP送信 |
+| `/two-factor/challenge` | OTP入力画面 |
+| `/two-factor/verify` | OTP検証 |
+| `/two-factor/resend` | OTP再送信 |
 
-## 認証パラメータ
+---
 
-### 認証URL パラメータ
-
-```php
-$params = [
-    'client_id' => 'YOUR_CLIENT_ID',
-    'redirect_uri' => 'https://your-app.com/auth/lineworks/callback',
-    'response_type' => 'id_token',  // Implicit Flow
-    'scope' => 'openid profile email',
-    'state' => 'RANDOM_STATE_VALUE',
-    'nonce' => 'RANDOM_NONCE_VALUE',
-    'domain' => 'YOUR_LINEWORKS_DOMAIN'
-];
-```
-
-### 必須パラメータ
-
-| パラメータ | 説明 | 例 |
-|-----------|------|-----|
-| `client_id` | LINE WORKS アプリのクライアントID | `your_client_id` |
-| `redirect_uri` | 認証後のリダイレクト先URL | `https://app.com/auth/lineworks/callback` |
-| `response_type` | レスポンスタイプ（Implicit Flow） | `id_token` |
-| `scope` | 要求するスコープ | `openid profile email` |
-| `state` | CSRF攻撃防止用のランダム値 | `abc123xyz` |
-| `nonce` | リプレイ攻撃防止用のランダム値 | `nonce_abc123` |
-| `domain` | LINE WORKSドメイン | `shin-on1981` |
-
-## ID Token 構造
-
-LINE WORKSから返されるID TokenはJWT（JSON Web Token）形式です。
-
-### JWT構造
-
-```
-Header.Payload.Signature
-```
-
-### Payload（ペイロード）
-
-```json
-{
-    "sub": "unique_user_id",
-    "name": "立石 智史",
-    "family_name": "立石",
-    "given_name": "智史",
-    "email": "user@shin-on1981",
-    "picture": "https://profile-image-url",
-    "iss": "https://auth.worksmobile.com",
-    "aud": "your_client_id",
-    "iat": 1640995200,
-    "exp": 1640998800,
-    "nonce": "nonce_abc123"
-}
-```
-
-### トークンフィールド説明
-
-| フィールド | 説明 | 例 |
-|------------|------|-----|
-| `sub` | ユーザーの一意識別子 | `unique_user_id_123` |
-| `name` | フルネーム（日本語姓名順） | `立石 智史` |
-| `family_name` | 姓 | `立石` |
-| `given_name` | 名 | `智史` |
-| `email` | メールアドレス | `user@shin-on1981` |
-| `picture` | プロフィール画像URL | `https://...` |
-| `iss` | トークン発行者 | `https://auth.worksmobile.com` |
-| `aud` | トークン対象者（Client ID） | `your_client_id` |
-| `iat` | 発行時刻（UNIX timestamp） | `1640995200` |
-| `exp` | 有効期限（UNIX timestamp） | `1640998800` |
-| `nonce` | リプレイ攻撃防止値 | `nonce_abc123` |
-
-## 実装詳細
-
-### 1. カスタム Socialite Provider
-
-**ファイル**: `app/Socialite/LineWorksProvider.php`
-
-```php
-class LineWorksProvider extends AbstractProvider implements ProviderInterface
-{
-    protected $scopes = ['openid', 'profile', 'email'];
-
-    // Implicit Flow用の認証URL生成
-    protected function getAuthUrl($state): string
-    {
-        $url = $this->buildAuthUrlFromBase('https://auth.worksmobile.com/oauth2/v2.0/authorize', $state);
-        $url .= '&domain=' . urlencode(config('services.lineworks.domain'));
-        $url .= '&nonce=' . $nonce;
-        $url = str_replace('response_type=code', 'response_type=id_token', $url);
-        return $url;
-    }
-}
-```
-
-### 2. ID Token 検証処理
-
-```php
-public function parseIdToken(string $idToken): ?array
-{
-    $tokenParts = explode('.', $idToken);
-    $payloadRaw = $this->base64UrlDecode($tokenParts[1]);
-    $payload = json_decode($payloadRaw, true);
-
-    // 有効期限チェック
-    if (isset($payload['exp']) && time() > $payload['exp']) {
-        throw new \Exception('Token expired');
-    }
-
-    return $payload;
-}
-```
-
-### 3. ドメイン検証
-
-```php
-public function validateDomain(array $userData): bool
-{
-    $email = $userData['email'] ?? null;
-    $emailDomain = substr(strrchr($email, '@'), 1);
-    $allowedDomain = 'shin-on1981';
-
-    return $emailDomain === $allowedDomain;
-}
-```
-
-### 4. JavaScript処理（コールバック）
-
-**ファイル**: `resources/views/auth/lineworks-callback.blade.php`
-
-```javascript
-// URLフラグメントからid_tokenを取得
-const fragment = window.location.hash.substring(1);
-const params = new URLSearchParams(fragment);
-const idToken = params.get('id_token');
-const state = params.get('state');
-
-if (idToken) {
-    // サーバーにID Tokenを送信
-    fetch('/auth/lineworks/process-token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            id_token: idToken,
-            state: state
-        })
-    });
-}
-```
-
-## セキュリティ実装
-
-### 1. State検証（CSRF防止）
-
-```php
-// 認証開始時
-$state = Str::random(40);
-session(['lineworks_oauth_state' => $state]);
-
-// コールバック処理時
-if (session('lineworks_oauth_state') !== $request->state) {
-    throw new \Exception('State validation failed');
-}
-```
-
-### 2. Nonce検証（リプレイ攻撃防止）
-
-```php
-// 認証開始時
-$nonce = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(random_bytes(32)));
-session(['lineworks_nonce' => $nonce]);
-
-// ID Token検証時
-if ($payload['nonce'] !== session('lineworks_nonce')) {
-    throw new \Exception('Nonce validation failed');
-}
-```
-
-### 3. ドメイン制限
-
-- 許可ドメイン: `shin-on1981`
-- 不正ドメインからのアクセスを自動拒否
-- エラーメッセージでドメイン要件を明示
-
-## 環境設定
-
-### 必須環境変数
+## 環境変数
 
 ```env
 # LINE WORKS OAuth設定
@@ -231,222 +44,128 @@ LINEWORKS_REDIRECT_URI="${APP_URL}/auth/lineworks/callback"
 LINEWORKS_DOMAIN=shin-on1981
 ```
 
-### config/services.php 設定
+---
 
-```php
-'lineworks' => [
-    'client_id' => env('LINEWORKS_CLIENT_ID'),
-    'client_secret' => env('LINEWORKS_CLIENT_SECRET'),
-    'redirect' => env('LINEWORKS_REDIRECT_URI'),
-    'domain' => env('LINEWORKS_DOMAIN'),
-],
+## OTP（2段階認証）
+
+### 概要
+
+LINE WORKS SSO認証成功後、アプリ内でOTPを生成しLINE WORKS Bot経由でユーザーに送信。ユーザーはOTPを入力してログイン完了。
+
+### 認証フロー詳細
+
+```
+1. ユーザーがLINE WORKSで認証
+2. アプリがID Tokenを検証
+3. アプリが6桁OTPを生成
+4. OTPをハッシュ化してDBに保存
+5. LINE WORKS Bot経由でOTPを送信
+6. ユーザーをOTP入力画面にリダイレクト
+7. ユーザーがOTPを入力
+8. アプリがOTPを検証
+9. ログイン完了
 ```
 
-## ユーザーデータ処理
+### OTP仕様
 
-### lineworks_id フィールドについて
+| 項目 | 値 |
+|------|-----|
+| 桁数 | 6桁 |
+| 形式 | 数字のみ（4種類の数字から生成） |
+| 有効期限 | 10分 |
+| 保存方法 | bcryptハッシュ化 |
+| 送信方法 | LINE WORKS Bot API |
 
-`users` テーブルの `lineworks_id` カラムには、LINE WORKS ID Token の `sub` フィールドの値が格納されます。
+### セキュリティ対策
 
-#### 格納データ詳細
-
-| 項目 | 内容 |
+| 対策 | 内容 |
 |------|------|
-| **データ型** | VARCHAR(255) |
-| **制約** | UNIQUE, NULL許可 |
-| **格納値** | ID Token の `sub` フィールド（ユーザー一意識別子） |
-| **取得方法** | `$lineWorksUser->getId()` |
+| 試行回数制限 | 5回失敗でアカウントロック |
+| ロック時間 | 3分間 |
+| 有効期限 | 10分 |
+| ハッシュ化 | bcrypt |
+| ログ記録 | 全操作をTwoFactorLogに記録 |
 
-#### ID Token内での対応関係
+### データベースカラム（users）
+
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| two_factor_code | VARCHAR | OTPハッシュ |
+| two_factor_expires_at | TIMESTAMP | 有効期限 |
+| two_factor_attempts | INT | 失敗回数 |
+| two_factor_locked_until | TIMESTAMP | ロック解除日時 |
+
+---
+
+## ID Token
+
+### JWT構造
 
 ```json
 {
-    "sub": "unique_user_id_123",  ← この値がlineworks_idに格納
+    "sub": "unique_user_id",      // ← lineworks_idに格納
     "name": "立石 智史",
     "email": "user@shin-on1981",
-    ...
+    "iss": "https://auth.worksmobile.com",
+    "aud": "your_client_id",
+    "exp": 1640998800,
+    "nonce": "nonce_abc123"
 }
 ```
 
-#### 利用用途
+### lineworks_id
 
-1. **ユーザー検索**: 既存ユーザーの特定
-   ```php
-   $user = User::where('lineworks_id', $lineWorksUser->getId())->first();
-   ```
+| 項目 | 内容 |
+|------|------|
+| データ型 | VARCHAR(255), UNIQUE |
+| 格納値 | ID Tokenの`sub`フィールド |
+| 用途 | ユーザー検索、アカウント連携 |
 
-2. **アカウント連携**: LINE WORKSアカウントとローカルアカウントの紐付け
-3. **重複防止**: 同一LINE WORKSユーザーの重複登録防止
+---
 
-#### 重要な特徴
+## セキュリティ
 
-- **永続性**: ユーザーのメールアドレスや名前が変更されても `sub` は変わらない
-- **一意性**: LINE WORKS内でユーザーを一意に識別する
-- **セキュリティ**: 外部から推測困難な値
+| 対策 | 説明 |
+|------|------|
+| State検証 | CSRF攻撃防止 |
+| Nonce検証 | リプレイ攻撃防止 |
+| ドメイン制限 | `shin-on1981`のみ許可 |
+| HTTPS強制 | 通信暗号化 |
+| 2段階認証 | OTP必須 |
+| セッション再生成 | OTP検証成功時 |
 
-### データベース保存
-
-```php
-$user = User::updateOrCreate(
-    ['lineworks_id' => $lineWorksUser->getId()],
-    [
-        'name' => $lineWorksUser->getName(),
-        'email' => $this->fixEmailDomain($lineWorksUser->getEmail()),
-        'lineworks_token' => $lineWorksUser->token,
-        'lineworks_refresh_token' => $lineWorksUser->refreshToken,
-        'password' => Hash::make(uniqid()),
-        'is_active' => true,
-    ]
-);
-```
-
-### メールドメイン修正
-
-```php
-private function fixEmailDomain(?string $email): ?string
-{
-    if (str_ends_with($email, '@shin-on1981')) {
-        return $email . '.com';  // shin-on1981.com に修正
-    }
-    return $email;
-}
-```
+---
 
 ## エラーハンドリング
 
-### 主要エラーパターン
-
-| エラータイプ | 説明 | ユーザー表示メッセージ |
-|-------------|------|----------------------|
-| ドメイン検証エラー | 許可されていないドメイン | `アクセス権限がありません。shin-on1981ドメインのメールアドレスでLINE WORKSにログインしてください。` |
-| State検証エラー | CSRF攻撃の可能性 | `LINE WORKS認証に失敗しました: State validation failed` |
-| トークン解析エラー | 不正なID Token | `LINE WORKS認証に失敗しました: Invalid ID Token format` |
-| 期限切れエラー | トークンが期限切れ | `LINE WORKS認証に失敗しました: Token expired` |
-
-## ログ出力
-
-### 認証プロセス監視
-
-```php
-\Log::info('LINE WORKS callback started (Implicit Flow)');
-\Log::info('ID Token received', ['token_preview' => substr($idToken, 0, 50)]);
-\Log::info('Domain validation', ['email' => $email, 'domain' => $emailDomain]);
-\Log::info("User logged in successfully: {$user->id}");
-```
-
-## テスト要件
-
-### 手動テスト項目
-
-1. **正常認証フロー**
-   - LINE WORKS認証画面表示
-   - ドメイン内ユーザーでログイン成功
-   - ダッシュボードへリダイレクト
-
-2. **セキュリティテスト**
-   - ドメイン外ユーザーでアクセス拒否
-   - State改ざんで認証失敗
-   - 期限切れトークンで認証失敗
-
-3. **エラーハンドリング**
-   - ネットワークエラー時の適切な表示
-   - 不正なパラメータでの安全な処理
-
-## 運用考慮事項
-
-### 1. モニタリング
-
-- 認証成功/失敗率の監視
-- 不正アクセス試行の検知
-- パフォーマンス監視（認証完了時間）
-
-### 2. メンテナンス
-
-- LINE WORKS API仕様変更への対応
-- セキュリティアップデート適用
-- 証明書更新（HTTPS）
-
-### 3. スケーラビリティ
-
-- セッション管理の最適化
-- 認証キャッシュ戦略
-- 負荷分散環境での状態管理
-
-## トラブルシューティング
-
-### よくある問題
-
-1. **"Domain validation failed"**
-   - 原因: LINE WORKSドメイン設定の不一致
-   - 解決: `LINEWORKS_DOMAIN`環境変数を確認
-
-2. **"Invalid state parameter"**
-   - 原因: セッション設定やCSRF トークンの問題
-   - 解決: セッション設定とCSRF設定を確認
-
-3. **"ID Token not found"**
-   - 原因: JavaScript処理の失敗
-   - 解決: ブラウザコンソールエラーを確認
+| エラー | 原因 | 対処 |
+|--------|------|------|
+| Domain validation failed | 許可外ドメイン | shin-on1981ドメインでログイン |
+| State validation failed | CSRF/セッション切れ | 再度ログイン |
+| 認証コードが正しくありません | OTP不一致 | 正しいOTPを入力 |
+| 有効期限が切れています | OTP期限切れ | 再送信ボタンで再発行 |
+| アカウントがロックされています | 5回失敗 | 3分後に再試行 |
 
 ---
 
-## 🎉 実装完了レポート（2025年9月）
+## 関連ファイル
 
-### ✅ LINE WORKS SSO統合完了状況（100%達成）
-
-#### 実装期間
-- **開始**: 2025年9月14日
-- **完了**: 2025年9月16日
-- **状況**: ✅ 100%完了・本番運用中
-
-#### 完了機能
-1. **OAuth 2.0 Implicit Flow実装** ✅
-   - LINE WORKS認証システム完全統合
-   - OpenID Connect対応
-   - セキュアな認証フロー実装完了
-
-2. **ユーザー管理システム** ✅
-   - LINE WORKSアカウント自動連携
-   - 権限管理（viewer/editor/admin）
-   - プロフィール情報同期
-
-3. **セッション管理** ✅
-   - 安全なセッション管理
-   - 自動ログアウト機能
-   - 不正アクセス対策
-
-4. **UI/UX統合** ✅
-   - シームレスなログイン体験
-   - エラーハンドリング
-   - レスポンシブ対応
-
-#### 運用状況
-- **認証成功率**: 99.9%以上
-- **平均認証時間**: 2秒以内
-- **同時ユーザー対応**: 30ユーザー
-- **稼働状況**: 24時間安定稼働中
-
-#### セキュリティ対策
-- **CSRF保護**: 完全実装
-- **State/Nonce検証**: 実装済み
-- **HTTPS通信**: 強制適用
-- **セッション保護**: 安全な設定適用
-
-### 📊 技術実装詳細
-- **実装コントローラー**: LineWorksController（完全実装）
-- **ミドルウェア**: LINE WORKS認証ミドルウェア
-- **設定ファイル**: .env設定完了
-- **テーブル**: users拡張（LINE WORKS連携カラム追加）
-
-### 🚀 システム統合効果
-- **業務効率**: ログイン作業の大幅削減
-- **セキュリティ**: 企業レベルの認証セキュリティ確保
-- **運用性**: 管理負荷の軽減
-- **ユーザビリティ**: 直感的な認証体験
+| 種別 | ファイル |
+|------|----------|
+| SSO認証 | `app/Http/Controllers/Auth/LineWorksController.php` |
+| OTP検証 | `app/Http/Controllers/Auth/TwoFactorController.php` |
+| Bot送信 | `app/Services/LineWorksBotService.php` |
+| OTP入力画面 | `resources/views/auth/two-factor-challenge.blade.php` |
+| ログモデル | `app/Models/TwoFactorLog.php` |
+| Provider | `app/Socialite/LineWorksProvider.php` |
 
 ---
 
-**最終更新**: 2025年9月29日
-**バージョン**: 2.0（実装完了版）
-**対象アプリケーション**: shin-on v2.0
-**実装状況**: ✅ 本番運用中・実運用レベル達成
+## 参考リンク
+
+- [LINE WORKS OAuth ドキュメント](https://developers.worksmobile.com/jp/docs/auth)
+- [LINE WORKS Bot API ガイド](./LINE_WORKS_Bot_API_Guide.md)
+
+---
+
+**最終更新**: 2025年12月5日

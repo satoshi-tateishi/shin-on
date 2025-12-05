@@ -32,13 +32,17 @@
 - [claude/docs/LINE_WORKS_SSO_Specification.md](claude/docs/LINE_WORKS_SSO_Specification.md) - LINE WORKS SSO認証仕様 🔐
 - [claude/docs/Dropbox_API_Specification.md](claude/docs/Dropbox_API_Specification.md) - Dropbox OAuth 2.0 & バックアップAPI仕様 ☁️
 - [claude/docs/Activity_Log_Specification.md](claude/docs/Activity_Log_Specification.md) - アクティビティログ機能仕様 📊
+- [claude/docs/GitHub_Actions_Deploy_Specification.md](claude/docs/GitHub_Actions_Deploy_Specification.md) - GitHub Actions デプロイ仕様 🚀
+
+#### 🔐 権限・セキュリティ
+- [claude/docs/Role_Permission_Specification.md](claude/docs/Role_Permission_Specification.md) - Role権限設計仕様書（機能追加時の権限設定ガイド）
 
 ## 🚀 利用方法
 1. **[claude/README.md](claude/README.md)** から開始
 2. 目的に応じて各カテゴリのファイルを参照
 3. クイックナビゲーションで効率的にアクセス
 
-## ✅ プロジェクト完成状況（2025年12月1日更新）
+## ✅ プロジェクト完成状況（2025年12月5日更新）
 - ✅ Laravel 12 + MySQL 8.0（Docker） - 基盤完成
 - ✅ Tailwind CSS v4.1.13（CSS-first設定、パフォーマンス改善済み）
 - ✅ Laravel-Boost MCP - AI開発支援環境構築済み
@@ -48,6 +52,7 @@
 - ✅ フェーズ間機材継承機能 - 完全実装・運用開始（2025年9月28日追加）
 - ✅ Dropboxバックアップシステム - OAuth 2.0対応、自動アップロード・ログクリーンアップ機能（2025年9月29日追加）
 - ✅ アクティビティログ - 操作履歴記録、ユーザー別フィルタリング、自動クリーンアップ（2025年12月1日追加）
+- ✅ Role権限管理 - 4段階ロール（viewer/general/editor/admin）、権限設定ページ（2025年12月5日追加）
 - ✅ ポート設定（HTTP:8081, Vite:5174, MySQL:3307）
 
 ## 🌐 サーバー情報
