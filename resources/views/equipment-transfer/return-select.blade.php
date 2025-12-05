@@ -141,10 +141,7 @@
 
                                 <!-- 基本倉庫 -->
                                 <td class="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap hidden sm:table-cell">
-                                    <div class="text-xs sm:text-sm font-medium text-gray-900">
-                                        ID: <span x-text="equipment.location_id"></span>
-                                    </div>
-                                    <div class="text-xs sm:text-sm text-gray-600" x-text="equipment.location?.name || '不明'"></div>
+                                    <div class="text-xs sm:text-sm font-medium text-gray-900" x-text="equipment.location?.name || '不明'"></div>
                                 </td>
 
                                 <!-- 返却先倉庫選択 -->

@@ -381,7 +381,7 @@
     <div class="relative top-10 sm:top-20 mx-auto p-4 sm:p-6 border w-full max-w-4xl shadow-lg rounded-md bg-white mx-2 sm:mx-auto">
         <div class="mt-3">
             <div class="flex justify-between items-center mb-4 sm:mb-6">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">機材継承</h3>
+                <h3 id="inheritanceModalTitle" class="text-base sm:text-lg font-medium text-gray-900">継承先フェーズを選択</h3>
                 <button type="button" onclick="closeInheritanceModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -391,7 +391,6 @@
 
             <!-- ステップ1: 継承先選択 -->
             <div id="step1" class="step-content">
-                <h4 class="text-sm sm:text-md font-medium text-gray-900 mb-4">継承先フェーズを選択</h4>
                 <div class="space-y-4">
                     <!-- 同一公演内フェーズ -->
                     <div>
@@ -428,12 +427,6 @@
 
             <!-- ステップ2: 継承確認 -->
             <div id="step2" class="step-content hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-sm sm:text-md font-medium text-gray-900">継承内容の確認</h4>
-                    <button type="button" onclick="goToStep1()"
-                            class="text-xs sm:text-sm text-blue-600 hover:text-blue-800">戻る</button>
-                </div>
-
                 <div id="inheritancePreview" class="mb-4 sm:mb-6">
                     <!-- 動的に追加される -->
                 </div>
@@ -730,6 +723,16 @@ function showStep(stepIdentifier) {
     }
 
     document.getElementById(elementId).classList.remove('hidden');
+
+    // モーダルタイトルを更新
+    const titleElement = document.getElementById('inheritanceModalTitle');
+    if (titleElement) {
+        if (stepIdentifier === 1) {
+            titleElement.textContent = '継承先フェーズを選択';
+        } else if (stepIdentifier === 2) {
+            titleElement.textContent = '継承内容の確認';
+        }
+    }
 }
 
 function renderPhaseList() {
@@ -754,15 +757,19 @@ function createPhaseElement(phase) {
     div.className = 'border rounded-lg p-2 sm:p-3 cursor-pointer hover:bg-gray-50 transition-colors';
     div.setAttribute('data-phase-id', phase.id);
 
+    const startDate = formatDateForDisplay(phase.start_date);
+    const endDate = formatDateForDisplay(phase.end_date);
+    const statusColor = getPhaseStatusColor(phase.phase_status);
+
     div.innerHTML = `
         <div class="flex items-center">
-            <input type="radio" name="target_phase" value="${phase.id}" class="mr-2 sm:mr-3">
-            <div class="flex-1">
-                <div class="text-xs sm:text-sm text-gray-900">${phase.performance.title}</div>
+            <input type="radio" name="target_phase" value="${phase.id}" class="mr-2 sm:mr-3 flex-shrink-0">
+            <div class="flex-1 min-w-0">
+                <div class="text-xs sm:text-sm text-gray-600 truncate">${phase.performance.title}</div>
                 <div class="text-sm sm:text-base font-medium text-gray-900">${phase.name}</div>
-                <div class="text-xs text-gray-400">
-                    ${phase.start_date} ～ ${phase.end_date}
-                    <span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 bg-${getPhaseStatusColor(phase.phase_status)}-100 text-${getPhaseStatusColor(phase.phase_status)}-800 rounded text-xs">
+                <div class="flex flex-wrap items-center gap-1 text-xs text-gray-400">
+                    <span>${startDate} 〜 ${endDate}</span>
+                    <span class="px-1.5 py-0.5 bg-${statusColor}-100 text-${statusColor}-800 rounded">
                         ${getPhaseStatusLabel(phase.phase_status)}
                     </span>
                 </div>
@@ -878,46 +885,71 @@ function goToStep1() {
     showStep(1);
 }
 
+function formatDateForDisplay(dateString) {
+    if (!dateString) return '';
+    // ISO8601形式 (2022-03-20T15:00:00.000000Z) またはY-m-d形式を処理
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function renderInheritancePreview() {
     const container = document.getElementById('inheritancePreview');
     const data = inheritanceData.previewData;
 
+    const targetStartDate = formatDateForDisplay(data.target_phase.start_date);
+    const targetEndDate = formatDateForDisplay(data.target_phase.end_date);
+
     container.innerHTML = `
         <div class="bg-blue-50 rounded-lg p-3 sm:p-4 mb-4">
             <h5 class="text-sm font-medium text-blue-900">継承情報</h5>
-            <p class="text-xs sm:text-sm text-blue-700">
-                <strong>継承元:</strong> ${data.source_phase.performance_title} - ${data.source_phase.name}<br>
-                <strong>継承先:</strong> ${data.target_phase.performance_title} - ${data.target_phase.name}<br>
-                <strong>期間:</strong> ${data.target_phase.start_date} ～ ${data.target_phase.end_date}
-            </p>
+            <div class="text-xs sm:text-sm text-blue-700 space-y-1">
+                <div><strong>継承元:</strong> ${data.source_phase.performance_title} - ${data.source_phase.name}</div>
+                <div><strong>継承先:</strong> ${data.target_phase.performance_title} - ${data.target_phase.name}</div>
+                <div><strong>期間:</strong> ${targetStartDate} 〜 ${targetEndDate}</div>
+            </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-auto -mx-4 sm:mx-0 max-h-[50vh] border border-gray-200 rounded-md">
             <table class="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">機材名</th>
-                        <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
-                        <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">継承可否</th>
+                        <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">機材</th>
+                        <th class="px-2 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-20 bg-gray-50">数量</th>
+                        <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell bg-gray-50">継承可否</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     ${data.equipments.map(equipment => `
                         <tr class="${equipment.can_inherit ? '' : 'bg-red-50'}">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4">
-                                <div class="text-xs sm:text-sm font-medium text-gray-900">${equipment.equipment_name}</div>
-                                <div class="text-xs text-gray-500">${equipment.category} > ${equipment.subcategory}</div>
-                                ${equipment.company_number ? `<div class="text-xs text-gray-400">${equipment.company_number}</div>` : ''}
+                            <td class="px-2 sm:px-6 py-2 sm:py-4 max-w-[180px] sm:max-w-none">
+                                <div class="text-xs text-gray-500 truncate">${equipment.category} / ${equipment.subcategory}</div>
+                                ${equipment.manufacturer ? `<div class="text-xs text-gray-400 truncate">${equipment.manufacturer}</div>` : ''}
+                                <div class="flex flex-wrap items-center gap-1">
+                                    <span class="text-xs sm:text-sm font-medium text-gray-900">${equipment.equipment_name}</span>
+                                    ${equipment.company_number ? `<span class="px-1.5 py-0.5 border border-gray-300 rounded text-xs text-gray-600">${equipment.company_number}</span>` : ''}
+                                </div>
+                                <!-- モバイル用: 継承可否表示 -->
+                                <div class="sm:hidden mt-1">
+                                    ${equipment.can_inherit ?
+                                        '<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">継承可能</span>' :
+                                        `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">継承不可</span>
+                                         <span class="text-xs text-red-600 ml-1">${getConflictReasonText(equipment.conflict_reason)}</span>`
+                                    }
+                                </div>
                             </td>
-                            <td class="px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">
-                                ${equipment.quantity}
+                            <td class="px-2 sm:px-6 py-2 sm:py-4 text-center">
+                                <div class="text-xs sm:text-sm text-gray-900">${equipment.quantity}</div>
                                 ${equipment.management_type === 'quantity' && equipment.available_quantity !== null ?
-                                    `<div class="text-xs text-gray-500">利用可能: ${equipment.available_quantity}</div>` : ''}
+                                    `<div class="text-xs text-gray-500">可: ${equipment.available_quantity}</div>` : ''}
                             </td>
-                            <td class="px-2 sm:px-6 py-3 sm:py-4">
+                            <td class="px-2 sm:px-6 py-2 sm:py-4 hidden sm:table-cell">
                                 ${equipment.can_inherit ?
-                                    '<span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">継承可能</span>' :
-                                    `<span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">継承不可</span>
+                                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">継承可能</span>' :
+                                    `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">継承不可</span>
                                      <div class="text-xs text-red-600 mt-1">${getConflictReasonText(equipment.conflict_reason)}</div>`
                                 }
                             </td>

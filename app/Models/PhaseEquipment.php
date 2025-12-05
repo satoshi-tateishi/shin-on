@@ -243,7 +243,7 @@ class PhaseEquipment extends Model
     private static function overlappingEquipment($equipmentId, $phaseStartDate, $phaseEndDate, $excludeId = null)
     {
         $query = self::where('equipment_id', $equipmentId)
-            ->where('status', 'checked_out')
+            ->whereNotIn('status', ['checked_in']) // 返却済み以外（予約済み + 出庫中）をチェック
             ->whereHas('phase', function ($phaseQuery) use ($phaseStartDate, $phaseEndDate) {
                 $phaseQuery->where(function ($q) use ($phaseStartDate, $phaseEndDate) {
                     // 期間が重複する条件
