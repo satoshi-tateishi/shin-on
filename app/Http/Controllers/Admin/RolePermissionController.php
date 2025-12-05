@@ -34,7 +34,7 @@ class RolePermissionController extends Controller
                     ['name' => 'システム管理', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => '- 会社設定', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true, 'indent' => true],
                     ['name' => '- バックアップ管理', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true, 'indent' => true],
-                    ['name' => '- Role権限設定', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true, 'indent' => true],
+                    ['name' => '- Role権限設定', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true, 'indent' => true],
                     ['name' => 'アクティビティ', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
                     ['name' => '- 操作履歴', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true, 'indent' => true],
                 ],

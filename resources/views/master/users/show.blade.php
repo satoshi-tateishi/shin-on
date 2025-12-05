@@ -206,12 +206,14 @@
                                         @switch($user->role)
                                             @case('admin') bg-red-100 text-red-800 @break
                                             @case('editor') bg-blue-100 text-blue-800 @break
-                                            @case('viewer') bg-green-100 text-green-800 @break
+                                            @case('general') bg-green-100 text-green-800 @break
+                                            @case('viewer') bg-gray-100 text-gray-800 @break
                                             @default bg-gray-100 text-gray-800 @break
                                         @endswitch">
                                         @switch($user->role)
                                             @case('admin') 管理者 @break
                                             @case('editor') 編集者 @break
+                                            @case('general') 一般 @break
                                             @case('viewer') 閲覧者 @break
                                             @default 不明 @break
                                         @endswitch

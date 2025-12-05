@@ -434,6 +434,33 @@
                         </a>
                     </div>
                 </div>
+                @else
+                <!-- Role権限設定 (viewer/general用) -->
+                <div class="mb-12">
+                    <div class="flex items-center mb-6">
+                        <div class="w-1 h-6 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full mr-4"></div>
+                        <h2 class="text-2xl font-bold text-gray-900">その他</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <a href="{{ route('admin.role-permissions.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1">
+                            <div class="px-6 py-2 sm:px-8 sm:py-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+                                            <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-purple-900 transition-colors">Role権限設定</h3>
+                                    </div>
+                                    <svg class="h-5 w-5 text-gray-400 group-hover:text-purple-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
                 @endif
 
                 @if(auth()->user()->role === 'admin')
