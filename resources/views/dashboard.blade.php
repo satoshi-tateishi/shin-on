@@ -80,11 +80,13 @@
                         @if(auth()->user()->role)
                             @php
                                 $roleLabels = [
-                                    'viewer' => '編集権限なし',
+                                    'general' => '一般',
+                                    'viewer' => '閲覧のみ',
                                     'editor' => '編集権限あり',
                                     'admin' => '管理者'
                                 ];
                                 $roleColors = [
+                                    'general' => 'bg-green-50 text-green-700 border-green-200',
                                     'viewer' => 'bg-gray-100 text-gray-800 border-gray-200',
                                     'editor' => 'bg-blue-50 text-blue-700 border-blue-200',
                                     'admin' => 'bg-red-50 text-red-700 border-red-200'
@@ -202,7 +204,6 @@
                     </div>
                 </div>
 
-                @if(auth()->user()->role !== 'viewer')
                 <!-- Master Data Section -->
                 <div class="mb-12">
                     <div class="flex items-center mb-6">
@@ -365,6 +366,7 @@
                     </div>
                 </div>
 
+                @if(!in_array(auth()->user()->role, ['viewer', 'general']))
                 <!-- Admin Section -->
                 <div class="mb-12">
                     <div class="flex items-center mb-6">
@@ -411,6 +413,25 @@
                             </div>
                         </a>
                         @endif
+
+                        <!-- Role権限設定 -->
+                        <a href="{{ route('admin.role-permissions.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:-translate-y-1">
+                            <div class="px-6 py-2 sm:px-8 sm:py-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+                                            <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-purple-900 transition-colors">Role権限設定</h3>
+                                    </div>
+                                    <svg class="h-5 w-5 text-gray-400 group-hover:text-purple-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                 </div>
                 @endif

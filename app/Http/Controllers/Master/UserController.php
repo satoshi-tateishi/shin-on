@@ -45,7 +45,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'role' => 'required|in:viewer,editor,admin',
+            'role' => 'required|in:general,viewer,editor,admin',
             'sort' => 'nullable|integer|min:0',
             'affiliation' => 'required|in:employee,partner',
             'furigana' => 'nullable|string|max:255',
@@ -133,7 +133,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,'.$user->id,
-            'role' => 'required|in:viewer,editor,admin',
+            'role' => 'required|in:general,viewer,editor,admin',
             'sort' => 'nullable|integer|min:0',
             'affiliation' => 'required|in:employee,partner',
             'furigana' => 'nullable|string|max:255',
@@ -386,8 +386,8 @@ class UserController extends Controller
             throw new \Exception('email の形式が正しくありません');
         }
 
-        if (! in_array($recordData['role'] ?? '', ['admin', 'editor', 'viewer'])) {
-            throw new \Exception('role は「admin」「editor」「viewer」のいずれかを指定してください');
+        if (! in_array($recordData['role'] ?? '', ['admin', 'editor', 'general', 'viewer'])) {
+            throw new \Exception('role は「admin」「editor」「general」「viewer」のいずれかを指定してください');
         }
 
         if (! in_array($recordData['affiliation'] ?? '', ['employee', 'partner'])) {

@@ -11,17 +11,15 @@
         <h1 class="text-xl sm:text-3xl font-bold text-gray-900">修理管理</h1>
     </div>
 
-    @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-        <div class="flex gap-2 sm:gap-3 ml-auto">
-            <a href="{{ route('repair-records.create') }}"
-               class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                修理報告
-            </a>
-        </div>
-    @endif
+    <div class="flex gap-2 sm:gap-3 ml-auto">
+        <a href="{{ route('repair-records.create') }}"
+           class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+            <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            修理報告
+        </a>
+    </div>
 @endsection
 
 @section('content')
@@ -203,17 +201,15 @@
                 </svg>
                 <h3 class="mt-2 text-xs sm:text-sm font-medium text-gray-900">修理記録がありません</h3>
                 <p class="mt-1 text-xs sm:text-sm text-gray-500">検索条件に該当する修理記録が見つかりませんでした。</p>
-                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                    <div class="mt-6">
-                        <a href="{{ route('repair-records.create') }}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                            </svg>
-                            修理報告
-                        </a>
-                    </div>
-                @endif
+                <div class="mt-6">
+                    <a href="{{ route('repair-records.create') }}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        修理報告
+                    </a>
+                </div>
             </div>
         @endif
     </div>

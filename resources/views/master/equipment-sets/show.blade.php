@@ -30,7 +30,7 @@
                     </a>
                 @endif
 
-                @if(auth()->user()->role === 'admin')
+                @if(in_array(auth()->user()->role, ['admin', 'editor']))
                     <form method="POST" action="{{ route('master.equipment-sets.destroy', $equipmentSet) }}" class="inline"
                           onsubmit="return confirm('機材セット「{{ $equipmentSet->name }}」を削除します。この操作は取り消せません。削除しますか？')">
                         @csrf

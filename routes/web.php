@@ -83,6 +83,9 @@ Route::middleware('auth')->group(function () {
                 Route::post('validate-password', [\App\Http\Controllers\Admin\EnvBackupController::class, 'validatePassword'])->name('validate-password');
             });
         });
+
+        // Role権限設定（管理者のみ）
+        Route::get('role-permissions', [\App\Http\Controllers\Admin\RolePermissionController::class, 'index'])->name('role-permissions.index');
     });
 
     // Dropbox OAuth認証ルート（管理者権限のみ）

@@ -77,7 +77,7 @@
                 </a>
             @endif
 
-            @if(auth()->user()->role === 'admin')
+            @if(in_array(auth()->user()->role, ['admin', 'editor']))
                 <form method="POST" action="{{ route('phases.destroy', $phase) }}" id="deletePhaseForm" class="inline">
                     @csrf
                     @method('DELETE')

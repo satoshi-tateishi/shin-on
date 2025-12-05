@@ -45,7 +45,7 @@ class UserFactory extends Factory
             'is_driver' => fake()->boolean(),
             'is_on_leave' => false,
             'is_resigned' => false,
-            'role' => fake()->randomElement(['admin', 'editor', 'viewer']),
+            'role' => fake()->randomElement(['admin', 'editor', 'general', 'viewer']),
             'affiliation' => fake()->randomElement(['employee', 'partner']),
         ];
     }

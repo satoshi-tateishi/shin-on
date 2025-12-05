@@ -20,44 +20,42 @@
             </a>
 
             <div class="flex flex-wrap gap-1 sm:gap-2">
-                @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                    <!-- ワークフローボタン -->
-                    @if($repairRecord->status === 'reported')
-                        <button onclick="openStartModal()"
-                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1m-6 4h.01M15 10h.01M12 14h.01M9 14h.01M12 10h.01" />
-                            </svg>
-                            <span class="hidden sm:inline">修理</span>開始
-                        </button>
-                    @elseif($repairRecord->status === 'in_progress')
-                        <button onclick="openCompleteModal()"
-                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-green-700">
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="hidden sm:inline">修理</span>完了
-                        </button>
-                    @endif
-
-                    @if($repairRecord->status !== 'completed')
-                        <button onclick="openCancelModal()"
-                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-red-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-red-700">
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            <span class="hidden sm:inline">キャンセル</span>
-                        </button>
-                    @endif
-
-                    <a href="{{ route('repair-records.edit', $repairRecord) }}"
-                       class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                <!-- ワークフローボタン -->
+                @if($repairRecord->status === 'reported')
+                    <button onclick="openStartModal()"
+                            class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
                         <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1m-6 4h.01M15 10h.01M12 14h.01M9 14h.01M12 10h.01" />
                         </svg>
-                        編集
-                    </a>
+                        <span class="hidden sm:inline">修理</span>開始
+                    </button>
+                @elseif($repairRecord->status === 'in_progress')
+                    <button onclick="openCompleteModal()"
+                            class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-green-700">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="hidden sm:inline">修理</span>完了
+                    </button>
                 @endif
+
+                @if($repairRecord->status !== 'completed')
+                    <button onclick="openCancelModal()"
+                            class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-red-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-red-700">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span class="hidden sm:inline">キャンセル</span>
+                    </button>
+                @endif
+
+                <a href="{{ route('repair-records.edit', $repairRecord) }}"
+                   class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    編集
+                </a>
 
                 <!-- PDF伝票ダウンロードボタン -->
                 <a href="{{ route('repair-records.export-pdf', $repairRecord) }}"
@@ -279,8 +277,7 @@
                             </div>
                         </div>
 
-                        @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                            <!-- 代替機選択フォーム -->
+                        <!-- 代替機選択フォーム -->
                             @if($alternatives->count() > 0)
                                 <div class="border-t pt-4 sm:pt-6">
                                     <h4 class="text-sm sm:text-md font-medium text-gray-900 mb-3 sm:mb-4">代替機への置換</h4>
@@ -331,7 +328,6 @@
                                     </button>
                                 </form>
                             </div>
-                        @endif
                     </div>
                 </div>
             @endif
@@ -371,8 +367,7 @@
     </div>
 
 <!-- ワークフローモーダル -->
-@if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-    <!-- 修理開始モーダル -->
+<!-- 修理開始モーダル -->
     <div id="startModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
         <div class="relative top-10 sm:top-20 mx-3 sm:mx-auto p-3 sm:p-5 border w-auto sm:w-96 max-w-sm sm:max-w-none shadow-lg rounded-md bg-white">
             <div class="mt-2 sm:mt-3">
@@ -507,7 +502,6 @@
             </div>
         </div>
     </div>
-@endif
 
 @push('scripts')
 <script>

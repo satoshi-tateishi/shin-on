@@ -288,6 +288,7 @@
                                         class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                                @error('role') border-red-300 @enderror">
                                     <option value="">選択</option>
+                                    <option value="general" {{ old('role') == 'general' ? 'selected' : '' }}>一般</option>
                                     <option value="viewer" {{ old('role') == 'viewer' ? 'selected' : '' }}>閲覧者</option>
                                     <option value="editor" {{ old('role') == 'editor' ? 'selected' : '' }}>編集者</option>
                                     <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>管理者</option>

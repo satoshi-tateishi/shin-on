@@ -117,6 +117,7 @@ class User extends Authenticatable
         return match ($this->role) {
             'admin' => '管理者',
             'editor' => '編集者',
+            'general' => '一般',
             'viewer' => '閲覧者',
             default => '不明',
         };
