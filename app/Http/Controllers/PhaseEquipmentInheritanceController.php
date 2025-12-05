@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Phase;
 use App\Models\PhaseEquipment;
+use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,10 @@ use Illuminate\Validation\ValidationException;
  */
 class PhaseEquipmentInheritanceController extends Controller
 {
+    public function __construct(
+        private ActivityLogService $activityLogService
+    ) {}
+
     /**
      * 継承可能な継承先フェーズ取得
      */
@@ -229,7 +234,7 @@ class PhaseEquipmentInheritanceController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($validated, $sourcePhase, $targetPhase) {
+            $result = DB::transaction(function () use ($validated, $sourcePhase, $targetPhase) {
                 // 出庫中の機材のみ取得
                 $sourceEquipments = PhaseEquipment::where('phase_id', $sourcePhase->id)
                     ->where('status', 'checked_out')
@@ -247,14 +252,14 @@ class PhaseEquipmentInheritanceController extends Controller
                 if ($validated['inherit_type'] === 'all') {
                     // 全継承
                     foreach ($sourceEquipments as $sourceEquipment) {
-                        $result = $this->createInheritedEquipment($sourceEquipment, $targetPhase, $sourceEquipment->quantity, $sourceEquipment->note);
-                        if ($result['created']) {
-                            $createdEquipmentIds[] = $result['id'];
+                        $createResult = $this->createInheritedEquipment($sourceEquipment, $targetPhase, $sourceEquipment->quantity, $sourceEquipment->note);
+                        if ($createResult['created']) {
+                            $createdEquipmentIds[] = $createResult['id'];
                             // 継承元の機材を自動返却
                             $this->autoReturnSourceEquipment($sourceEquipment);
                         }
-                        if ($result['warning']) {
-                            $warnings[] = $result['warning'];
+                        if ($createResult['warning']) {
+                            $warnings[] = $createResult['warning'];
                         }
                     }
                 } else {
@@ -264,27 +269,43 @@ class PhaseEquipmentInheritanceController extends Controller
                         $sourceEquipment = PhaseEquipment::find($selection['source_phase_equipment_id']);
                         if ($sourceEquipment && $sourceEquipment->status === 'checked_out') {
                             $note = $selection['inherit_note'] ? $sourceEquipment->note : ($selection['new_note'] ?? '');
-                            $result = $this->createInheritedEquipment($sourceEquipment, $targetPhase, $selection['quantity'], $note);
-                            if ($result['created']) {
-                                $createdEquipmentIds[] = $result['id'];
+                            $createResult = $this->createInheritedEquipment($sourceEquipment, $targetPhase, $selection['quantity'], $note);
+                            if ($createResult['created']) {
+                                $createdEquipmentIds[] = $createResult['id'];
                                 // 継承元の機材を自動返却
                                 $this->autoReturnSourceEquipment($sourceEquipment);
                             }
-                            if ($result['warning']) {
-                                $warnings[] = $result['warning'];
+                            if ($createResult['warning']) {
+                                $warnings[] = $createResult['warning'];
                             }
                         }
                     }
                 }
 
-                return response()->json([
-                    'success' => true,
+                return [
                     'inherited_count' => count($createdEquipmentIds),
                     'total_source_count' => $sourceEquipments->count(),
                     'created_equipment_ids' => $createdEquipmentIds,
                     'warnings' => $warnings,
-                ]);
+                ];
             });
+
+            // アクティビティログ記録（トランザクション成功後）
+            if ($result['inherited_count'] > 0) {
+                $this->activityLogService->logInheritanceExecute(
+                    $sourcePhase,
+                    $targetPhase,
+                    $result['inherited_count']
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'inherited_count' => $result['inherited_count'],
+                'total_source_count' => $result['total_source_count'],
+                'created_equipment_ids' => $result['created_equipment_ids'],
+                'warnings' => $result['warnings'],
+            ]);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
