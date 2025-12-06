@@ -24,6 +24,21 @@ use Illuminate\View\View;
 class InventoryTransferController extends Controller
 {
     /**
+     * コンストラクタ - 権限チェック
+     */
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            // viewer権限は倉庫間移動にアクセス不可
+            if (auth()->user()->role === 'viewer') {
+                abort(403, 'この機能へのアクセス権限がありません。');
+            }
+
+            return $next($request);
+        });
+    }
+
+    /**
      * 倉庫間移動専用画面表示
      *
      * @return View 倉庫間移動画面のビュー

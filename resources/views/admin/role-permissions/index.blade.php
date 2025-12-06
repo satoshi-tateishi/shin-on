@@ -45,12 +45,6 @@
                         </span>
                         <span class="text-gray-600">担当者のみ</span>
                     </div>
-                    <div class="flex items-center gap-1.5 sm:gap-2">
-                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-yellow-100 text-yellow-700 rounded text-[10px] sm:text-xs font-medium">
-                            URL
-                        </span>
-                        <span class="text-gray-600">URL直接</span>
-                    </div>
                 </div>
             </div>
 
@@ -207,7 +201,6 @@
                 <ul class="text-[10px] sm:text-sm text-amber-700 space-y-0.5 sm:space-y-1">
                     <li>・ユーザーマスタはadminのみ編集可能</li>
                     <li>・👤 = 公演スタッフとして登録されているユーザー</li>
-                    <li>・URL = ダッシュボードリンクなし、URL直接アクセスで閲覧可</li>
                 </ul>
             </div>
         </div>

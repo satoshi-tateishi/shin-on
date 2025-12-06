@@ -471,17 +471,16 @@
                         <h2 class="text-2xl font-bold text-gray-900">アクティビティ</h2>
                     </div>
                     <a href="{{ route('activity-logs.index') }}" class="block group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200 hover:-translate-y-1">
-                        <div class="p-6">
-                            <!-- Header -->
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
+                        <div class="px-6 py-2 sm:px-8 sm:py-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
                                     <div class="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
                                         <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-gray-700 transition-colors">操作履歴</h3>
+                                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors">操作履歴</h3>
                                         <p class="text-sm text-gray-500">
                                             全 {{ number_format($activityStats['total']) }} 件
                                             @if($activityStats['today'] > 0)
@@ -494,7 +493,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
                             </div>
-
                         </div>
                     </a>
                 </div>

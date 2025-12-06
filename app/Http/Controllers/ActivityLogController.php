@@ -9,6 +9,21 @@ use Illuminate\View\View;
 
 class ActivityLogController extends Controller
 {
+    /**
+     * コンストラクタ - 権限チェック
+     */
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            // admin権限のみ操作履歴にアクセス可能
+            if (auth()->user()->role !== 'admin') {
+                abort(403, 'この機能へのアクセス権限がありません。');
+            }
+
+            return $next($request);
+        });
+    }
+
     public function index(Request $request): View
     {
         $filter = $request->get('filter', 'all');

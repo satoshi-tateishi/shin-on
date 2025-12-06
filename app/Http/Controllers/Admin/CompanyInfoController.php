@@ -10,6 +10,21 @@ use Illuminate\Support\Str;
 
 class CompanyInfoController extends Controller
 {
+    /**
+     * コンストラクタ - 権限チェック
+     */
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            // editor/admin権限のみ会社設定にアクセス可能
+            if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
+                abort(403, 'この機能へのアクセス権限がありません。');
+            }
+
+            return $next($request);
+        });
+    }
+
     public function index()
     {
         $logo = CompanyLogo::getActiveLogo();
