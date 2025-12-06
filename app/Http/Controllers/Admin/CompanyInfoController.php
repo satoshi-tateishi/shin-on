@@ -11,22 +11,19 @@ use Illuminate\Support\Str;
 class CompanyInfoController extends Controller
 {
     /**
-     * コンストラクタ - 権限チェック
+     * 権限チェック - editor/admin権限のみ会社設定にアクセス可能
      */
-    public function __construct()
+    private function checkAccess(): void
     {
-        $this->middleware(function ($request, $next) {
-            // editor/admin権限のみ会社設定にアクセス可能
-            if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
-                abort(403, 'この機能へのアクセス権限がありません。');
-            }
-
-            return $next($request);
-        });
+        if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
+            abort(403, 'この機能へのアクセス権限がありません。');
+        }
     }
 
     public function index()
     {
+        $this->checkAccess();
+
         $logo = CompanyLogo::getActiveLogo();
         $companyInfo = CompanyInfo::getActiveCompanyInfo();
         return view('admin.company-info.index', compact('logo', 'companyInfo'));
@@ -34,6 +31,8 @@ class CompanyInfoController extends Controller
 
     public function store(Request $request)
     {
+        $this->checkAccess();
+
         $request->validate([
             'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
@@ -63,6 +62,8 @@ class CompanyInfoController extends Controller
 
     public function destroy()
     {
+        $this->checkAccess();
+
         $logo = CompanyLogo::getActiveLogo();
 
         if ($logo) {
@@ -80,6 +81,8 @@ class CompanyInfoController extends Controller
      */
     public function storeCompanyInfo(Request $request)
     {
+        $this->checkAccess();
+
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'postal_code' => 'nullable|string|max:10',

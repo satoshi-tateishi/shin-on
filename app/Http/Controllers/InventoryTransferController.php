@@ -24,18 +24,13 @@ use Illuminate\View\View;
 class InventoryTransferController extends Controller
 {
     /**
-     * コンストラクタ - 権限チェック
+     * 権限チェック - viewer権限は倉庫間移動にアクセス不可
      */
-    public function __construct()
+    private function checkAccess(): void
     {
-        $this->middleware(function ($request, $next) {
-            // viewer権限は倉庫間移動にアクセス不可
-            if (auth()->user()->role === 'viewer') {
-                abort(403, 'この機能へのアクセス権限がありません。');
-            }
-
-            return $next($request);
-        });
+        if (auth()->user()->role === 'viewer') {
+            abort(403, 'この機能へのアクセス権限がありません。');
+        }
     }
 
     /**
@@ -45,6 +40,8 @@ class InventoryTransferController extends Controller
      */
     public function transferIndex(): View
     {
+        $this->checkAccess();
+
         return view('equipment-transfer.index');
     }
 
@@ -59,6 +56,8 @@ class InventoryTransferController extends Controller
      */
     public function transferEquipment(Request $request): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $validated = $request->validate([
                 'equipment_id' => 'required|exists:equipments,id',
@@ -125,6 +124,8 @@ class InventoryTransferController extends Controller
      */
     public function getTransferableEquipment(Request $request): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $validated = $request->validate([
                 'location_id' => 'nullable|exists:locations,id',
@@ -236,6 +237,8 @@ class InventoryTransferController extends Controller
      */
     public function bulkTransferEquipment(Request $request): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $validated = $request->validate([
                 'transfers' => 'required|array|min:1',
@@ -326,6 +329,8 @@ class InventoryTransferController extends Controller
      */
     public function returnEquipmentToBase(Request $request, Equipment $equipment): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $validated = $request->validate([
                 'note' => 'nullable|string|max:500',
@@ -391,6 +396,8 @@ class InventoryTransferController extends Controller
      */
     public function getEquipmentForReturn(Request $request): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $query = Equipment::query()
                 ->where('management_type', 'individual')
@@ -460,6 +467,8 @@ class InventoryTransferController extends Controller
      */
     public function bulkReturn(Request $request): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $validated = $request->validate([
                 'returns' => 'required|array|min:1',
@@ -609,6 +618,8 @@ class InventoryTransferController extends Controller
      */
     public function getWarehouses(): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $warehouses = Location::active()
                 ->warehouses()
@@ -647,6 +658,8 @@ class InventoryTransferController extends Controller
      */
     public function getTransferableCategories(): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             // location_id が 92-94 の機材の subcategory_id を取得
             $subcategoryIds = Equipment::whereIn('location_id', [92, 93, 94])
@@ -713,6 +726,8 @@ class InventoryTransferController extends Controller
      */
     public function getPhaseInfo(int $phase): JsonResponse
     {
+        $this->checkAccess();
+
         try {
             $phaseModel = \App\Models\Phase::with(['performance', 'location'])->findOrFail($phase);
 
