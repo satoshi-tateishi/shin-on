@@ -336,6 +336,9 @@ class PhaseEquipmentController extends Controller
         try {
             DB::beginTransaction();
 
+            // 削除前に機材名と新音番号を取得
+            $equipment = $phaseEquipment->equipment;
+
             // 出庫中または返却済みの機材の場合、Equipment の status を available に戻す
             if (in_array($phaseEquipment->status, ['checked_out', 'checked_in'])) {
                 $phaseEquipment->equipment->update(['status' => 'available']);
@@ -347,7 +350,10 @@ class PhaseEquipmentController extends Controller
 
             return redirect()
                 ->route('phases.equipment.index', $phase)
-                ->with('success', '機材使用記録を削除しました。');
+                ->with('deleted', [
+                    'name' => $equipment->name,
+                    'number' => $equipment->company_number,
+                ]);
 
         } catch (\Exception $e) {
             DB::rollback();

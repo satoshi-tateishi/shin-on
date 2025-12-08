@@ -111,6 +111,29 @@
                     </div>
                 @endif
 
+                @if(session('deleted'))
+                    <div class="mb-6 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 px-4 py-3 rounded-md">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex flex-wrap items-center gap-1">
+                                @if(is_array(session('deleted')))
+                                    <span class="font-medium">{{ session('deleted.name') }}</span>
+                                    @if(session('deleted.number'))
+                                        <span class="px-1.5 py-0.5 border border-red-600 dark:border-red-400 rounded text-xs">{{ session('deleted.number') }}</span>
+                                    @endif
+                                    <span>の使用記録を削除しました。</span>
+                                @else
+                                    {{ session('deleted') }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if(session('error'))
                     <div class="mb-6 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 px-4 py-3 rounded-md">
                         <div class="flex">

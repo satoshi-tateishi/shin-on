@@ -314,13 +314,9 @@
                                         @endif
 
                                         @if(in_array($phaseEquipment->status, ['reserved', 'checked_out']))
-                                            <form method="POST" action="{{ route('phases.equipment.destroy', [$phase, $phaseEquipment]) }}"
-                                                  class="inline"
-                                                  onsubmit="return confirm('この機材の使用記録を削除しますか？')" onclick="event.stopPropagation()">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-xs sm:text-sm text-red-600 hover:text-red-900">削除</button>
-                                            </form>
+                                            <button type="button"
+                                                    onclick="event.stopPropagation(); openDeleteModal('{{ route('phases.equipment.destroy', [$phase, $phaseEquipment]) }}', '{{ $phaseEquipment->equipment->name }}', '{{ $phaseEquipment->equipment->company_number }}')"
+                                                    class="text-xs sm:text-sm text-red-600 hover:text-red-900">削除</button>
                                         @endif
                                     @endif
                                 </div>
@@ -427,6 +423,47 @@
     :required="true"
 />
 
+<!-- 削除確認モーダル -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70" onclick="closeDeleteModal()"></div>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-auto border border-gray-200 dark:border-gray-700">
+            <div class="p-4 sm:p-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+                    <h3 class="ml-3 text-base sm:text-lg font-medium text-gray-900 dark:text-white">使用記録の削除</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    以下の機材の使用記録を削除しますか？
+                </p>
+                <div class="mb-6 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded flex flex-wrap items-center gap-1">
+                    <span id="deleteEquipmentName" class="text-sm font-medium text-gray-900 dark:text-white"></span>
+                    <span id="deleteEquipmentNumber" class="px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-400 hidden"></span>
+                </div>
+                <div class="flex justify-end gap-2 sm:gap-3">
+                    <button type="button"
+                            onclick="closeDeleteModal()"
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
+                        キャンセル
+                    </button>
+                    <form id="deleteForm" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                            削除する
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 機材継承モーダル -->
 <div id="inheritanceModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70" onclick="closeInheritanceModal()"></div>
@@ -510,6 +547,23 @@
 <script>
 function closeCheckoutModal() {
     document.getElementById('checkoutModal').classList.add('hidden');
+}
+
+function openDeleteModal(action, equipmentName, companyNumber) {
+    document.getElementById('deleteForm').action = action;
+    document.getElementById('deleteEquipmentName').textContent = equipmentName;
+    const numberEl = document.getElementById('deleteEquipmentNumber');
+    if (companyNumber) {
+        numberEl.textContent = companyNumber;
+        numberEl.classList.remove('hidden');
+    } else {
+        numberEl.classList.add('hidden');
+    }
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
 }
 
 async function openCheckinModal(phaseEquipmentId) {
