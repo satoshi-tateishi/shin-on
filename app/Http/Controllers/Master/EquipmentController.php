@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\HasCsvOperations;
 use App\Http\Controllers\Concerns\HasMasterOperations;
 use App\Http\Controllers\Concerns\HasSortableRecords;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EquipmentRequest;
 use App\Models\CompanyLogo;
 use App\Models\Equipment;
 use App\Models\EquipmentCategory;
@@ -89,40 +90,9 @@ class EquipmentController extends Controller
         return view('master.equipments.create', compact('categories', 'locations'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(EquipmentRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'subcategory_id' => 'required|exists:equipment_subcategories,id',
-            'manufacturer' => 'nullable|string|max:255',
-            'name' => 'required|string|max:255',
-            'company_number' => 'nullable|string|max:50',
-            'management_type' => 'required|in:individual,quantity',
-            'quantity' => 'nullable|integer|min:1',
-            'unit' => 'nullable|in:台,個,本,箱,ケース,ラック,セット',
-            'model_number' => 'nullable|string|max:100',
-            'serial_number' => 'nullable|string|max:100',
-            'supplier' => 'nullable|string|max:255',
-            'purchase_date' => 'nullable|date',
-            'warranty_expiry' => 'nullable|date',
-            'price' => 'nullable|numeric|min:0',
-            'status' => 'required|in:available,in_use,repair,retired,lost',
-            'location_id' => 'nullable|exists:locations,id',
-            'now_location_id' => 'nullable|exists:locations,id',
-            'is_discard' => 'nullable|boolean',
-            'is_schedule_visible' => 'nullable|boolean',
-            'discard_at' => 'nullable|date',
-            'notes' => 'nullable|string|max:1000',
-        ], [
-            'subcategory_id.required' => 'サブカテゴリは必須です。',
-            'subcategory_id.exists' => '選択されたサブカテゴリが存在しません。',
-            'name.required' => '機材名は必須です。',
-            'management_type.required' => '管理方式は必須です。',
-            'management_type.in' => '正しい管理方式を選択してください。',
-            'status.required' => '状態は必須です。',
-            'status.in' => '正しい状態を選択してください。',
-            'location_id.exists' => '選択された場所が存在しません。',
-        ]);
-
+        $validated = $request->validated();
         $validated['sort'] = $this->getNextSortOrder();
         Equipment::create($validated);
 
@@ -146,41 +116,9 @@ class EquipmentController extends Controller
         return view('master.equipments.edit', compact('equipment', 'categories', 'subcategories', 'locations'));
     }
 
-    public function update(Request $request, Equipment $equipment): RedirectResponse
+    public function update(EquipmentRequest $request, Equipment $equipment): RedirectResponse
     {
-        $validated = $request->validate([
-            'subcategory_id' => 'required|exists:equipment_subcategories,id',
-            'manufacturer' => 'nullable|string|max:255',
-            'name' => 'required|string|max:255',
-            'company_number' => 'nullable|string|max:50',
-            'management_type' => 'required|in:individual,quantity',
-            'quantity' => 'nullable|integer|min:1',
-            'unit' => 'nullable|in:台,個,本,箱,ケース,ラック,セット',
-            'model_number' => 'nullable|string|max:100',
-            'serial_number' => 'nullable|string|max:100',
-            'supplier' => 'nullable|string|max:255',
-            'purchase_date' => 'nullable|date',
-            'warranty_expiry' => 'nullable|date',
-            'price' => 'nullable|numeric|min:0',
-            'status' => 'required|in:available,in_use,repair,retired,lost',
-            'location_id' => 'nullable|exists:locations,id',
-            'now_location_id' => 'nullable|exists:locations,id',
-            'is_discard' => 'nullable|boolean',
-            'is_schedule_visible' => 'nullable|boolean',
-            'discard_at' => 'nullable|date',
-            'notes' => 'nullable|string|max:1000',
-        ], [
-            'subcategory_id.required' => 'サブカテゴリは必須です。',
-            'subcategory_id.exists' => '選択されたサブカテゴリが存在しません。',
-            'name.required' => '機材名は必須です。',
-            'management_type.required' => '管理方式は必須です。',
-            'management_type.in' => '正しい管理方式を選択してください。',
-            'status.required' => '状態は必須です。',
-            'status.in' => '正しい状態を選択してください。',
-            'location_id.exists' => '選択された場所が存在しません。',
-        ]);
-
-        $equipment->update($validated);
+        $equipment->update($request->validated());
 
         return redirect()->route('master.equipments.index')
             ->with('success', '機材を更新しました。');
@@ -342,9 +280,10 @@ class EquipmentController extends Controller
     protected function getUniqueIdentifier(array $recordData): array
     {
         // IDがある場合はIDで特定、なければnameとcompany_numberで特定
-        if (!empty($recordData['id'])) {
+        if (! empty($recordData['id'])) {
             return ['id' => $recordData['id']];
         }
+
         return ['name' => $recordData['name'], 'company_number' => $recordData['company_number']];
     }
 
@@ -362,14 +301,14 @@ class EquipmentController extends Controller
         }
 
         // subcategory_id の確認（NULLでない場合のみ存在チェック）
-        if (!is_null($recordData['subcategory_id'])) {
+        if (! is_null($recordData['subcategory_id'])) {
             if (! EquipmentSubcategory::where('id', $recordData['subcategory_id'])->exists()) {
                 throw new \Exception("サブカテゴリID {$recordData['subcategory_id']} が存在しません");
             }
         }
 
         // location_id の確認（NULLでない場合のみ存在チェック）
-        if (!is_null($recordData['location_id'])) {
+        if (! is_null($recordData['location_id'])) {
             if (! Location::where('id', $recordData['location_id'])->exists()) {
                 throw new \Exception("場所ID {$recordData['location_id']} が存在しません");
             }
@@ -516,16 +455,16 @@ class EquipmentController extends Controller
      * 修理記録作成フォームでの段階的機材選択に使用。
      * パフォーマンス最適化のため、必要最小限のデータのみ返却。
      *
-     * @param Request $request
-     *   - category: カテゴリ名（必須）
-     *   - subcategory: サブカテゴリ名（必須）
+     * @param  Request  $request
+     *                            - category: カテゴリ名（必須）
+     *                            - subcategory: サブカテゴリ名（必須）
      * @return JsonResponse
-     *   - success: boolean
-     *   - equipments: array 機材一覧（sort順）
-     *     - id: 機材ID
-     *     - name: 機材名
-     *     - company_number: 会社管理番号
-     *     - sort: ソート順
+     *                      - success: boolean
+     *                      - equipments: array 機材一覧（sort順）
+     *                      - id: 機材ID
+     *                      - name: 機材名
+     *                      - company_number: 会社管理番号
+     *                      - sort: ソート順
      */
     public function getEquipmentsBySubcategory(Request $request)
     {
@@ -587,13 +526,13 @@ class EquipmentController extends Controller
                 'subcategory_id',
                 'manufacturer', 'name',
             ])
-            ->selectRaw('GROUP_CONCAT(company_number ORDER BY sort SEPARATOR ", ") as company_numbers')
-            ->selectRaw('SUM(quantity) as total_quantity')
-            ->with([
-                'subcategory:id,category_id,name',
-                'subcategory.category:id,name',
-            ])
-            ->groupBy('manufacturer', 'name', 'subcategory_id');
+                ->selectRaw('GROUP_CONCAT(company_number ORDER BY sort SEPARATOR ", ") as company_numbers')
+                ->selectRaw('SUM(quantity) as total_quantity')
+                ->with([
+                    'subcategory:id,category_id,name',
+                    'subcategory.category:id,name',
+                ])
+                ->groupBy('manufacturer', 'name', 'subcategory_id');
 
             // フィルター適用（グループ化前のカラムのみ）
             if ($request->filled('category_id')) {
@@ -606,8 +545,8 @@ class EquipmentController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('manufacturer', 'like', "%{$search}%")
-                      ->orWhere('company_number', 'like', "%{$search}%");
+                        ->orWhere('manufacturer', 'like', "%{$search}%")
+                        ->orWhere('company_number', 'like', "%{$search}%");
                 });
             }
 
@@ -692,13 +631,13 @@ class EquipmentController extends Controller
                 'subcategory_id',
                 'manufacturer', 'name',
             ])
-            ->selectRaw('GROUP_CONCAT(company_number ORDER BY sort SEPARATOR ", ") as company_numbers')
-            ->selectRaw('SUM(quantity) as total_quantity')
-            ->with([
-                'subcategory:id,category_id,name',
-                'subcategory.category:id,name',
-            ])
-            ->groupBy('manufacturer', 'name', 'subcategory_id');
+                ->selectRaw('GROUP_CONCAT(company_number ORDER BY sort SEPARATOR ", ") as company_numbers')
+                ->selectRaw('SUM(quantity) as total_quantity')
+                ->with([
+                    'subcategory:id,category_id,name',
+                    'subcategory.category:id,name',
+                ])
+                ->groupBy('manufacturer', 'name', 'subcategory_id');
 
             // フィルター適用
             if ($request->filled('category_id')) {
@@ -711,8 +650,8 @@ class EquipmentController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('manufacturer', 'like', "%{$search}%")
-                      ->orWhere('company_number', 'like', "%{$search}%");
+                        ->orWhere('manufacturer', 'like', "%{$search}%")
+                        ->orWhere('company_number', 'like', "%{$search}%");
                 });
             }
 

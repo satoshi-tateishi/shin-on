@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Responses\ApiResponse;
 use App\Models\Equipment;
-use App\Models\EquipmentCategory;
-use App\Models\EquipmentMovement;
 use App\Models\Location;
-use App\Models\PhaseEquipment;
+use App\Services\InventoryTransferService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,20 +17,12 @@ use Illuminate\View\View;
  *
  * このコントローラーは機材の倉庫間移動に関する全ての機能を管理します。
  * 個体管理機材の移動、一括移動、返却処理などを含みます。
- *
- * @package App\Http\Controllers
  */
 class InventoryTransferController extends Controller
 {
-    /**
-     * 権限チェック - viewer権限は倉庫間移動にアクセス不可
-     */
-    private function checkAccess(): void
-    {
-        if (auth()->user()->role === 'viewer') {
-            abort(403, 'この機能へのアクセス権限がありません。');
-        }
-    }
+    public function __construct(
+        private InventoryTransferService $transferService
+    ) {}
 
     /**
      * 倉庫間移動専用画面表示
@@ -40,8 +31,6 @@ class InventoryTransferController extends Controller
      */
     public function transferIndex(): View
     {
-        $this->checkAccess();
-
         return view('equipment-transfer.index');
     }
 
@@ -51,13 +40,11 @@ class InventoryTransferController extends Controller
      * 指定した機材を別の倉庫に移動します。
      * 個体管理機材のみが対象となります。
      *
-     * @param Request $request リクエストデータ
+     * @param  Request  $request  リクエストデータ
      * @return JsonResponse JSON応答
      */
     public function transferEquipment(Request $request): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $validated = $request->validate([
                 'equipment_id' => 'required|exists:equipments,id',
@@ -69,10 +56,7 @@ class InventoryTransferController extends Controller
 
             // 個体管理機材のみ対象
             if ($equipment->management_type !== 'individual') {
-                return response()->json([
-                    'success' => false,
-                    'error' => '数量管理機材の倉庫間移動はサポートされていません。',
-                ], 400);
+                return ApiResponse::error('数量管理機材の倉庫間移動はサポートされていません。');
             }
 
             $currentLocationId = $equipment->now_location_id;
@@ -80,18 +64,13 @@ class InventoryTransferController extends Controller
 
             // 同じ場所への移動はエラー
             if ($currentLocationId == $toLocationId) {
-                return response()->json([
-                    'success' => false,
-                    'error' => '同じ場所への移動はできません。',
-                ], 400);
+                return ApiResponse::error('同じ場所への移動はできません。');
             }
 
             // 現在地を移動先に設定
             $equipment->update(['now_location_id' => $toLocationId]);
 
-            return response()->json([
-                'success' => true,
-                'message' => '機材の倉庫間移動が完了しました。',
+            return ApiResponse::success('機材の倉庫間移動が完了しました。', [
                 'equipment' => [
                     'id' => $equipment->id,
                     'name' => $equipment->name,
@@ -101,10 +80,7 @@ class InventoryTransferController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '倉庫間移動に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('倉庫間移動に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -119,13 +95,11 @@ class InventoryTransferController extends Controller
      * - 現在使用中でない機材（phase_equipment.status != 'checked_out'）
      * - 現在修理中でない機材（repair_records.status != 'in_progress'）
      *
-     * @param Request $request リクエストデータ
+     * @param  Request  $request  リクエストデータ
      * @return JsonResponse JSON応答
      */
     public function getTransferableEquipment(Request $request): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $validated = $request->validate([
                 'location_id' => 'nullable|exists:locations,id',
@@ -134,84 +108,10 @@ class InventoryTransferController extends Controller
                 'status' => 'nullable|in:available,maintenance,repair',
             ]);
 
-            $query = Equipment::with([
-                'location',
-                'nowLocation',
-                'subcategory.category',
-            ])
-                ->where('management_type', 'individual') // 個体管理機材のみ
-                ->where('is_discard', false) // 廃棄されていないもののみ
-                ->whereIn('location_id', [92, 93, 94]) // location_idが92-94の機材のみ表示対象
-                // 使用中の機材を除外
-                ->whereNotExists(function ($subQuery) {
-                    $subQuery->select(DB::raw(1))
-                        ->from('phase_equipment')
-                        ->whereColumn('phase_equipment.equipment_id', 'equipments.id')
-                        ->where('phase_equipment.status', 'checked_out');
-                })
-                // 修理中の機材を除外
-                ->whereNotExists(function ($subQuery) {
-                    $subQuery->select(DB::raw(1))
-                        ->from('repair_records')
-                        ->whereColumn('repair_records.equipment_id', 'equipments.id')
-                        ->where('repair_records.status', 'in_progress');
-                });
+            $equipment = $this->transferService->getTransferableEquipment($validated);
+            $equipmentData = $this->transferService->formatEquipmentForApi($equipment);
 
-            // フィルタ適用
-            if (! empty($validated['location_id'])) {
-                $query->where('now_location_id', $validated['location_id']);
-            }
-
-            if (! empty($validated['category_id'])) {
-                $query->whereHas('subcategory.category', function ($q) use ($validated) {
-                    $q->where('id', $validated['category_id']);
-                });
-            }
-
-            if (! empty($validated['search'])) {
-                $query->where(function ($q) use ($validated) {
-                    $q->where('name', 'like', '%'.$validated['search'].'%')
-                        ->orWhere('company_number', 'like', '%'.$validated['search'].'%');
-                });
-            }
-
-            if (! empty($validated['status'])) {
-                $query->where('status', $validated['status']);
-            }
-
-            $equipment = $query->orderBy('sort')->get();
-
-            // レスポンス用にデータを整形
-            $equipmentData = $equipment->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'company_number' => $item->company_number,
-                    'manufacturer' => $item->manufacturer,
-                    'status' => $item->status,
-                    'location_id' => $item->location_id,
-                    'now_location_id' => $item->now_location_id,
-                    'location' => [
-                        'id' => $item->location->id,
-                        'name' => $item->location->name,
-                        'type' => $item->location->type,
-                        'display_name' => $item->location->name,
-                    ],
-                    'subcategory' => [
-                        'id' => $item->subcategory->id,
-                        'name' => $item->subcategory->name,
-                        'category' => [
-                            'id' => $item->subcategory->category->id,
-                            'name' => $item->subcategory->category->name,
-                        ],
-                    ],
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $equipmentData,
-            ]);
+            return ApiResponse::data(['data' => $equipmentData]);
 
         } catch (\Exception $e) {
             \Log::error('Get transferable equipment error', [
@@ -219,10 +119,7 @@ class InventoryTransferController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'error' => '機材データの取得に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('機材データの取得に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -232,13 +129,11 @@ class InventoryTransferController extends Controller
      * 複数の機材を一度に別の倉庫に移動します。
      * 各機材の移動処理は独立しており、一部が失敗しても他の処理は継続されます。
      *
-     * @param Request $request リクエストデータ
+     * @param  Request  $request  リクエストデータ
      * @return JsonResponse JSON応答
      */
     public function bulkTransferEquipment(Request $request): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $validated = $request->validate([
                 'transfers' => 'required|array|min:1',
@@ -258,6 +153,7 @@ class InventoryTransferController extends Controller
                         // 個体管理機材のみ対象
                         if ($equipment->management_type !== 'individual') {
                             $errors[] = "機材「{$equipment->name}」: 数量管理機材の倉庫間移動はサポートされていません。";
+
                             continue;
                         }
 
@@ -267,6 +163,7 @@ class InventoryTransferController extends Controller
                         // 同じ場所への移動はスキップ
                         if ($currentLocationId == $toLocationId) {
                             $errors[] = "機材「{$equipment->name}」: 同じ場所への移動はできません。";
+
                             continue;
                         }
 
@@ -290,11 +187,7 @@ class InventoryTransferController extends Controller
             $errorCount = count($errors);
 
             if ($successCount > 0 && $errorCount === 0) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "{$successCount}件の機材移動が完了しました。",
-                    'transfers' => $results,
-                ]);
+                return ApiResponse::success("{$successCount}件の機材移動が完了しました。", ['transfers' => $results]);
             } elseif ($successCount > 0 && $errorCount > 0) {
                 return response()->json([
                     'success' => true,
@@ -303,17 +196,10 @@ class InventoryTransferController extends Controller
                     'errors' => $errors,
                 ], 206); // Partial Content
             } else {
-                return response()->json([
-                    'success' => false,
-                    'error' => '機材移動に失敗しました。',
-                    'errors' => $errors,
-                ], 400);
+                return ApiResponse::error('機材移動に失敗しました。', $errors);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '一括移動処理でエラーが発生しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('一括移動処理でエラーが発生しました: '.$e->getMessage());
         }
     }
 
@@ -323,41 +209,30 @@ class InventoryTransferController extends Controller
      * 指定した機材を基本倉庫（location_id）に返却します。
      * 現在地（now_location_id）を基本倉庫に変更します。
      *
-     * @param Request $request リクエストデータ
-     * @param Equipment $equipment 返却対象の機材
+     * @param  Request  $request  リクエストデータ
+     * @param  Equipment  $equipment  返却対象の機材
      * @return JsonResponse JSON応答
      */
     public function returnEquipmentToBase(Request $request, Equipment $equipment): JsonResponse
     {
-        $this->checkAccess();
-
         try {
-            $validated = $request->validate([
+            $request->validate([
                 'note' => 'nullable|string|max:500',
             ]);
 
             // 個体管理機材のみ対象
             if ($equipment->management_type !== 'individual') {
-                return response()->json([
-                    'success' => false,
-                    'error' => '数量管理機材の返却はサポートされていません。',
-                ], 400);
+                return ApiResponse::error('数量管理機材の返却はサポートされていません。');
             }
 
             // 基本倉庫と現在地が同じ場合はエラー
             if ($equipment->now_location_id == $equipment->location_id) {
-                return response()->json([
-                    'success' => false,
-                    'error' => '機材は既に基本倉庫にあります。',
-                ], 400);
+                return ApiResponse::error('機材は既に基本倉庫にあります。');
             }
 
             // 基本倉庫が設定されていない場合はエラー
             if (! $equipment->location_id) {
-                return response()->json([
-                    'success' => false,
-                    'error' => '基本倉庫が設定されていません。',
-                ], 400);
+                return ApiResponse::error('基本倉庫が設定されていません。');
             }
 
             $fromLocationName = $equipment->nowLocation?->name ?? '不明';
@@ -366,9 +241,7 @@ class InventoryTransferController extends Controller
             // 現在地を基本倉庫に設定して返却
             $equipment->update(['now_location_id' => $equipment->location_id]);
 
-            return response()->json([
-                'success' => true,
-                'message' => '機材を基本倉庫に返却しました。',
+            return ApiResponse::success('機材を基本倉庫に返却しました。', [
                 'equipment' => [
                     'id' => $equipment->id,
                     'name' => $equipment->name,
@@ -378,10 +251,7 @@ class InventoryTransferController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '返却に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('返却に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -391,13 +261,11 @@ class InventoryTransferController extends Controller
      * 返却処理対象となる機材の一覧を取得します。
      * location_id が92-94の個体管理機材が対象です。
      *
-     * @param Request $request リクエストデータ
+     * @param  Request  $request  リクエストデータ
      * @return JsonResponse JSON応答
      */
     public function getEquipmentForReturn(Request $request): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $query = Equipment::query()
                 ->where('management_type', 'individual')
@@ -442,17 +310,13 @@ class InventoryTransferController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            return response()->json([
-                'success' => true,
+            return ApiResponse::data([
                 'data' => $equipments,
                 'count' => $equipments->count(),
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '機材データの取得に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('機材データの取得に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -462,13 +326,11 @@ class InventoryTransferController extends Controller
      * 複数の機材を指定された返却先倉庫に一括で返却します。
      * PhaseEquipmentのステータスも同時に更新し、移動履歴も作成します。
      *
-     * @param Request $request リクエストデータ
+     * @param  Request  $request  リクエストデータ
      * @return JsonResponse JSON応答
      */
     public function bulkReturn(Request $request): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $validated = $request->validate([
                 'returns' => 'required|array|min:1',
@@ -477,134 +339,28 @@ class InventoryTransferController extends Controller
                 'returns.*.phase_equipment_id' => 'nullable|integer|exists:phase_equipment,id',
             ]);
 
-            $returns = $validated['returns'];
-            $results = [];
-            $errors = [];
+            $result = $this->transferService->processBulkReturn(
+                $validated['returns'],
+                auth()->id()
+            );
 
-            DB::transaction(function () use ($returns, &$results, &$errors) {
-                foreach ($returns as $returnData) {
-                    try {
-                        $equipmentId = $returnData['equipment_id'];
-                        $returnLocationId = $returnData['return_location_id'];
-
-                        // 機材取得・バリデーション
-                        $equipment = Equipment::find($equipmentId);
-
-                        if (! $equipment) {
-                            $errors[] = "機材ID {$equipmentId}: 機材が見つかりません";
-                            continue;
-                        }
-
-                        if ($equipment->management_type !== 'individual') {
-                            $errors[] = "機材ID {$equipmentId}: 個体管理機材のみ返却可能です";
-                            continue;
-                        }
-
-                        if (! in_array($equipment->location_id, [92, 93, 94])) {
-                            $errors[] = "機材ID {$equipmentId}: 基本倉庫ID 92-94の機材のみが対象です";
-                            continue;
-                        }
-
-                        // 返却先倉庫の確認
-                        $returnLocation = Location::find($returnLocationId);
-                        if (! $returnLocation || $returnLocation->type !== '倉庫') {
-                            $errors[] = "機材ID {$equipmentId}: 無効な返却先倉庫です";
-                            continue;
-                        }
-
-                        // 返却処理実行
-                        $equipment->update(['now_location_id' => $returnLocationId]);
-
-                        // PhaseEquipmentのステータスを「返却済み」に更新
-                        $phaseEquipmentId = $returnData['phase_equipment_id'] ?? null;
-
-                        if ($phaseEquipmentId) {
-                            // 特定のPhaseEquipmentのみ更新
-                            $phaseEquipment = PhaseEquipment::find($phaseEquipmentId);
-
-                            if ($phaseEquipment && $phaseEquipment->equipment_id == $equipmentId && $phaseEquipment->status == 'checked_out') {
-                                $phaseEquipment->update([
-                                    'status' => 'checked_in',
-                                    'checkin_date' => now()->format('Y-m-d'),
-                                    'checkin_user_id' => auth()->id(),
-                                ]);
-
-                                // 移動履歴を作成
-                                EquipmentMovement::createCheckin(
-                                    $equipment->id,
-                                    $phaseEquipment->phase_id,
-                                    $phaseEquipment->quantity,
-                                    auth()->id(),
-                                    $returnLocationId,
-                                    '返却先選択による返却'
-                                );
-                            }
-                        } else {
-                            // 従来の処理：該当機材のすべての出庫中PhaseEquipmentを更新
-                            $phaseEquipments = PhaseEquipment::where('equipment_id', $equipmentId)
-                                ->where('status', 'checked_out')
-                                ->get();
-
-                            foreach ($phaseEquipments as $phaseEquipment) {
-                                $phaseEquipment->update([
-                                    'status' => 'checked_in',
-                                    'checkin_date' => now()->format('Y-m-d'),
-                                    'checkin_user_id' => auth()->id(),
-                                ]);
-
-                                // 移動履歴を作成
-                                EquipmentMovement::createCheckin(
-                                    $equipment->id,
-                                    $phaseEquipment->phase_id,
-                                    $phaseEquipment->quantity,
-                                    auth()->id(),
-                                    $returnLocationId,
-                                    '返却先選択による返却'
-                                );
-                            }
-                        }
-
-                        $results[] = [
-                            'id' => $equipment->id,
-                            'name' => $equipment->name,
-                            'company_number' => $equipment->company_number,
-                            'return_location' => $returnLocation->name,
-                        ];
-                    } catch (\Exception $e) {
-                        $errors[] = "機材ID {$returnData['equipment_id']}: {$e->getMessage()}";
-                    }
-                }
-            });
-
-            // 結果の処理
-            $successCount = count($results);
-            $errorCount = count($errors);
+            $successCount = count($result['results']);
+            $errorCount = count($result['errors']);
 
             if ($successCount > 0 && $errorCount === 0) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "{$successCount}件の機材返却が完了しました。",
-                    'returns' => $results,
-                ]);
+                return ApiResponse::success("{$successCount}件の機材返却が完了しました。", ['returns' => $result['results']]);
             } elseif ($successCount > 0 && $errorCount > 0) {
                 return response()->json([
                     'success' => true,
                     'message' => "{$successCount}件の機材返却が完了しました。{$errorCount}件でエラーが発生しました。",
-                    'returns' => $results,
-                    'errors' => $errors,
+                    'returns' => $result['results'],
+                    'errors' => $result['errors'],
                 ], 206); // Partial Content
             } else {
-                return response()->json([
-                    'success' => false,
-                    'error' => '機材返却に失敗しました。',
-                    'errors' => $errors,
-                ], 400);
+                return ApiResponse::error('機材返却に失敗しました。', $result['errors']);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '一括返却処理でエラーが発生しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('一括返却処理でエラーが発生しました: '.$e->getMessage());
         }
     }
 
@@ -618,8 +374,6 @@ class InventoryTransferController extends Controller
      */
     public function getWarehouses(): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $warehouses = Location::active()
                 ->warehouses()
@@ -635,16 +389,10 @@ class InventoryTransferController extends Controller
                     ];
                 });
 
-            return response()->json([
-                'success' => true,
-                'warehouses' => $warehouses,
-            ]);
+            return ApiResponse::data(['warehouses' => $warehouses]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => '倉庫一覧の取得に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('倉庫一覧の取得に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -658,34 +406,13 @@ class InventoryTransferController extends Controller
      */
     public function getTransferableCategories(): JsonResponse
     {
-        $this->checkAccess();
-
         try {
-            // location_id が 92-94 の機材の subcategory_id を取得
-            $subcategoryIds = Equipment::whereIn('location_id', [92, 93, 94])
-                ->where('management_type', 'individual')
-                ->where('is_discard', false)
-                ->distinct()
-                ->pluck('subcategory_id');
+            $categories = $this->transferService->getTransferableCategories();
 
-            // subcategory から category を取得
-            $categories = EquipmentCategory::whereHas('subcategories', function ($query) use ($subcategoryIds) {
-                $query->whereIn('id', $subcategoryIds);
-            })
-                ->active()
-                ->ordered()
-                ->get(['id', 'name']);
-
-            return response()->json([
-                'success' => true,
-                'categories' => $categories,
-            ]);
+            return ApiResponse::data(['categories' => $categories]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'カテゴリ一覧の取得に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('カテゴリ一覧の取得に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -695,8 +422,8 @@ class InventoryTransferController extends Controller
      * 指定した機材の最後の移動記録を取得します。
      * 基準日以前の最新の移動記録を返します。
      *
-     * @param int $equipmentId 機材ID
-     * @param Carbon $asOfDate 基準日
+     * @param  int  $equipmentId  機材ID
+     * @param  Carbon  $asOfDate  基準日
      * @return array|null 移動記録データまたはnull
      */
     private function getLastMovement(int $equipmentId, Carbon $asOfDate): ?array
@@ -721,18 +448,14 @@ class InventoryTransferController extends Controller
     /**
      * フェーズ情報取得API
      *
-     * @param int $phase フェーズID
-     * @return JsonResponse
+     * @param  int  $phase  フェーズID
      */
     public function getPhaseInfo(int $phase): JsonResponse
     {
-        $this->checkAccess();
-
         try {
             $phaseModel = \App\Models\Phase::with(['performance', 'location'])->findOrFail($phase);
 
-            return response()->json([
-                'success' => true,
+            return ApiResponse::data([
                 'phase' => [
                     'id' => $phaseModel->id,
                     'name' => $phaseModel->name,
@@ -749,10 +472,7 @@ class InventoryTransferController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'フェーズ情報の取得に失敗しました: '.$e->getMessage(),
-            ], 404);
+            return ApiResponse::notFound('フェーズ情報の取得に失敗しました: '.$e->getMessage());
         }
     }
 }

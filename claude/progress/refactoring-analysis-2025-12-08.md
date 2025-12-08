@@ -23,23 +23,23 @@
 | 7 | CheckRole ミドルウェア | `app/Http/Middleware/CheckRole.php` | ✅ 完了 |
 | 8 | ApiResponse統一 | `app/Http/Responses/ApiResponse.php` | ✅ 完了 |
 
+### Step 9: 高優先度対応 ✅
+| # | 項目 | 対象ファイル | 状態 |
+|---|------|-------------|------|
+| 9 | InventoryTransferController分割 | `app/Services/InventoryTransferService.php` | ✅ 完了 |
+
 ---
 
 ## 残作業
 
-### 高優先度
-| # | 項目 | 対象 | 概要 |
-|---|------|------|------|
-| 5 | InventoryTransferController分割 | Service層新規作成 | `bulkReturn()` 140行、`getTransferableEquipment()` 102行をService層へ分離 |
-
-### 中優先度
-| # | 項目 | 対象 | 概要 |
-|---|------|------|------|
-| 10 | レイアウト統合 | `layouts/*.blade.php` | `master.blade.php`と`app.blade.php`の95%重複を統合 |
-| 11 | バリデーション共通化 | `Rules/`新規作成 | 画像バリデーション等の重複ルールを共通化 |
-| 12 | Equipment.php責務分離 | `Services/Equipment/` | 516行、13個のビジネスロジックをService層へ分離 |
-| 13 | BackupService分割 | `Services/Backup/` | 979行を4つのServiceに分割 |
-| 14 | Form Request拡充 | `Requests/`新規作成 | 複雑なフォームにForm Requestを追加 |
+### Step 10-14: 中優先度対応 ✅
+| # | 項目 | 対象ファイル | 状態 |
+|---|------|-------------|------|
+| 10 | レイアウト統合 | `layouts/master.blade.php`に統合 | ✅ 完了 |
+| 11 | バリデーション共通化 | `app/Rules/ValidationRules.php` | ✅ 完了 |
+| 12 | Equipment.php責務分離 | `app/Services/EquipmentAnalyticsService.php` | ✅ 完了 |
+| 13 | BackupService分割 | `Services/Backup/` | ⏸️ 保留（影響範囲大） |
+| 14 | Form Request拡充 | `app/Http/Requests/EquipmentRequest.php` | ✅ 完了 |
 
 ### 低優先度
 | # | 項目 | 対象 | 概要 |
@@ -56,8 +56,18 @@
 ```
 app/Http/Middleware/CheckRole.php        # Role権限ミドルウェア
 app/Http/Responses/ApiResponse.php       # 統一JSONレスポンス
+app/Services/InventoryTransferService.php # 倉庫間移動Service
+app/Services/EquipmentAnalyticsService.php # 機材分析Service
+app/Rules/ValidationRules.php            # 共通バリデーションルール
+app/Http/Requests/EquipmentRequest.php   # 機材Form Request
 resources/views/components/button.blade.php      # ボタンコンポーネント
 resources/views/components/form-input.blade.php  # フォーム入力コンポーネント
+```
+
+## 削除済みファイル一覧
+
+```
+resources/views/layouts/app.blade.php    # master.blade.phpに統合
 ```
 
 ---
@@ -66,11 +76,11 @@ resources/views/components/form-input.blade.php  # フォーム入力コンポ�
 
 | 領域 | 初期スコア | 現在スコア |
 |------|-----------|-----------|
-| Controllers & Routes | 60/100 | 70/100 |
-| Models & Services | 70/100 | 75/100 |
+| Controllers & Routes | 60/100 | 78/100 |
+| Models & Services | 70/100 | 82/100 |
 | Views & Frontend | 65/100 | 70/100 |
-| **総合** | **65/100** | **72/100** |
+| **総合** | **65/100** | **77/100** |
 
 ---
 
-*残作業は必要に応じて段階的に実施*
+*残作業（低優先度）は必要に応じて段階的に実施*

@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\HasMasterOperations;
 use App\Http\Controllers\Concerns\HasSortableRecords;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Rules\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -36,24 +37,24 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'role' => 'required|in:general,viewer,editor,admin',
-            'sort' => 'nullable|integer|min:0',
+            'sort' => ValidationRules::sortOrder(),
             'affiliation' => 'required|in:employee,partner',
             'furigana' => 'nullable|string|max:255',
-            'hired_at' => 'nullable|date',
-            'resigned_at' => 'nullable|date',
-            'birthday' => 'nullable|date',
-            'mobile_phone' => 'nullable|string|max:20',
-            'postal_code' => 'nullable|string|max:8',
+            'hired_at' => ValidationRules::date(),
+            'resigned_at' => ValidationRules::date(),
+            'birthday' => ValidationRules::date(),
+            'mobile_phone' => ValidationRules::phone(),
+            'postal_code' => ValidationRules::postalCode(),
             'address' => 'nullable|string|max:500',
             'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:20',
+            'emergency_contact_phone' => ValidationRules::phone(),
             'notes' => 'nullable|string|max:1000',
-            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'icon' => ValidationRules::imageIcon(),
             'is_staff' => 'nullable|boolean',
             'is_designer' => 'nullable|boolean',
             'is_driver' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
-        ], [
+        ], array_merge([
             'name.required' => '氏名は必須です。',
             'email.required' => 'メールアドレスは必須です。',
             'email.email' => 'メールアドレスの形式が正しくありません。',
@@ -62,15 +63,13 @@ class UserController extends Controller
             'role.in' => '正しい権限を選択してください。',
             'affiliation.required' => '所属は必須です。',
             'affiliation.in' => '正しい所属を選択してください。',
-            'sort.integer' => 'ソート順は数値で入力してください。',
-            'sort.min' => 'ソート順は0以上で入力してください。',
-            'hired_at.date' => '入社日は正しい日付形式で入力してください。',
-            'resigned_at.date' => '退職日は正しい日付形式で入力してください。',
-            'birthday.date' => '生年月日は正しい日付形式で入力してください。',
-            'icon.image' => 'アイコンは画像ファイルである必要があります。',
-            'icon.mimes' => 'アイコンはJPEG、PNG、JPG、GIF、WebP形式のファイルをアップロードしてください。',
-            'icon.max' => 'アイコンのファイルサイズは2MB以下である必要があります。',
-        ]);
+        ],
+            ValidationRules::sortMessages(),
+            ValidationRules::dateMessages('hired_at', '入社日'),
+            ValidationRules::dateMessages('resigned_at', '退職日'),
+            ValidationRules::dateMessages('birthday', '生年月日'),
+            ValidationRules::imageMessages()
+        ));
 
         // Handle icon upload
         if ($request->hasFile('icon')) {
@@ -114,20 +113,20 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'role' => 'required|in:general,viewer,editor,admin',
-            'sort' => 'nullable|integer|min:0',
+            'sort' => ValidationRules::sortOrder(),
             'affiliation' => 'required|in:employee,partner',
             'furigana' => 'nullable|string|max:255',
             'department' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
-            'hired_at' => 'nullable|date',
-            'resigned_at' => 'nullable|date',
-            'birthday' => 'nullable|date',
-            'phone' => 'nullable|string|max:20',
-            'mobile_phone' => 'nullable|string|max:20',
-            'postal_code' => 'nullable|string|max:8',
+            'hired_at' => ValidationRules::date(),
+            'resigned_at' => ValidationRules::date(),
+            'birthday' => ValidationRules::date(),
+            'phone' => ValidationRules::phone(),
+            'mobile_phone' => ValidationRules::phone(),
+            'postal_code' => ValidationRules::postalCode(),
             'address' => 'nullable|string|max:500',
             'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:20',
+            'emergency_contact_phone' => ValidationRules::phone(),
             'notes' => 'nullable|string|max:1000',
             'is_staff' => 'nullable|boolean',
             'is_designer' => 'nullable|boolean',
@@ -135,8 +134,8 @@ class UserController extends Controller
             'is_on_leave' => 'nullable|boolean',
             'is_resigned' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
-            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        ], [
+            'icon' => ValidationRules::imageIcon(),
+        ], array_merge([
             'name.required' => '氏名は必須です。',
             'email.required' => 'メールアドレスは必須です。',
             'email.email' => 'メールアドレスの形式が正しくありません。',
@@ -145,15 +144,13 @@ class UserController extends Controller
             'role.in' => '正しい権限を選択してください。',
             'affiliation.required' => '所属は必須です。',
             'affiliation.in' => '正しい所属を選択してください。',
-            'sort.integer' => 'ソート順は数値で入力してください。',
-            'sort.min' => 'ソート順は0以上で入力してください。',
-            'hired_at.date' => '入社日は正しい日付形式で入力してください。',
-            'resigned_at.date' => '退職日は正しい日付形式で入力してください。',
-            'birthday.date' => '生年月日は正しい日付形式で入力してください。',
-            'icon.image' => 'アイコンは画像ファイルである必要があります。',
-            'icon.mimes' => 'アイコンはJPEG、PNG、JPG、GIF、WebP形式のファイルをアップロードしてください。',
-            'icon.max' => 'アイコンのファイルサイズは2MB以下である必要があります。',
-        ]);
+        ],
+            ValidationRules::sortMessages(),
+            ValidationRules::dateMessages('hired_at', '入社日'),
+            ValidationRules::dateMessages('resigned_at', '退職日'),
+            ValidationRules::dateMessages('birthday', '生年月日'),
+            ValidationRules::imageMessages()
+        ));
 
         // Handle icon upload
         if ($request->hasFile('icon')) {

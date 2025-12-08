@@ -3,43 +3,31 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyLogo;
 use App\Models\CompanyInfo;
+use App\Models\CompanyLogo;
+use App\Rules\ValidationRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CompanyInfoController extends Controller
 {
-    /**
-     * 権限チェック - editor/admin権限のみ会社設定にアクセス可能
-     */
-    private function checkAccess(): void
-    {
-        if (! in_array(auth()->user()->role, ['editor', 'admin'])) {
-            abort(403, 'この機能へのアクセス権限がありません。');
-        }
-    }
-
     public function index()
     {
-        $this->checkAccess();
-
         $logo = CompanyLogo::getActiveLogo();
         $companyInfo = CompanyInfo::getActiveCompanyInfo();
+
         return view('admin.company-info.index', compact('logo', 'companyInfo'));
     }
 
     public function store(Request $request)
     {
-        $this->checkAccess();
-
         $request->validate([
-            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+            'logo' => ValidationRules::imageLogo(true),
+        ], ValidationRules::logoMessages());
 
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
-            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
             $filePath = $file->storeAs('company-logos', $fileName, 'public');
 
             CompanyLogo::where('is_active', true)->update(['is_active' => false]);
@@ -53,27 +41,26 @@ class CompanyInfoController extends Controller
             ]);
 
             return redirect()->route('admin.company-info.index')
-                           ->with('success', '会社ロゴをアップロードしました。');
+                ->with('success', '会社ロゴをアップロードしました。');
         }
 
         return redirect()->route('admin.company-info.index')
-                       ->with('error', 'ファイルのアップロードに失敗しました。');
+            ->with('error', 'ファイルのアップロードに失敗しました。');
     }
 
     public function destroy()
     {
-        $this->checkAccess();
-
         $logo = CompanyLogo::getActiveLogo();
 
         if ($logo) {
             $logo->delete();
+
             return redirect()->route('admin.company-info.index')
-                           ->with('success', '会社ロゴを削除しました。');
+                ->with('success', '会社ロゴを削除しました。');
         }
 
         return redirect()->route('admin.company-info.index')
-                       ->with('error', '削除するロゴが見つかりません。');
+            ->with('error', '削除するロゴが見つかりません。');
     }
 
     /**
@@ -81,13 +68,11 @@ class CompanyInfoController extends Controller
      */
     public function storeCompanyInfo(Request $request)
     {
-        $this->checkAccess();
-
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'postal_code' => 'nullable|string|max:10',
             'address' => 'nullable|string|max:500',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ValidationRules::phone(),
             'repair_contact_person' => 'nullable|string|max:255',
             'repair_contact_email' => 'nullable|email|max:255',
         ]);
@@ -96,7 +81,7 @@ class CompanyInfoController extends Controller
 
         // どの情報が更新されたかを判定
         $isRepairInfoUpdate = $request->filled('repair_contact_person') || $request->filled('repair_contact_email');
-        $isCompanyInfoUpdate = !$companyInfo ||
+        $isCompanyInfoUpdate = ! $companyInfo ||
             ($companyInfo->company_name !== $validated['company_name']) ||
             ($companyInfo->postal_code !== ($validated['postal_code'] ?? null)) ||
             ($companyInfo->address !== ($validated['address'] ?? null)) ||
@@ -107,9 +92,9 @@ class CompanyInfoController extends Controller
             $companyInfo->update($validated);
 
             // メッセージの決定
-            if ($isRepairInfoUpdate && !$isCompanyInfoUpdate) {
+            if ($isRepairInfoUpdate && ! $isCompanyInfoUpdate) {
                 $message = '修理担当者情報を更新しました。';
-            } elseif (!$isRepairInfoUpdate && $isCompanyInfoUpdate) {
+            } elseif (! $isRepairInfoUpdate && $isCompanyInfoUpdate) {
                 $message = '会社情報を更新しました。';
             } else {
                 $message = '会社情報を更新しました。';

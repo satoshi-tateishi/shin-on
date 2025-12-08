@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EquipmentAnalyticsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,14 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 class Equipment extends Model
 {
     use HasFactory;
+
+    /**
+     * 分析サービスインスタンスを取得（遅延初期化）
+     */
+    protected function analyticsService(): EquipmentAnalyticsService
+    {
+        return app(EquipmentAnalyticsService::class);
+    }
 
     protected $table = 'equipments';
 
@@ -264,30 +273,22 @@ class Equipment extends Model
 
     /**
      * 修理履歴を取得（期間指定可能）
+     *
+     * @deprecated Use EquipmentAnalyticsService::getRepairHistory() instead
      */
     public function getRepairHistory($startDate = null, $endDate = null)
     {
-        $query = $this->repairRecords()->with('reportedBy');
-
-        if ($startDate && $endDate) {
-            $query->reportedBetween($startDate, $endDate);
-        }
-
-        return $query->orderBy('reported_at', 'desc')->get();
+        return $this->analyticsService()->getRepairHistory($this, $startDate, $endDate);
     }
 
     /**
      * 修理コストの合計を取得（期間指定可能）
+     *
+     * @deprecated Use EquipmentAnalyticsService::getTotalRepairCost() instead
      */
     public function getTotalRepairCost($startDate = null, $endDate = null): float
     {
-        $query = $this->repairRecords()->whereNotNull('repair_cost');
-
-        if ($startDate && $endDate) {
-            $query->reportedBetween($startDate, $endDate);
-        }
-
-        return $query->sum('repair_cost') ?? 0.0;
+        return $this->analyticsService()->getTotalRepairCost($this, $startDate, $endDate);
     }
 
     /**
@@ -308,79 +309,42 @@ class Equipment extends Model
 
     /**
      * 指定期間での使用可能性チェック
+     *
+     * @deprecated Use EquipmentAnalyticsService::isAvailableInPeriod() instead
      */
     public function isAvailableInPeriod($startDate, $endDate): bool
     {
-        if ($this->status !== 'available' || $this->is_discard) {
-            return false;
-        }
-
-        return ! PhaseEquipment::hasEquipmentConflict($this->id, $startDate, $endDate);
+        return $this->analyticsService()->isAvailableInPeriod($this, $startDate, $endDate);
     }
 
     /**
      * 指定期間での使用可能数量（数量管理機材のみ）
+     *
+     * @deprecated Use EquipmentAnalyticsService::getAvailableQuantityInPeriod() instead
      */
     public function getAvailableQuantityInPeriod($startDate, $endDate): int
     {
-        if ($this->management_type !== 'quantity') {
-            return $this->isAvailableInPeriod($startDate, $endDate) ? 1 : 0;
-        }
-
-        return PhaseEquipment::getAvailableQuantity($this->id, $startDate, $endDate);
+        return $this->analyticsService()->getAvailableQuantityInPeriod($this, $startDate, $endDate);
     }
 
     /**
      * この機材の代替機候補を検索
+     *
+     * @deprecated Use EquipmentAnalyticsService::findAlternatives() instead
      */
     public function findAlternatives(array $excludeIds = []): \Illuminate\Database\Eloquent\Collection
     {
-        $excludeIds[] = $this->id; // 自分自身を除外
-
-        // 1. 同一機材名の代替機を検索（最優先）
-        $sameNameAlternatives = static::where('name', $this->name)
-            ->whereNotIn('id', $excludeIds)
-            ->available()
-            ->ordered()
-            ->get();
-
-        if ($sameNameAlternatives->isNotEmpty()) {
-            return $sameNameAlternatives;
-        }
-
-        // 2. 同一サブカテゴリの代替機を検索
-        $sameSubcategoryAlternatives = static::where('subcategory_id', $this->subcategory_id)
-            ->whereNotIn('id', $excludeIds)
-            ->available()
-            ->ordered()
-            ->get();
-
-        if ($sameSubcategoryAlternatives->isNotEmpty()) {
-            return $sameSubcategoryAlternatives;
-        }
-
-        // 3. 同一カテゴリの代替機を検索
-        return static::whereHas('subcategory', function ($query) {
-            $query->where('category_id', $this->subcategory->category_id);
-        })
-            ->whereNotIn('id', $excludeIds)
-            ->available()
-            ->ordered()
-            ->get();
+        return $this->analyticsService()->findAlternatives($this, $excludeIds);
     }
 
     /**
      * 将来の使用予約を取得
+     *
+     * @deprecated Use EquipmentAnalyticsService::getFutureReservations() instead
      */
     public function getFutureReservations(): \Illuminate\Database\Eloquent\Collection
     {
-        return $this->phaseEquipments()
-            ->whereHas('phase', function ($query) {
-                $query->where('start_date', '>=', now()->format('Y-m-d'));
-            })
-            ->with(['phase.performance'])
-            ->get()
-            ->sortBy('phase.start_date');
+        return $this->analyticsService()->getFutureReservations($this);
     }
 
     /**
@@ -419,98 +383,31 @@ class Equipment extends Model
 
     /**
      * 在庫アラート判定（不足・過剰在庫チェック）
+     *
+     * @deprecated Use EquipmentAnalyticsService::checkInventoryAlerts() instead
      */
     public function checkInventoryAlerts(?\Carbon\Carbon $asOfDate = null): array
     {
-        $asOfDate = $asOfDate ?? now();
-        $inventory = $this->getInventoryAsOf($asOfDate);
-        $alerts = [];
-
-        // 在庫不足チェック（最小在庫数設定があれば）
-        $minStockLevel = $this->min_stock_level ?? 1;
-        if ($inventory['available_quantity'] < $minStockLevel) {
-            $alerts[] = [
-                'type' => 'low_stock',
-                'message' => "在庫不足: {$inventory['available_quantity']}個 (最小: {$minStockLevel}個)",
-                'severity' => 'warning',
-            ];
-        }
-
-        // 長期未使用チェック（90日以上未使用）
-        $lastUsage = $this->equipmentMovements()
-            ->where('movement_type', 'checkout')
-            ->orderBy('moved_at', 'desc')
-            ->first();
-
-        if (! $lastUsage || $lastUsage->moved_at->lt(now()->subDays(90))) {
-            $days = $lastUsage ? $lastUsage->moved_at->diffInDays(now()) : '不明';
-            $alerts[] = [
-                'type' => 'unused',
-                'message' => "長期未使用: {$days}日間未使用",
-                'severity' => 'info',
-            ];
-        }
-
-        return $alerts;
+        return $this->analyticsService()->checkInventoryAlerts($this, $asOfDate);
     }
 
     /**
      * 機材の移動履歴統計を取得
+     *
+     * @deprecated Use EquipmentAnalyticsService::getMovementStats() instead
      */
     public function getMovementStats(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
     {
-        $startDate = $startDate ?? now()->subYear();
-        $endDate = $endDate ?? now();
-
-        $movements = $this->equipmentMovements()
-            ->whereBetween('moved_at', [$startDate, $endDate])
-            ->get();
-
-        return [
-            'total_movements' => $movements->count(),
-            'checkout_count' => $movements->where('movement_type', 'checkout')->count(),
-            'checkin_count' => $movements->where('movement_type', 'checkin')->count(),
-            'transfer_count' => $movements->where('movement_type', 'transfer')->count(),
-            'repair_count' => $movements->whereIn('movement_type', ['repair_start', 'repair_complete'])->count(),
-            'most_frequent_location' => $movements->groupBy('to_location_id')->sortByDesc(function ($group) {
-                return $group->count();
-            })->keys()->first(),
-        ];
+        return $this->analyticsService()->getMovementStats($this, $startDate, $endDate);
     }
 
     /**
      * 機材の使用パターン分析
+     *
+     * @deprecated Use EquipmentAnalyticsService::analyzeUsagePattern() instead
      */
     public function analyzeUsagePattern(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
     {
-        $startDate = $startDate ?? now()->subYear();
-        $endDate = $endDate ?? now();
-
-        $usages = $this->phaseEquipments()
-            ->whereHas('phase', function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('start_date', [$startDate, $endDate]);
-            })
-            ->with(['phase.performance'])
-            ->get();
-
-        $monthlyUsage = $usages->groupBy(function ($usage) {
-            return $usage->phase->start_date->format('Y-m');
-        })->map(function ($group) {
-            return $group->count();
-        });
-
-        $performanceTypes = $usages->groupBy(function ($usage) {
-            return $usage->phase->performance->type ?? 'その他';
-        })->map(function ($group) {
-            return $group->count();
-        });
-
-        return [
-            'total_usage_count' => $usages->count(),
-            'monthly_usage' => $monthlyUsage->toArray(),
-            'performance_types' => $performanceTypes->toArray(),
-            'average_usage_per_month' => $monthlyUsage->avg(),
-            'peak_usage_month' => $monthlyUsage->keys()->first(),
-        ];
+        return $this->analyticsService()->analyzeUsagePattern($this, $startDate, $endDate);
     }
 }

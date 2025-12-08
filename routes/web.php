@@ -55,11 +55,13 @@ Route::middleware('auth')->group(function () {
 
     // 管理者機能ルート
     Route::prefix('admin')->name('admin.')->group(function () {
-        // 会社設定管理
-        Route::get('company-info', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'index'])->name('company-info.index');
-        Route::post('company-info/logo', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'store'])->name('company-info.store');
-        Route::delete('company-info/logo', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'destroy'])->name('company-info.destroy');
-        Route::post('company-info', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'storeCompanyInfo'])->name('company-info.store-company-info');
+        // 会社設定管理（editor/admin権限のみ）
+        Route::prefix('company-info')->name('company-info.')->middleware('role:admin,editor')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'index'])->name('index');
+            Route::post('logo', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'store'])->name('store');
+            Route::delete('logo', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'destroy'])->name('destroy');
+            Route::post('/', [\App\Http\Controllers\Admin\CompanyInfoController::class, 'storeCompanyInfo'])->name('store-company-info');
+        });
 
         // バックアップ管理（管理者権限のみ）
         Route::prefix('backup')->name('backup.')->group(function () {
@@ -274,8 +276,8 @@ Route::middleware('auth')->group(function () {
         Route::get('export-pdf', [InventoryController::class, 'exportPdf'])->name('export-pdf');
     });
 
-    // 倉庫間移動専用画面
-    Route::prefix('equipment-transfer')->name('equipment-transfer.')->group(function () {
+    // 倉庫間移動専用画面（viewer権限除外）
+    Route::prefix('equipment-transfer')->name('equipment-transfer.')->middleware('role:admin,editor,general')->group(function () {
         Route::get('/', [InventoryTransferController::class, 'transferIndex'])->name('index');
         Route::get('/return-select', function () {
             return view('equipment-transfer.return-select');
