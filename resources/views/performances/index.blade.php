@@ -147,8 +147,24 @@
                                         @if($performance->phases->count() > 0)
                                             <div class="space-y-1">
                                                 @foreach($performance->phases->sortBy('start_date') as $phase)
+                                                    @php
+                                                        $statusColors = [
+                                                            'upcoming' => 'bg-gray-100 text-gray-800',
+                                                            'in_progress' => 'bg-blue-100 text-blue-800',
+                                                            'completed' => 'bg-green-100 text-green-800',
+                                                            'pending_return' => 'bg-orange-100 text-orange-800',
+                                                        ];
+                                                        $displayStatus = $phase->phase_status;
+                                                        $displayLabel = $phase->phase_status_label;
+                                                        if ($phase->phase_status === 'completed' && $phase->hasUnreturnedEquipment()) {
+                                                            $displayStatus = 'pending_return';
+                                                            $displayLabel = '返却待ち';
+                                                        }
+                                                    @endphp
                                                     <div class="flex items-center gap-1.5 whitespace-nowrap">
-                                                        <x-status-badge :status="$phase->phase_status" type="phase" class="flex-shrink-0 w-14 justify-center" />
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 w-14 justify-center {{ $statusColors[$displayStatus] ?? 'bg-gray-100 text-gray-800' }}">
+                                                            {{ $displayLabel }}
+                                                        </span>
                                                         <span class="text-xs text-gray-500">{{ $phase->name }}</span>
                                                     </div>
                                                 @endforeach
