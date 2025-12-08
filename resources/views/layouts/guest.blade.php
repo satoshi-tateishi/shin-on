@@ -1,6 +1,16 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="darkMode()" :class="{ 'dark': isDark }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="darkMode()">
     <head>
+        <script>
+            // 即座にダークモードを適用（FOIT防止）
+            (function() {
+                var isDark = localStorage.getItem('darkMode') === 'true' ||
+                    (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                }
+            })();
+        </script>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -48,8 +58,12 @@
                         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
                             if (!localStorage.getItem('darkMode')) {
                                 this.isDark = e.matches;
+                                this.applyTheme();
                             }
                         });
+                    },
+                    applyTheme() {
+                        document.documentElement.classList.toggle('dark', this.isDark);
                     }
                 }
             }
