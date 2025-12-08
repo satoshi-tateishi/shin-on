@@ -3,17 +3,17 @@
 @section('title', 'フェーズ機材管理')
 
 @section('breadcrumb')
-    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
-    > <a href="{{ route('performances.show', $phase->performance) }}" class="text-blue-600 hover:text-blue-800">{{ $phase->performance->title }}</a>
-    > <a href="{{ route('phases.show', $phase) }}" class="text-blue-600 hover:text-blue-800">{{ $phase->name }}</a>
-    > <span class="text-gray-800">使用機材管理</span>
+    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">公演一覧</a>
+    > <a href="{{ route('performances.show', $phase->performance) }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">{{ $phase->performance->title }}</a>
+    > <a href="{{ route('phases.show', $phase) }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">{{ $phase->name }}</a>
+    > <span class="text-gray-800 dark:text-gray-200">使用機材管理</span>
 @endsection
 
 @section('header')
     <div class="w-full">
-        <p class="text-base sm:text-lg text-gray-600">{{ $phase->performance->title }}</p>
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 mb-1">{{ $phase->name }} 使用機材管理</h1>
-        <p class="text-xs sm:text-sm text-gray-500 mb-2">
+        <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400">{{ $phase->performance->title }}</p>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">{{ $phase->name }} 使用機材管理</h1>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">
             {{ $phase->start_date->format('Y/m/d') }} ～ {{ $phase->end_date->format('Y/m/d') }}
             @if($phase->location)
                 @ {{ $phase->location->name }}
@@ -21,7 +21,7 @@
         </p>
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('phases.show', $phase) }}"
-               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -51,9 +51,9 @@
     @if(auth()->user()->role === 'editor' ||
         auth()->user()->role === 'admin' ||
         $phase->performance->staff->contains('user_id', auth()->id()))
-        <div class="bg-white border border-gray-200 rounded-lg">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">一括ステータス変更</h3>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">一括ステータス変更</h3>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
                 <div class="flex flex-wrap gap-2 sm:gap-4">
@@ -75,16 +75,67 @@
                     @endif
 
                     @if($equipmentStats['checked_out'] > 0)
-                        <button type="button"
-                                onclick="handleBulkReturn({{ $phase->id }}, {{ $equipmentStats['checked_out'] }})"
-                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-green-700">
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="hidden sm:inline">出庫中 → 返却済み</span>
-                            <span class="sm:hidden">返却</span>
-                            ({{ $equipmentStats['checked_out'] }})
-                        </button>
+                        <div x-data="{ showBulkReturnModal: false }" class="inline">
+                            <button type="button"
+                                    @click="showBulkReturnModal = true"
+                                    class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-green-700">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="hidden sm:inline">出庫中 → 返却済み</span>
+                                <span class="sm:hidden">返却</span>
+                                ({{ $equipmentStats['checked_out'] }})
+                            </button>
+
+                            <!-- 一括返却確認モーダル -->
+                            <div x-show="showBulkReturnModal"
+                                 x-cloak
+                                 class="fixed inset-0 z-50 overflow-y-auto"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 x-transition:leave="transition ease-in duration-200"
+                                 x-transition:leave-start="opacity-100"
+                                 x-transition:leave-end="opacity-0">
+                                <div class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70" @click="showBulkReturnModal = false"></div>
+                                <div class="flex items-center justify-center min-h-screen p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-auto border border-gray-200 dark:border-gray-700"
+                                         @click.stop
+                                         x-transition:enter="transition ease-out duration-300"
+                                         x-transition:enter-start="opacity-0 transform scale-95"
+                                         x-transition:enter-end="opacity-100 transform scale-100"
+                                         x-transition:leave="transition ease-in duration-200"
+                                         x-transition:leave-start="opacity-100 transform scale-100"
+                                         x-transition:leave-end="opacity-0 transform scale-95">
+                                        <div class="p-4 sm:p-6">
+                                            <div class="flex items-center mb-4">
+                                                <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <h3 class="ml-3 text-base sm:text-lg font-medium text-gray-900 dark:text-white">一括返却の確認</h3>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                                                出庫中の機材 <span class="font-bold text-green-600 dark:text-green-400">{{ $equipmentStats['checked_out'] }}件</span> を一括で返却済みに変更しますか？
+                                            </p>
+                                            <div class="flex justify-end gap-2 sm:gap-3">
+                                                <button type="button"
+                                                        @click="showBulkReturnModal = false"
+                                                        class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
+                                                    キャンセル
+                                                </button>
+                                                <button type="button"
+                                                        @click="showBulkReturnModal = false; executeBulkReturn({{ $phase->id }})"
+                                                        class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                                                    返却する
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <button type="button"
                                 onclick="openInheritanceModal()"
@@ -96,7 +147,7 @@
                         </button>
                     @else
                         <button type="button" disabled
-                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-300 border border-transparent text-xs sm:text-sm font-medium rounded-md text-gray-500 cursor-not-allowed">
+                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-300 dark:bg-gray-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 cursor-not-allowed">
                             <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
@@ -149,8 +200,8 @@
 
     <!-- フィルター状態の表示 -->
     @if(request('status'))
-        <div class="p-2 sm:p-3 bg-blue-50 rounded-lg flex justify-between items-center">
-            <span class="text-xs sm:text-sm text-blue-800">
+        <div class="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex justify-between items-center">
+            <span class="text-xs sm:text-sm text-blue-800 dark:text-blue-300">
                 フィルター中:
                 @switch(request('status'))
                     @case('reserved')
@@ -166,52 +217,52 @@
                         {{ request('status') }}
                 @endswitch
             </span>
-            <a href="{{ route('phases.equipment.index', $phase) }}" class="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline">解除</a>
+            <a href="{{ route('phases.equipment.index', $phase) }}" class="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">解除</a>
         </div>
     @endif
 
     <!-- 機材一覧 -->
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         @if($phaseEquipments->count() > 0)
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 機材
                             </th>
-                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-20">
+                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-20">
                                 数量
                             </th>
-                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                                 ステータス
                             </th>
-                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
                                 出庫・返却
                             </th>
-                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 操作
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($phaseEquipments as $phaseEquipment)
-                        <tr class="hover:bg-gray-50 cursor-pointer"
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                             onclick="window.location='{{ route('phases.equipment.show', [$phase, $phaseEquipment]) }}'"
                             data-phase-equipment-id="{{ $phaseEquipment->id }}"
                             data-equipment-location="{{ $phaseEquipment->equipment->location_id }}"
                         >
                             <td class="px-3 sm:px-6 py-3 sm:py-4 max-w-[200px] sm:max-w-none">
-                                <div class="text-xs text-gray-500 truncate" title="{{ $phaseEquipment->equipment->subcategory->category->name }} / {{ $phaseEquipment->equipment->subcategory->name }}">
+                                <div class="text-xs text-gray-500 dark:text-gray-400 truncate" title="{{ $phaseEquipment->equipment->subcategory->category->name }} / {{ $phaseEquipment->equipment->subcategory->name }}">
                                     {{ $phaseEquipment->equipment->subcategory->category->name }} / {{ $phaseEquipment->equipment->subcategory->name }}
                                 </div>
                                 @if($phaseEquipment->equipment->manufacturer)
-                                    <div class="text-xs text-gray-400 truncate">{{ $phaseEquipment->equipment->manufacturer }}</div>
+                                    <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ $phaseEquipment->equipment->manufacturer }}</div>
                                 @endif
                                 <div class="flex flex-wrap items-center gap-1">
-                                    <span class="text-xs sm:text-sm font-medium text-gray-900">{{ $phaseEquipment->equipment->name }}</span>
+                                    <span class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{{ $phaseEquipment->equipment->name }}</span>
                                     @if($phaseEquipment->equipment->company_number)
-                                        <span class="px-1.5 py-0.5 border border-gray-300 rounded text-xs text-gray-600">{{ $phaseEquipment->equipment->company_number }}</span>
+                                        <span class="px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-400">{{ $phaseEquipment->equipment->company_number }}</span>
                                     @endif
                                 </div>
                                 <!-- モバイル用ステータス表示 -->
@@ -220,7 +271,7 @@
                                 </div>
                             </td>
                             <td class="px-2 sm:px-6 py-3 sm:py-4 text-center" onclick="event.stopPropagation()">
-                                <div class="text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->quantity }}</div>
+                                <div class="text-xs sm:text-sm text-gray-900 dark:text-white">{{ $phaseEquipment->quantity }}</div>
                                 @if(auth()->user()->role === 'editor' ||
                                     auth()->user()->role === 'admin' ||
                                     $phase->performance->staff->contains('user_id', auth()->id()))
@@ -233,7 +284,7 @@
                             <td class="px-2 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
                                 <x-status-badge :status="$phaseEquipment->status" type="equipment" />
                             </td>
-                            <td class="px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-500 hidden md:table-cell">
+                            <td class="px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                 @if($phaseEquipment->checkout_date)
                                     <div>出庫: {{ $phaseEquipment->checkout_date->format('Y/m/d') }}</div>
                                     @if($phaseEquipment->checkoutUser)
@@ -281,37 +332,37 @@
             </div>
 
             <!-- ページネーション -->
-            <div class="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
+            <div class="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700">
                 {{ $phaseEquipments->links() }}
             </div>
         @else
             <div class="text-center py-8 sm:py-12">
-                <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <h3 class="mt-2 text-xs sm:text-sm font-medium text-gray-900">該当機材なし</h3>
+                <h3 class="mt-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">該当機材なし</h3>
             </div>
         @endif
     </div>
 </div>
 
 <!-- 出庫モーダル -->
-<div id="checkoutModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-4 sm:p-5 border w-80 sm:w-96 shadow-lg rounded-md bg-white">
+<div id="checkoutModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-4 sm:p-5 border border-gray-200 dark:border-gray-700 w-80 sm:w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="mt-3">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-4">機材出庫</h3>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4">機材出庫</h3>
             <form id="checkoutForm" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="mb-4">
-                    <label for="checkout_date" class="block text-xs sm:text-sm font-medium text-gray-700">出庫日</label>
+                    <label for="checkout_date" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">出庫日</label>
                     <input type="date" name="checkout_date" id="checkout_date" required
                            value="{{ date('Y-m-d') }}"
-                           class="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                           class="mt-1 block w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="flex justify-end space-x-2 sm:space-x-3">
                     <button type="button" onclick="closeCheckoutModal()"
-                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
                         戻る
                     </button>
                     <button type="submit"
@@ -325,36 +376,36 @@
 </div>
 
 <!-- 返却モーダル -->
-<div id="checkinModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-4 sm:p-5 border w-80 sm:w-96 shadow-lg rounded-md bg-white">
+<div id="checkinModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-4 sm:p-5 border border-gray-200 dark:border-gray-700 w-80 sm:w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="mt-3">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-4">機材返却</h3>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4">機材返却</h3>
             <form id="checkinForm" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="mb-4">
-                    <label for="checkin_date" class="block text-xs sm:text-sm font-medium text-gray-700">返却日</label>
+                    <label for="checkin_date" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">返却日</label>
                     <input type="date" name="checkin_date" id="checkin_date" required
                            value="{{ date('Y-m-d') }}"
-                           class="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                           class="mt-1 block w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
 
                 <!-- 返却先選択（location_id=92-94の機材のみ表示） -->
                 <div id="locationSelectDiv" class="mb-4 hidden">
-                    <label for="to_location_id" class="block text-xs sm:text-sm font-medium text-gray-700">返却先倉庫 <span class="text-red-500">*</span></label>
+                    <label for="to_location_id" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">返却先倉庫 <span class="text-red-500">*</span></label>
                     <div class="mt-1 flex">
                         <input type="hidden" name="to_location_id" id="to_location_id">
                         <button type="button" id="selectLocationBtn" onclick="openLocationSelector()"
-                                class="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 text-left text-sm shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            <span id="selectedLocationText" class="text-gray-500">返却先倉庫を選択...</span>
+                                class="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-left text-sm shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <span id="selectedLocationText" class="text-gray-500 dark:text-gray-400">返却先倉庫を選択...</span>
                         </button>
                     </div>
-                    <div id="locationError" class="text-red-500 text-xs mt-1 hidden">返却先倉庫を選択してください</div>
+                    <div id="locationError" class="text-red-500 dark:text-red-400 text-xs mt-1 hidden">返却先倉庫を選択してください</div>
                 </div>
 
                 <div class="flex justify-end space-x-2 sm:space-x-3">
                     <button type="button" onclick="closeCheckinModal()"
-                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
                         戻る
                     </button>
                     <button type="submit"
@@ -377,12 +428,13 @@
 />
 
 <!-- 機材継承モーダル -->
-<div id="inheritanceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 sm:top-20 mx-auto p-4 sm:p-6 border w-full max-w-4xl shadow-lg rounded-md bg-white mx-2 sm:mx-auto">
-        <div class="mt-3">
+<div id="inheritanceModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70" onclick="closeInheritanceModal()"></div>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl mx-auto border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div class="flex justify-between items-center mb-4 sm:mb-6">
-                <h3 id="inheritanceModalTitle" class="text-base sm:text-lg font-medium text-gray-900">継承先フェーズを選択</h3>
-                <button type="button" onclick="closeInheritanceModal()" class="text-gray-400 hover:text-gray-600">
+                <h3 id="inheritanceModalTitle" class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">継承先フェーズを選択</h3>
+                <button type="button" onclick="closeInheritanceModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -394,7 +446,7 @@
                 <div class="space-y-4">
                     <!-- 同一公演内フェーズ -->
                     <div>
-                        <h5 class="text-xs sm:text-sm font-medium text-gray-700 mb-2">同一公演内のフェーズ</h5>
+                        <h5 class="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">同一公演内のフェーズ</h5>
                         <div id="samePerformancePhases" class="space-y-2">
                             <!-- 動的に追加される -->
                         </div>
@@ -403,9 +455,9 @@
                     <!-- 他公演フェーズ -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <h5 class="text-xs sm:text-sm font-medium text-gray-700">他公演のフェーズ</h5>
+                            <h5 class="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">他公演のフェーズ</h5>
                             <button type="button" id="toggleOtherPerformances" onclick="toggleOtherPerformances()"
-                                    class="text-xs sm:text-sm text-blue-600 hover:text-blue-800">表示</button>
+                                    class="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">表示</button>
                         </div>
                         <div id="otherPerformancePhases" class="space-y-2 hidden">
                             <!-- 動的に追加される -->
@@ -415,11 +467,11 @@
 
                 <div class="mt-4 sm:mt-6 flex justify-end space-x-2 sm:space-x-3">
                     <button type="button" onclick="closeInheritanceModal()"
-                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
                         キャンセル
                     </button>
                     <button type="button" id="nextToStep2" onclick="goToStep2()" disabled
-                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed">
                         次へ
                     </button>
                 </div>
@@ -433,7 +485,7 @@
 
                 <div class="mt-4 sm:mt-6 flex justify-end space-x-2 sm:space-x-3">
                     <button type="button" onclick="goToStep1()"
-                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
                         戻る
                     </button>
                     <button type="button" id="executeInheritance" onclick="executeInheritance()"
@@ -447,7 +499,7 @@
             <div id="executingStep" class="step-content hidden">
                 <div class="text-center py-8">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                    <p class="mt-2 text-xs sm:text-sm text-gray-600">機材を継承中...</p>
+                    <p class="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">機材を継承中...</p>
                 </div>
             </div>
         </div>
@@ -540,11 +592,7 @@ async function handleEquipmentReturn(phaseEquipmentId, phaseId) {
     }
 }
 
-async function handleBulkReturn(phaseId, equipmentCount) {
-    if (!confirm(`出庫中の機材 ${equipmentCount}件を一括で返却済みに変更しますか？`)) {
-        return;
-    }
-
+async function executeBulkReturn(phaseId) {
     try {
         const checkedOutEquipments = await getCheckedOutEquipments(phaseId);
 

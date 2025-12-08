@@ -3,15 +3,15 @@
 @section('title', '機材使用詳細')
 
 @section('breadcrumb')
-    > <a href="{{ route('phases.equipment.index', $phaseEquipment->phase) }}" class="text-blue-600 hover:text-blue-800">{{ $phaseEquipment->phase->name }} - 機材管理</a>
-    > <span class="text-gray-800">詳細</span>
+    > <a href="{{ route('phases.equipment.index', $phaseEquipment->phase) }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">{{ $phaseEquipment->phase->name }} - 機材管理</a>
+    > <span class="text-gray-800 dark:text-gray-200">詳細</span>
 @endsection
 
 @section('header')
     <div class="w-full">
-        <p class="text-base sm:text-lg text-gray-600">{{ $phaseEquipment->phase->performance->title }}</p>
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 mb-1">{{ $phaseEquipment->phase->name }} 機材使用詳細</h1>
-        <p class="text-xs sm:text-sm text-gray-500 mb-2">
+        <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400">{{ $phaseEquipment->phase->performance->title }}</p>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">{{ $phaseEquipment->phase->name }} 機材使用詳細</h1>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">
             {{ $phaseEquipment->phase->start_date->format('Y/m/d') }} ～ {{ $phaseEquipment->phase->end_date->format('Y/m/d') }}
             @if($phaseEquipment->phase->location)
                 @ {{ $phaseEquipment->phase->location->name }}
@@ -19,7 +19,7 @@
         </p>
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('phases.equipment.index', $phaseEquipment->phase) }}"
-               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -77,43 +77,43 @@
         <!-- 基本情報 -->
         <div class="lg:col-span-2 space-y-4 sm:space-y-6">
             <!-- ステータス -->
-            <div class="bg-white border border-gray-200 rounded-lg">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div class="px-4 py-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-medium text-gray-900">使用状況</h3>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">使用状況</h3>
                 <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium mt-2
-                    {{ $phaseEquipment->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                    {{ $phaseEquipment->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}
-                    {{ $phaseEquipment->status === 'checked_in' ? 'bg-blue-100 text-blue-800' : '' }}">
+                    {{ $phaseEquipment->status === 'reserved' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' : '' }}
+                    {{ $phaseEquipment->status === 'checked_out' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : '' }}
+                    {{ $phaseEquipment->status === 'checked_in' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : '' }}">
                     {{ $phaseEquipment->status_label }}
                 </span>
 
                 <div class="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                        <dt class="text-xs sm:text-sm font-medium text-gray-500">登録者</dt>
-                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ auth()->user()->name }}</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">登録者</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ auth()->user()->name }}</dd>
                     </div>
                     <div>
-                        <dt class="text-xs sm:text-sm font-medium text-gray-500">予約日時</dt>
-                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->created_at->format('Y/m/d H:i') }}</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">予約日時</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->created_at->format('Y/m/d H:i') }}</dd>
                     </div>
                     @if($phaseEquipment->checked_out_at)
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">出庫担当者</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->checkedOutBy->name ?? '-' }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">出庫担当者</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->checkedOutBy->name ?? '-' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">出庫日時</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->checked_out_at->format('Y/m/d H:i') }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">出庫日時</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->checked_out_at->format('Y/m/d H:i') }}</dd>
                         </div>
                     @endif
                     @if($phaseEquipment->checked_in_at)
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">返却担当者</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->checkedInBy->name ?? '-' }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">返却担当者</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->checkedInBy->name ?? '-' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">返却日時</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->checked_in_at->format('Y/m/d H:i') }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">返却日時</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->checked_in_at->format('Y/m/d H:i') }}</dd>
                         </div>
                     @endif
                 </div>
@@ -121,53 +121,53 @@
             </div>
 
             <!-- 機材情報 -->
-            <div class="bg-white border border-gray-200 rounded-lg">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div class="px-4 py-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">機材情報</h3>
-                    <div class="text-xs sm:text-sm text-gray-500">
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">機材情報</h3>
+                    <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         <div>{{ $phaseEquipment->equipment->subcategory->category->name ?? '-' }}</div>
                         <div>{{ $phaseEquipment->equipment->subcategory->name ?? '-' }}</div>
                     </div>
 
                     <div class="mt-2 sm:mt-3 flex flex-wrap items-center gap-1 sm:gap-2">
-                        <span class="text-xs sm:text-sm text-gray-900 font-medium">{{ $phaseEquipment->equipment->name }}</span>
+                        <span class="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">{{ $phaseEquipment->equipment->name }}</span>
                         @if($phaseEquipment->equipment->company_number)
-                            <span class="px-1.5 sm:px-2 py-0.5 sm:py-1 border border-gray-300 rounded text-xs text-gray-600">
+                            <span class="px-1.5 sm:px-2 py-0.5 sm:py-1 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-400">
                                 {{ $phaseEquipment->equipment->company_number }}
                             </span>
                         @endif
-                        <span class="text-xs sm:text-sm text-gray-600">使用数量 : {{ $phaseEquipment->quantity }}個</span>
+                        <span class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">使用数量 : {{ $phaseEquipment->quantity }}個</span>
                     </div>
 
                     @if($phaseEquipment->equipment->description)
                         <div class="mt-3 sm:mt-4">
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">機材説明</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->equipment->description }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">機材説明</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->equipment->description }}</dd>
                         </div>
                     @endif
                 </div>
             </div>
 
             <!-- フェーズ情報 -->
-            <div class="bg-white border border-gray-200 rounded-lg">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div class="px-4 py-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">フェーズ情報</h3>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">フェーズ情報</h3>
                     <div class="grid grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">フェーズ名</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->phase->name }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">フェーズ名</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->phase->name }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">使用場所</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->phase->location->name ?? '未設定' }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">使用場所</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->phase->location->name ?? '未設定' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">開始日</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->phase->start_date->format('Y/m/d') }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">開始日</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->phase->start_date->format('Y/m/d') }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs sm:text-sm font-medium text-gray-500">終了日</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">{{ $phaseEquipment->phase->end_date->format('Y/m/d') }}</dd>
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">終了日</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100">{{ $phaseEquipment->phase->end_date->format('Y/m/d') }}</dd>
                         </div>
                     </div>
                 </div>
@@ -175,10 +175,10 @@
 
             @if($phaseEquipment->note)
                 <!-- 備考 -->
-                <div class="bg-white border border-gray-200 rounded-lg">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div class="px-4 py-4 sm:p-6">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">備考</h3>
-                        <p class="text-xs sm:text-sm text-gray-900 whitespace-pre-line">{{ $phaseEquipment->note }}</p>
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">備考</h3>
+                        <p class="text-xs sm:text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ $phaseEquipment->note }}</p>
                     </div>
                 </div>
             @endif
@@ -187,19 +187,19 @@
         <!-- サイドバー -->
         <div class="space-y-4 sm:space-y-6">
             <!-- 移動履歴 -->
-            <div class="bg-white border border-gray-200 rounded-lg">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div class="px-4 py-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">移動履歴</h3>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">移動履歴</h3>
                     <div class="space-y-2 sm:space-y-3">
                         @forelse($movements as $movement)
                             <div class="flex items-start space-x-2 sm:space-x-3">
                                 <div class="flex-shrink-0">
                                     <span class="inline-flex items-center justify-center h-6 w-6 sm:h-8 sm:w-8 rounded-full text-xs font-medium
-                                        {{ $movement->movement_type === 'checkout' ? 'bg-green-100 text-green-800' : '' }}
-                                        {{ $movement->movement_type === 'checkin' ? 'bg-blue-100 text-blue-800' : '' }}
-                                        {{ in_array($movement->movement_type, ['transfer', 'maintenance']) ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                        {{ $movement->movement_type === 'repair_start' ? 'bg-red-100 text-red-800' : '' }}
-                                        {{ $movement->movement_type === 'repair_complete' ? 'bg-purple-100 text-purple-800' : '' }}">
+                                        {{ $movement->movement_type === 'checkout' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : '' }}
+                                        {{ $movement->movement_type === 'checkin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : '' }}
+                                        {{ in_array($movement->movement_type, ['transfer', 'maintenance']) ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' : '' }}
+                                        {{ $movement->movement_type === 'repair_start' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' : '' }}
+                                        {{ $movement->movement_type === 'repair_complete' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' : '' }}">
                                         @switch($movement->movement_type)
                                             @case('checkout')
                                                 出
@@ -225,27 +225,27 @@
                                     </span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-xs sm:text-sm font-medium text-gray-900">
+                                    <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {{ $movement->movement_type_label }}
                                     </p>
-                                    <p class="text-xs text-gray-500">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ $movement->moved_at->format('Y/m/d H:i') }}
                                         @if($movement->moved_by)
                                             - {{ $movement->movedBy->name }}
                                         @endif
                                     </p>
                                     @if($movement->from_location)
-                                        <p class="text-xs text-gray-500">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ $movement->fromLocation->name }} → {{ $movement->toLocation->name ?? '不明' }}
                                         </p>
                                     @endif
                                     @if($movement->quantity && $movement->quantity != 1)
-                                        <p class="text-xs text-gray-500">数量: {{ $movement->quantity }}個</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">数量: {{ $movement->quantity }}個</p>
                                     @endif
                                 </div>
                             </div>
                         @empty
-                            <p class="text-xs sm:text-sm text-gray-500 text-center py-3 sm:py-4">移動履歴がありません</p>
+                            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center py-3 sm:py-4">移動履歴がありません</p>
                         @endforelse
                     </div>
                 </div>
@@ -253,28 +253,28 @@
 
             <!-- 同一機材の他の使用状況 -->
             @if($otherUsages->count() > 0)
-                <div class="bg-white border border-gray-200 rounded-lg">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div class="px-4 py-4 sm:p-6">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">他の使用予定</h3>
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">他の使用予定</h3>
                         <div class="space-y-2 sm:space-y-3">
                             @foreach($otherUsages as $usage)
                                 @if($usage->status !== 'checked_in')
-                                <div class="border border-gray-200 rounded-lg p-2 sm:p-3">
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2 sm:p-3">
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="flex-1 min-w-0">
-                                            <p class="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                                            <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                                 {{ $usage->phase->performance->title }}
                                             </p>
-                                            <p class="text-xs text-gray-500">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ $usage->phase->name }} - {{ $usage->quantity }}個
                                             </p>
-                                            <p class="text-xs text-gray-500">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ $usage->phase->start_date->format('m/d') }} ～ {{ $usage->phase->end_date->format('m/d') }}
                                             </p>
                                         </div>
                                         <span class="flex-shrink-0 inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
-                                            {{ $usage->status === 'reserved' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                            {{ $usage->status === 'checked_out' ? 'bg-green-100 text-green-800' : '' }}">
+                                            {{ $usage->status === 'reserved' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' : '' }}
+                                            {{ $usage->status === 'checked_out' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : '' }}">
                                             {{ $usage->status_label }}
                                         </span>
                                     </div>
@@ -290,16 +290,16 @@
 </div>
 
 <!-- モーダル -->
-<div id="actionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-10 sm:top-20 mx-2 sm:mx-auto p-4 sm:p-5 border w-auto sm:w-96 max-w-sm shadow-lg rounded-md bg-white">
+<div id="actionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-gray-900 dark:bg-opacity-70 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 sm:top-20 mx-2 sm:mx-auto p-4 sm:p-5 border border-gray-200 dark:border-gray-700 w-auto sm:w-96 max-w-sm shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="mt-3">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-4" id="modalTitle"></h3>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4" id="modalTitle"></h3>
             <form id="actionForm" method="POST">
                 @csrf
                 <input type="hidden" name="_method" value="DELETE" id="methodField">
                 <div class="flex justify-end space-x-2 sm:space-x-3">
                     <button type="button" onclick="window.closeModal()"
-                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                            class="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500">
                         戻る
                     </button>
                     <button type="submit" id="confirmButton"

@@ -8,9 +8,9 @@
     ];
 
     $textColors = [
-        'blue' => 'text-blue-900',
-        'orange' => 'text-orange-900',
-        'green' => 'text-green-900',
+        'blue' => 'text-blue-900 dark:text-blue-300',
+        'orange' => 'text-orange-900 dark:text-orange-300',
+        'green' => 'text-green-900 dark:text-green-300',
     ];
 
     $ringColors = [
@@ -23,7 +23,7 @@
     $textColor = $textColors[$color] ?? $textColors['blue'];
     $ringColor = $ringColors[$color] ?? $ringColors['blue'];
 
-    $baseClasses = 'block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow';
+    $baseClasses = 'block bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700';
     $activeClasses = $active ? "ring-2 $ringColor" : '';
 
     $tag = $href ? 'a' : 'div';
@@ -38,7 +38,7 @@
                 {!! $icon !!}
             </svg>
             <div class="text-xs">
-                <span class="font-medium text-gray-500">{{ $title }}</span>
+                <span class="font-medium text-gray-500 dark:text-gray-400">{{ $title }}</span>
                 <span class="font-medium {{ $textColor }} ml-1">{{ $count }}</span>
             </div>
         </div>
@@ -51,7 +51,7 @@
             </div>
             <div class="ml-5 w-0 flex-1">
                 <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">{{ $title }}</dt>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ $title }}</dt>
                     <dd class="text-lg font-medium {{ $textColor }}">{{ $count }}</dd>
                 </dl>
             </div>

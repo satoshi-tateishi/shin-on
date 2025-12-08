@@ -209,7 +209,7 @@ class PhaseEquipmentManager {
         if (!container) return;
 
         if (equipments.length === 0) {
-            container.innerHTML = '<div class="text-sm text-gray-500 text-center py-4">該当する機材がありません</div>';
+            container.innerHTML = '<div class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">該当する機材がありません</div>';
             return;
         }
 
@@ -224,21 +224,21 @@ class PhaseEquipmentManager {
             let statusClass, statusText, statusTextClass, clickable, onClickAction;
 
             if (isSelected) {
-                statusClass = 'bg-blue-100 border-blue-300 cursor-pointer hover:bg-blue-200';
+                statusClass = 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/70';
                 statusText = 'クリックで解除';
-                statusTextClass = 'text-blue-800';
+                statusTextClass = 'text-blue-800 dark:text-blue-300';
                 clickable = true;
                 onClickAction = `phaseEquipmentManager.deselectEquipment(${equipment.id})`;
             } else if (isAvailable) {
-                statusClass = 'bg-green-50 border-green-200 cursor-pointer hover:bg-gray-50';
+                statusClass = 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700';
                 statusText = '利用可能';
-                statusTextClass = 'text-green-800';
+                statusTextClass = 'text-green-800 dark:text-green-300';
                 clickable = true;
                 onClickAction = `phaseEquipmentManager.selectEquipment(${equipment.id})`;
             } else {
-                statusClass = 'bg-red-50 border-red-200 cursor-not-allowed opacity-75';
+                statusClass = 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 cursor-not-allowed opacity-75';
                 statusText = '利用不可';
-                statusTextClass = 'text-red-800';
+                statusTextClass = 'text-red-800 dark:text-red-300';
                 clickable = false;
                 onClickAction = '';
             }
@@ -250,18 +250,18 @@ class PhaseEquipmentManager {
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <div class="flex items-center gap-2">
-                                <div class="font-medium text-gray-900">${this.escapeHtml(equipment.name)}</div>
-                                ${equipment.company_number ? `<div class="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600">${this.escapeHtml(equipment.company_number)}</div>` : ''}
+                                <div class="font-medium text-gray-900 dark:text-white">${this.escapeHtml(equipment.name)}</div>
+                                ${equipment.company_number ? `<div class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-400">${this.escapeHtml(equipment.company_number)}</div>` : ''}
                                 ${isSelected ? '<div class="px-2 py-1 bg-blue-500 text-white rounded text-xs font-medium">選択</div>' : ''}
                             </div>
                         </div>
                         <div class="text-right">
                             <span class="text-xs font-medium ${statusTextClass}">${statusText}</span>
                             ${equipment.management_type === 'quantity' && !isSelected ?
-                                `<div class="text-xs text-gray-500">利用可能: ${equipment.available_quantity}個</div>` : ''
+                                `<div class="text-xs text-gray-500 dark:text-gray-400">利用可能: ${equipment.available_quantity}個</div>` : ''
                             }
                             ${isSelected && equipment.management_type === 'quantity' ?
-                                `<div class="text-xs text-blue-600">選択数量: ${this.getSelectedQuantity(equipment.id)}個</div>` : ''
+                                `<div class="text-xs text-blue-600 dark:text-blue-400">選択数量: ${this.getSelectedQuantity(equipment.id)}個</div>` : ''
                             }
                         </div>
                     </div>
@@ -293,7 +293,6 @@ class PhaseEquipmentManager {
      * 機材選択解除 - 選択済み機材をクリックでリストから削除
      */
     deselectEquipment(equipmentId) {
-
         const equipment = this.availableEquipments.find(eq => eq.id === equipmentId);
         if (!equipment) {
             return;
@@ -303,10 +302,8 @@ class PhaseEquipmentManager {
         const index = this.selectedEquipmentList.findIndex(item => item.equipment.id === equipmentId);
 
         if (index >= 0) {
-            // 確認ダイアログを表示
-            if (confirm(`${equipment.name} を選択解除しますか？`)) {
-                this.removeFromList(index);
-            }
+            // 直接リストから削除（選択時と同様にトースト通知を表示）
+            this.removeFromList(index);
         }
     }
 
@@ -327,28 +324,28 @@ class PhaseEquipmentManager {
         dialog.style.zIndex = '9999';
         dialog.innerHTML = `
             <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="window.closeQuantityDialog()"></div>
-                <div class="relative inline-block bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">数量を入力</h3>
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 transition-opacity" onclick="window.closeQuantityDialog()"></div>
+                <div class="relative inline-block bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">数量を入力</h3>
                         <div class="mt-2">
-                            <p class="text-sm text-gray-700 font-medium mb-2">${this.escapeHtml(equipment.name)}</p>
-                            <p class="text-sm text-gray-500 mb-4">利用可能数量: ${equipment.available_quantity}個</p>
-                            <label for="dialog-quantity" class="block text-sm font-medium text-gray-700 mb-2">数量</label>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">${this.escapeHtml(equipment.name)}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">利用可能数量: ${equipment.available_quantity}個</p>
+                            <label for="dialog-quantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">数量</label>
                             <input type="number" id="dialog-quantity" min="1" max="${equipment.available_quantity}" value="1"
                                    oninput="window.validateQuantityInput(this, ${equipment.available_quantity})"
                                    onkeydown="window.preventInvalidInput(event)"
-                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <p id="quantity-error" class="mt-1 text-sm text-red-600 hidden">利用可能数量を超えています</p>
+                                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p id="quantity-error" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden">利用可能数量を超えています</p>
                         </div>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button onclick="window.confirmQuantityAndAdd()" type="button" id="dialog-add-button"
                                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
                             追加
                         </button>
                         <button onclick="window.closeQuantityDialog()" type="button"
-                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                             キャンセル
                         </button>
                     </div>
@@ -445,8 +442,8 @@ class PhaseEquipmentManager {
 
         infoDiv.innerHTML = `
             <div class="flex items-center gap-2">
-                <div class="font-medium">${this.escapeHtml(this.selectedEquipment.name)}</div>
-                ${this.selectedEquipment.company_number ? `<div class="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600">${this.escapeHtml(this.selectedEquipment.company_number)}</div>` : ''}
+                <div class="font-medium text-gray-900 dark:text-white">${this.escapeHtml(this.selectedEquipment.name)}</div>
+                ${this.selectedEquipment.company_number ? `<div class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-400">${this.escapeHtml(this.selectedEquipment.company_number)}</div>` : ''}
             </div>
         `;
 
@@ -642,22 +639,22 @@ class PhaseEquipmentManager {
         // テーブル内容の更新
         tableBody.innerHTML = this.selectedEquipmentList.map((item, index) => {
             return `
-                <tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div>
-                            <div class="text-sm font-medium text-gray-900">${this.escapeHtml(item.equipment.name)}</div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">${this.escapeHtml(item.equipment.name)}</div>
                             ${item.equipment.company_number ?
-                                `<div class="text-xs text-gray-500 mt-1">${this.escapeHtml(item.equipment.company_number)}</div>` :
+                                `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${this.escapeHtml(item.equipment.company_number)}</div>` :
                                 ''
                             }
                         </div>
                     </td>
                     <td class="px-4 py-3 text-center whitespace-nowrap">
-                        <span class="text-sm text-gray-900">${item.quantity}</span>
+                        <span class="text-sm text-gray-900 dark:text-white">${item.quantity}</span>
                     </td>
                     <td class="px-4 py-3 text-center whitespace-nowrap">
                         <button type="button" onclick="window.removeFromList(${index})"
-                                class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">
                             削除
                         </button>
                     </td>
@@ -678,8 +675,43 @@ class PhaseEquipmentManager {
             // 機材リストの表示を更新（選択済み状態をリセット）
             this.refreshEquipmentDisplay();
 
-            this.showSuccess(`${removedItem.equipment.name} をリストから削除しました`);
+            this.showRemoved(`${removedItem.equipment.name} をリストから削除しました`);
         }
+    }
+
+    /**
+     * 削除メッセージ表示（赤色）
+     */
+    showRemoved(message) {
+        // 既存のメッセージを削除
+        const existingMessage = document.getElementById('removed-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        // 削除メッセージを作成（赤色）
+        const removedDiv = document.createElement('div');
+        removedDiv.id = 'removed-message';
+        removedDiv.className = 'fixed top-4 right-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700 rounded-md p-4 shadow-lg z-50';
+        removedDiv.innerHTML = `
+            <div class="flex">
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="ml-3">
+                    <p class="text-sm text-red-800 dark:text-red-200">${this.escapeHtml(message)}</p>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(removedDiv);
+
+        // 3秒後に自動削除
+        setTimeout(() => {
+            if (removedDiv && removedDiv.parentNode) {
+                removedDiv.parentNode.removeChild(removedDiv);
+            }
+        }, 3000);
     }
 
     /**
@@ -799,16 +831,16 @@ class PhaseEquipmentManager {
         const container = document.getElementById('setAvailabilityInfo');
         if (!container) return;
 
-        const statusClass = data.all_available ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+        const statusClass = data.all_available ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700' : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700';
         const statusText = data.all_available ? 'セット使用可能' : 'セット使用不可';
-        const statusTextClass = data.all_available ? 'text-green-800' : 'text-red-800';
+        const statusTextClass = data.all_available ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300';
 
         const itemsHtml = data.items.map(item => {
-            const itemStatusClass = item.is_available ? 'text-green-600' : 'text-red-600';
+            const itemStatusClass = item.is_available ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
             const itemStatus = item.is_available ? '✓' : '✗';
 
             return `
-                <div class="flex justify-between">
+                <div class="flex justify-between text-gray-900 dark:text-gray-200">
                     <span>${this.escapeHtml(item.equipment_name)}</span>
                     <span class="${itemStatusClass}">${itemStatus} ${item.required_quantity}個${item.available_quantity ? ` (利用可能: ${item.available_quantity}個)` : ''}</span>
                 </div>
@@ -925,14 +957,14 @@ class PhaseEquipmentManager {
         // エラーメッセージを作成
         const errorDiv = document.createElement('div');
         errorDiv.id = 'error-message';
-        errorDiv.className = 'fixed top-4 right-4 bg-red-50 border border-red-200 rounded-md p-4 shadow-lg z-50';
+        errorDiv.className = 'fixed top-4 right-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700 rounded-md p-4 shadow-lg z-50';
         errorDiv.innerHTML = `
             <div class="flex">
                 <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
                 <div class="ml-3">
-                    <p class="text-sm text-red-800">${this.escapeHtml(message)}</p>
+                    <p class="text-sm text-red-800 dark:text-red-200">${this.escapeHtml(message)}</p>
                 </div>
             </div>
         `;
@@ -960,14 +992,14 @@ class PhaseEquipmentManager {
         // 成功メッセージを作成
         const successDiv = document.createElement('div');
         successDiv.id = 'success-message';
-        successDiv.className = 'fixed top-4 right-4 bg-green-50 border border-green-200 rounded-md p-4 shadow-lg z-50';
+        successDiv.className = 'fixed top-4 right-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700 rounded-md p-4 shadow-lg z-50';
         successDiv.innerHTML = `
             <div class="flex">
                 <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
                 <div class="ml-3">
-                    <p class="text-sm text-green-800">${this.escapeHtml(message)}</p>
+                    <p class="text-sm text-green-800 dark:text-green-200">${this.escapeHtml(message)}</p>
                 </div>
             </div>
         `;
