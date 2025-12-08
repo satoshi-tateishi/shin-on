@@ -11,20 +11,18 @@
     <div class="w-full">
         <h1 class="text-xl sm:text-3xl font-bold text-gray-900 mb-2">新規使用場所</h1>
         <div class="flex items-center justify-between">
-            <a href="{{ route('master.locations.index') }}"
-               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            <x-button variant="secondary" :href="route('master.locations.index')">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 一覧
-            </a>
-            <button type="submit" form="create-form"
-                    class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+            </x-button>
+            <x-button variant="primary" type="submit" form="create-form">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
                 作成
-            </button>
+            </x-button>
         </div>
     </div>
 @endsection

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -58,16 +59,10 @@ trait HasMasterOperations
 
             $status = $request->is_active ? '有効' : '無効';
 
-            return response()->json([
-                'success' => true,
-                'message' => "{$count}件のデータを{$status}に変更しました。",
-            ]);
+            return ApiResponse::success("{$count}件のデータを{$status}に変更しました。");
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => '一括更新に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('一括更新に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -85,16 +80,10 @@ trait HasMasterOperations
             $modelClass = $this->getModelClass();
             $count = $modelClass::whereIn('id', $request->ids)->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => "{$count}件のデータを削除しました。",
-            ]);
+            return ApiResponse::success("{$count}件のデータを削除しました。");
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => '一括削除に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('一括削除に失敗しました: '.$e->getMessage());
         }
     }
 
@@ -113,8 +102,7 @@ trait HasMasterOperations
         $perPage = min($request->get('per_page', 15), 100);
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'success' => true,
+        return ApiResponse::data([
             'data' => $data->items(),
             'pagination' => [
                 'current_page' => $data->currentPage(),

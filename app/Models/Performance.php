@@ -149,32 +149,33 @@ class Performance extends Model
 
     /**
      * 公演全体の開始日（最初のフェーズの開始日）
+     * 注意: phases リレーションを事前にeager loadすること
      */
     public function getStartDateAttribute(): ?string
     {
-        $firstPhase = $this->phases()->orderBy('start_date')->first();
+        $firstPhase = $this->phases->sortBy('start_date')->first();
 
         return $firstPhase?->start_date?->format('Y-m-d');
     }
 
     /**
      * 公演全体の終了日（最後のフェーズの終了日）
+     * 注意: phases リレーションを事前にeager loadすること
      */
     public function getEndDateAttribute(): ?string
     {
-        $lastPhase = $this->phases()->orderBy('end_date', 'desc')->first();
+        $lastPhase = $this->phases->sortByDesc('end_date')->first();
 
         return $lastPhase?->end_date?->format('Y-m-d');
     }
 
     /**
      * 公演の会場一覧（重複除去）
+     * 注意: phases.location リレーションを事前にeager loadすること
      */
     public function getVenuesAttribute(): array
     {
-        return $this->phases()
-            ->with('location')
-            ->get()
+        return $this->phases
             ->pluck('location.name')
             ->filter()
             ->unique()
@@ -184,12 +185,11 @@ class Performance extends Model
 
     /**
      * メイン会場（最も多く使用される会場）
+     * 注意: phases.location リレーションを事前にeager loadすること
      */
     public function getMainVenueAttribute(): ?string
     {
-        $venues = $this->phases()
-            ->with('location')
-            ->get()
+        $venues = $this->phases
             ->pluck('location.name')
             ->filter()
             ->countBy();
@@ -199,11 +199,12 @@ class Performance extends Model
 
     /**
      * 公演期間の日数計算（フェーズ基準）
+     * 注意: phases リレーションを事前にeager loadすること
      */
     public function getDurationDaysAttribute(): ?int
     {
-        $startDate = $this->phases()->min('start_date');
-        $endDate = $this->phases()->max('end_date');
+        $startDate = $this->phases->min('start_date');
+        $endDate = $this->phases->max('end_date');
 
         if ($startDate && $endDate) {
             return \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1;

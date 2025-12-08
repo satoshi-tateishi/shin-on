@@ -176,13 +176,17 @@ Route::middleware('auth')->group(function () {
         Route::post('productions/import-csv', [ProductionController::class, 'importCsv'])->name('productions.import-csv');
         Route::resource('productions', ProductionController::class);
 
-        // ユーザーマスタ（管理者のみ）
+        // ユーザーマスタ
         Route::get('users/export-csv', [UserController::class, 'exportCsv'])->name('users.export-csv');
         Route::get('users/template-csv', [UserController::class, 'templateCsv'])->name('users.template-csv');
-        Route::post('users/import-csv', [UserController::class, 'importCsv'])->name('users.import-csv');
-        Route::post('users/update-sort', [UserController::class, 'updateSort'])->name('users.update-sort');
-        Route::delete('users/{user}/remove-icon', [UserController::class, 'removeIcon'])->name('master.users.remove-icon');
-        Route::resource('users', UserController::class);
+        // 管理者のみ：ユーザーCRUD操作
+        Route::middleware('role:admin')->group(function () {
+            Route::post('users/import-csv', [UserController::class, 'importCsv'])->name('users.import-csv');
+            Route::post('users/update-sort', [UserController::class, 'updateSort'])->name('users.update-sort');
+            Route::delete('users/{user}/remove-icon', [UserController::class, 'removeIcon'])->name('master.users.remove-icon');
+            Route::resource('users', UserController::class)->except(['index', 'show']);
+        });
+        Route::resource('users', UserController::class)->only(['index', 'show']);
     });
 
     // 公演・フェーズ管理ルート
@@ -302,8 +306,9 @@ Route::get('/login', function () {
     return view('auth.login');
 })->name('login')->middleware('guest');
 
-// TODO: 本番では削除 - テスト用API（認証なし）
-Route::prefix('test-api')->group(function () {
+// テスト用API（認証なし）- ローカル・テスト環境のみ
+if (app()->environment('local', 'testing')) {
+    Route::prefix('test-api')->group(function () {
     Route::get('schedule/simple', function () {
         return response()->json([
             'status' => 'ok',
@@ -346,3 +351,4 @@ Route::prefix('test-api')->group(function () {
         ]);
     });
 });
+} // end if (local/testing environment)

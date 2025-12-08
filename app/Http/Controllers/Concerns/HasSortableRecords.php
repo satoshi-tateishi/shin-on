@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,16 +27,10 @@ trait HasSortableRecords
                     ->update(['sort' => $item['sort']]);
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'ソート順を更新しました。',
-            ]);
+            return ApiResponse::success('ソート順を更新しました。');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ソート順の更新に失敗しました: '.$e->getMessage(),
-            ], 500);
+            return ApiResponse::serverError('ソート順の更新に失敗しました: '.$e->getMessage());
         }
     }
 

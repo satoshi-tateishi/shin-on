@@ -27,21 +27,11 @@ class UserController extends Controller
 
     public function create(): View
     {
-        // 管理者のみがユーザーを新規作成可能
-        if (auth()->user()->role !== 'admin') {
-            abort(403, '権限がありません。');
-        }
-
         return view('master.users.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
-        // 管理者のみがユーザーを新規作成可能
-        if (auth()->user()->role !== 'admin') {
-            abort(403, '権限がありません。');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
@@ -115,21 +105,11 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
-        // 管理者のみがユーザー情報を編集可能
-        if (auth()->user()->role !== 'admin') {
-            abort(403, '権限がありません。');
-        }
-
         return view('master.users.edit', compact('user'));
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        // 管理者のみがユーザー情報を編集可能
-        if (auth()->user()->role !== 'admin') {
-            abort(403, '権限がありません。');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,'.$user->id,
@@ -201,11 +181,7 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        // 管理者のみが削除可能、自分自身は削除不可
-        if (auth()->user()->role !== 'admin') {
-            abort(403, '権限がありません。');
-        }
-
+        // 自分自身は削除不可
         if ($user->id === auth()->user()->id) {
             return redirect()->route('users.index')
                 ->with('error', '自分自身を削除することはできません。');
@@ -358,9 +334,10 @@ class UserController extends Controller
     protected function getUniqueIdentifier(array $recordData): array
     {
         // IDがある場合はIDで特定、なければemailで特定
-        if (!empty($recordData['id'])) {
+        if (! empty($recordData['id'])) {
             return ['id' => $recordData['id']];
         }
+
         return ['email' => $recordData['email']];
     }
 
@@ -428,11 +405,6 @@ class UserController extends Controller
      */
     public function removeIcon(User $user): RedirectResponse
     {
-        // 管理者のみがアイコン削除可能
-        if (auth()->user()->role !== 'admin') {
-            abort(403, '権限がありません。');
-        }
-
         if ($user->icon && file_exists(public_path($user->icon))) {
             unlink(public_path($user->icon));
         }
@@ -493,11 +465,6 @@ class UserController extends Controller
      */
     public function updateSort(Request $request)
     {
-        // 管理者のみがソート順更新可能
-        if (auth()->user()->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => '権限がありません。'], 403);
-        }
-
         $request->validate([
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',

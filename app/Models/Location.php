@@ -76,18 +76,18 @@ class Location extends Model
     public function scopeForInventoryFilter($query)
     {
         return $query->active()
-                    ->warehouses()
-                    ->where('is_inventory_visible', true)
-                    ->ordered();
+            ->warehouses()
+            ->where('is_inventory_visible', true)
+            ->ordered();
     }
 
     // スコープ: 移動フィルタ用
     public function scopeForTransferFilter($query)
     {
         return $query->active()
-                    ->warehouses()
-                    ->where('is_transfer_visible', true)
-                    ->ordered();
+            ->warehouses()
+            ->where('is_transfer_visible', true)
+            ->ordered();
     }
 
     // 表示名取得
@@ -109,8 +109,20 @@ class Location extends Model
     }
 
     // 機材数を取得
+    // 注意: withCount('equipments') を事前に使用することを推奨
     public function getEquipmentsCountAttribute(): int
     {
+        // equipments_countが既にロードされている場合はそれを使用
+        if (isset($this->attributes['equipments_count'])) {
+            return $this->attributes['equipments_count'];
+        }
+
+        // equipmentsリレーションが既にロードされている場合はそれを使用
+        if ($this->relationLoaded('equipments')) {
+            return $this->equipments->count();
+        }
+
+        // フォールバック: クエリを発行
         return $this->equipments()->count();
     }
 
@@ -154,11 +166,19 @@ class Location extends Model
 
     /**
      * 倉庫容量管理関連メソッド
+     * 注意: equipments リレーションを事前にeager loadすることを推奨
      */
     public function getCapacityUsageAttribute(): array
     {
         $maxCapacity = $this->max_capacity ?? 1000; // デフォルト容量
-        $currentUsage = $this->equipments()->sum('quantity') ?? $this->equipments()->count();
+
+        // equipmentsリレーションが既にロードされている場合はそれを使用
+        if ($this->relationLoaded('equipments')) {
+            $currentUsage = $this->equipments->sum('quantity') ?: $this->equipments->count();
+        } else {
+            $currentUsage = $this->equipments()->sum('quantity') ?: $this->equipments()->count();
+        }
+
         $usagePercentage = $maxCapacity > 0 ? ($currentUsage / $maxCapacity) * 100 : 0;
 
         return [

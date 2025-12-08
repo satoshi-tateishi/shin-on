@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // カスタムミドルウェアのエイリアス登録
         $middleware->alias([
             'performance.access' => \App\Http\Middleware\CheckPerformanceAccess::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
         ]);
     })
     ->withSchedule(function ($schedule) {

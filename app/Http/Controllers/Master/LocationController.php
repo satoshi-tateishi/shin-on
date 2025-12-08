@@ -20,7 +20,7 @@ class LocationController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Location::query();
+        $query = Location::withCount('equipments');
         $query = $this->applyFilters($query, $request);
 
         // タイプでのフィルター
@@ -323,9 +323,10 @@ class LocationController extends Controller
     protected function getUniqueIdentifier(array $recordData): array
     {
         // IDがある場合はIDで特定、なければnameとtypeで特定
-        if (!empty($recordData['id'])) {
+        if (! empty($recordData['id'])) {
             return ['id' => $recordData['id']];
         }
+
         return ['name' => $recordData['name'], 'type' => $recordData['type']];
     }
 

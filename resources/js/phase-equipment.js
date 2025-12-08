@@ -72,16 +72,9 @@ class PhaseEquipmentManager {
      * 検索・フィルター機能の初期化
      */
     initSearchAndFilter() {
-        console.log('🎧 [DEBUG] initSearchAndFilter called');
         const searchInput = document.getElementById('equipment_search');
         const categorySelect = document.getElementById('category_id');
         const subcategorySelect = document.getElementById('subcategory_id');
-
-        console.log('🔍 [DEBUG] Search filter elements:', {
-            searchInput: !!searchInput,
-            categorySelect: !!categorySelect,
-            subcategorySelect: !!subcategorySelect
-        });
 
         if (searchInput) {
             // デバウンス処理付きの検索
@@ -92,23 +85,18 @@ class PhaseEquipmentManager {
                     this.searchEquipments();
                 }, 300);
             });
-            console.log('✅ [DEBUG] Search input listener added');
         }
 
         if (categorySelect) {
             categorySelect.addEventListener('change', () => {
-                console.log('📡 [DEBUG] Category changed, calling updateSubcategories');
                 this.updateSubcategories();
             });
-            console.log('✅ [DEBUG] Category change listener added');
         }
 
         if (subcategorySelect) {
             subcategorySelect.addEventListener('change', () => {
-                console.log('📡 [DEBUG] Subcategory changed');
                 this.searchEquipments();
             });
-            console.log('✅ [DEBUG] Subcategory change listener added');
         }
     }
 
@@ -116,16 +104,8 @@ class PhaseEquipmentManager {
      * サブカテゴリ更新
      */
     updateSubcategories() {
-        console.log('🔄 [DEBUG] updateSubcategories called');
         const categorySelect = document.getElementById('category_id');
         const subcategorySelect = document.getElementById('subcategory_id');
-
-        console.log('🔍 [DEBUG] DOM elements:', {
-            categorySelect: !!categorySelect,
-            subcategorySelect: !!subcategorySelect,
-            categoryValue: categorySelect?.value,
-            subcategoryChildrenCount: subcategorySelect?.children.length
-        });
 
         if (!categorySelect || !subcategorySelect) {
             console.error('❌ [DEBUG] Required elements not found');
@@ -133,15 +113,12 @@ class PhaseEquipmentManager {
         }
 
         const selectedCategoryId = categorySelect.value;
-        console.log('🎯 [DEBUG] Selected category ID:', selectedCategoryId);
 
         // 初期化時に全オプションを保存（初回のみ）
         if (!this.allSubcategoryOptions) {
             this.allSubcategoryOptions = Array.from(subcategorySelect.children);
-            console.log('💾 [DEBUG] Saved subcategory options:', this.allSubcategoryOptions.length);
             // デバッグ用に全オプションの内容を出力
             this.allSubcategoryOptions.forEach((option, index) => {
-                console.log(`📋 [DEBUG] Option ${index}:`, option.tagName, option.textContent?.substring(0, 20), option.dataset?.categoryId);
             });
         }
 
@@ -152,11 +129,9 @@ class PhaseEquipmentManager {
         while (subcategorySelect.children.length > 1) {
             subcategorySelect.removeChild(subcategorySelect.lastChild);
         }
-        console.log('🗑️ [DEBUG] Cleared existing options, remaining:', subcategorySelect.children.length);
 
         if (!selectedCategoryId) {
             // カテゴリが「全カテゴリ」の場合、全サブカテゴリを表示
-            console.log('📂 [DEBUG] Showing all subcategories');
             this.allSubcategoryOptions.slice(1).forEach(element => {
                 if (element.tagName === 'OPTGROUP') {
                     subcategorySelect.appendChild(element.cloneNode(true));
@@ -164,11 +139,9 @@ class PhaseEquipmentManager {
             });
         } else {
             // 選択されたカテゴリに属するサブカテゴリのみを表示
-            console.log('🎯 [DEBUG] Filtering for category:', selectedCategoryId);
             let addedCount = 0;
 
             this.allSubcategoryOptions.slice(1).forEach(element => {
-                console.log('🔍 [DEBUG] Processing element:', element.tagName, element.label || element.textContent?.substring(0, 20));
 
                 if (element.tagName === 'OPTGROUP') {
                     const optgroup = element.cloneNode(false); // 空のoptgroupを作成
@@ -177,7 +150,6 @@ class PhaseEquipmentManager {
 
                     options.forEach(option => {
                         const categoryId = option.dataset.categoryId;
-                        console.log('🔎 [DEBUG] Option:', option.textContent, 'categoryId:', categoryId, 'matches:', categoryId === selectedCategoryId);
 
                         if (categoryId === selectedCategoryId) {
                             optgroup.appendChild(option.cloneNode(true));
@@ -187,17 +159,13 @@ class PhaseEquipmentManager {
                     });
 
                     if (hasValidOptions) {
-                        console.log('✅ [DEBUG] Adding optgroup with', optgroup.children.length, 'options');
                         subcategorySelect.appendChild(optgroup);
                     }
                 }
             });
-            console.log('📈 [DEBUG] Added', addedCount, 'subcategory options');
         }
 
-        console.log('✅ [DEBUG] Final subcategory structure:');
         Array.from(subcategorySelect.children).forEach((child, index) => {
-            console.log(`  ${index}: ${child.tagName} - ${child.textContent?.substring(0, 30)} (${child.children?.length || 0} children)`);
         });
 
         // 機材検索も実行
@@ -307,14 +275,12 @@ class PhaseEquipmentManager {
      * 機材選択 - クリックで直接リストに追加
      */
     selectEquipment(equipmentId) {
-        console.log('🎯 [DEBUG] selectEquipment called with ID:', equipmentId);
         this.selectedEquipment = this.availableEquipments.find(eq => eq.id === equipmentId);
         if (!this.selectedEquipment) {
             console.error('❌ [DEBUG] Equipment not found:', equipmentId);
             return;
         }
 
-        console.log('✅ [DEBUG] Equipment selected:', this.selectedEquipment.name);
 
         // 数量管理機材の場合、数量入力ダイアログを表示
         if (this.selectedEquipment.management_type === 'quantity') {
@@ -329,7 +295,6 @@ class PhaseEquipmentManager {
      * 機材選択解除 - 選択済み機材をクリックでリストから削除
      */
     deselectEquipment(equipmentId) {
-        console.log('🔄 [DEBUG] deselectEquipment called with ID:', equipmentId);
 
         const equipment = this.availableEquipments.find(eq => eq.id === equipmentId);
         if (!equipment) {
@@ -344,7 +309,6 @@ class PhaseEquipmentManager {
             // 確認ダイアログを表示
             if (confirm(`${equipment.name} を選択解除しますか？`)) {
                 this.removeFromList(index);
-                console.log('✅ [DEBUG] Equipment deselected:', equipment.name);
             }
         }
     }
@@ -455,7 +419,6 @@ class PhaseEquipmentManager {
         if (existingIndex >= 0) {
             // 既存の機材の数量を更新
             this.selectedEquipmentList[existingIndex].quantity = quantity;
-            console.log('📝 [DEBUG] Updated existing equipment quantity:', quantity);
             this.showSuccess(`${equipment.name} の数量を更新しました`);
         } else {
             // 新しい機材をリストに追加
@@ -463,7 +426,6 @@ class PhaseEquipmentManager {
                 equipment: equipment,
                 quantity: quantity
             });
-            console.log('✅ [DEBUG] Added equipment to list:', equipment.name, 'quantity:', quantity);
             this.showSuccess(`${equipment.name} をリストに追加しました`);
         }
 
@@ -560,14 +522,12 @@ class PhaseEquipmentManager {
         if (existingIndex >= 0) {
             // 既存の機材の数量を更新
             this.selectedEquipmentList[existingIndex].quantity = quantity;
-            console.log('📝 [DEBUG] Updated existing equipment quantity:', quantity);
         } else {
             // 新しい機材をリストに追加
             this.selectedEquipmentList.push({
                 equipment: this.selectedEquipment,
                 quantity: quantity
             });
-            console.log('✅ [DEBUG] Added equipment to list:', this.selectedEquipment.name, 'quantity:', quantity);
         }
 
         // テーブルを更新
@@ -709,7 +669,6 @@ class PhaseEquipmentManager {
             `;
         }).join('');
 
-        console.log('📊 [DEBUG] Updated table with', this.selectedEquipmentList.length, 'items');
     }
 
     /**
@@ -718,7 +677,6 @@ class PhaseEquipmentManager {
     removeFromList(index) {
         if (index >= 0 && index < this.selectedEquipmentList.length) {
             const removedItem = this.selectedEquipmentList.splice(index, 1)[0];
-            console.log('🗑️ [DEBUG] Removed equipment from list:', removedItem.equipment.name);
             this.updateSelectedEquipmentTable();
 
             // 機材リストの表示を更新（選択済み状態をリセット）
@@ -782,7 +740,6 @@ class PhaseEquipmentManager {
             dataInput.value = JSON.stringify(equipmentData);
         }
 
-        console.log('🚀 [DEBUG] Submitting equipment data:', equipmentData);
 
         // フォームを送信
         event.target.submit();
@@ -1137,28 +1094,24 @@ let phaseEquipmentManager;
 
 // Windowオブジェクトに関数を登録（Viteモジュールから呼び出し可能にする）
 window.toggleSelectionMode = function() {
-    console.log('🔗 [DEBUG] Global toggleSelectionMode called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.toggleSelectionMode();
     }
 }
 
 window.updateSubcategories = function() {
-    console.log('🔗 [DEBUG] Global updateSubcategories called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.updateSubcategories();
     }
 }
 
 window.searchEquipments = function() {
-    console.log('🔗 [DEBUG] Global searchEquipments called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.searchEquipments();
     }
 }
 
 window.selectEquipment = function(equipmentId) {
-    console.log('🔗 [DEBUG] Global selectEquipment called with ID:', equipmentId);
     if (phaseEquipmentManager) {
         phaseEquipmentManager.selectEquipment(equipmentId);
     } else {
@@ -1167,7 +1120,6 @@ window.selectEquipment = function(equipmentId) {
 }
 
 window.deselectEquipment = function(equipmentId) {
-    console.log('🔗 [DEBUG] Global deselectEquipment called with ID:', equipmentId);
     if (phaseEquipmentManager) {
         phaseEquipmentManager.deselectEquipment(equipmentId);
     } else {
@@ -1176,63 +1128,54 @@ window.deselectEquipment = function(equipmentId) {
 }
 
 window.checkSetAvailability = function() {
-    console.log('🔗 [DEBUG] Global checkSetAvailability called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.checkSetAvailability();
     }
 }
 
 window.checkoutEquipment = function(phaseEquipmentId, phaseId) {
-    console.log('🔗 [DEBUG] Global checkoutEquipment called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.checkoutEquipment(phaseEquipmentId, phaseId);
     }
 }
 
 window.checkinEquipment = function(phaseEquipmentId, phaseId) {
-    console.log('🔗 [DEBUG] Global checkinEquipment called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.checkinEquipment(phaseEquipmentId, phaseId);
     }
 }
 
 window.deleteEquipment = function(phaseEquipmentId, phaseId) {
-    console.log('🔗 [DEBUG] Global deleteEquipment called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.deleteEquipment(phaseEquipmentId, phaseId);
     }
 }
 
 window.closeModal = function() {
-    console.log('🔗 [DEBUG] Global closeModal called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.closeModal();
     }
 }
 
 window.removeFromList = function(index) {
-    console.log('🔗 [DEBUG] Global removeFromList called with index:', index);
     if (phaseEquipmentManager) {
         phaseEquipmentManager.removeFromList(index);
     }
 }
 
 window.closeQuantityDialog = function() {
-    console.log('🔗 [DEBUG] Global closeQuantityDialog called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.closeQuantityDialog();
     }
 }
 
 window.confirmQuantityAndAdd = function() {
-    console.log('🔗 [DEBUG] Global confirmQuantityAndAdd called');
     if (phaseEquipmentManager) {
         phaseEquipmentManager.confirmQuantityAndAdd();
     }
 }
 
 window.validateQuantityInput = function(input, maxQuantity) {
-    console.log('🔗 [DEBUG] Global validateQuantityInput called');
     const value = parseInt(input.value);
     const errorElement = document.getElementById('quantity-error');
     const addButton = document.getElementById('dialog-add-button');
@@ -1262,7 +1205,6 @@ window.validateQuantityInput = function(input, maxQuantity) {
 }
 
 window.preventInvalidInput = function(event) {
-    console.log('🔗 [DEBUG] Global preventInvalidInput called');
 
     // Enterキーで確定
     if (event.key === 'Enter') {
@@ -1280,10 +1222,8 @@ window.preventInvalidInput = function(event) {
 
 // 初期化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 [DEBUG] DOMContentLoaded - Initializing PhaseEquipmentManager');
     phaseEquipmentManager = new PhaseEquipmentManager();
     window.phaseEquipmentManager = phaseEquipmentManager; // グローバルからアクセス可能に
-    console.log('✅ [DEBUG] PhaseEquipmentManager initialized and available globally');
 });
 
 export default PhaseEquipmentManager;

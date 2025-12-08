@@ -11,22 +11,20 @@
     <div class="w-full">
         <h1 class="text-xl sm:text-3xl font-bold text-gray-900 mb-2">{{ $location->name }}</h1>
         <div class="flex items-center justify-between">
-            <a href="{{ route('master.locations.index') }}"
-               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            <x-button variant="secondary" :href="route('master.locations.index')">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 一覧
-            </a>
+            </x-button>
 
             @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
-                <a href="{{ route('master.locations.edit', $location) }}"
-                   class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                <x-button variant="primary" :href="route('master.locations.edit', $location)">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                     編集
-                </a>
+                </x-button>
             @endif
         </div>
     </div>
