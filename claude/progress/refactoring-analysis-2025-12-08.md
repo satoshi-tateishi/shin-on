@@ -44,10 +44,16 @@
 ### 低優先度
 | # | 項目 | 対象 | 概要 |
 |---|------|------|------|
-| 15 | phase-equipment.jsリファクタ | `resources/js/` | 1,288行のモジュール分割 |
+| 15 | phase-equipment.jsリファクタ | `resources/js/` | 1,228行のモジュール分割 |
 | 16 | Alpine.js統一 | 各ビューファイル | vanilla JS（31ビュー）をAlpine.jsへ移行 |
 | 17 | ダークモード対応 | CSS/Tailwind設定 | デザイントークン定義 |
 | 18 | API完全分離 | `routes/api.php`新規 | HTML/JSON混在の解消 |
+
+### コードベースクリーンアップ ✅
+| # | 項目 | 対象 | 状態 |
+|---|------|------|------|
+| 19 | 古いバックアップファイル削除 | `app/Http/Controllers/zOLD/` | ✅ 完了 |
+| 20 | 古いリストアファイル削除 | `storage/app/restore/` | ✅ 完了 |
 
 ---
 
@@ -68,6 +74,8 @@ resources/views/components/form-input.blade.php  # フォーム入力コンポ�
 
 ```
 resources/views/layouts/app.blade.php    # master.blade.phpに統合
+app/Http/Controllers/zOLD/               # 古いバックアップコントローラー (2ファイル)
+storage/app/restore/2025-11-27_23-12-55/ # 古いリストアファイル
 ```
 
 ---
