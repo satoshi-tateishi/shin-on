@@ -152,6 +152,16 @@ class Phase extends Model
     }
 
     /**
+     * 未返却の機材があるか
+     */
+    public function hasUnreturnedEquipment(): bool
+    {
+        return $this->phaseEquipments()
+            ->where('status', 'checked_out')
+            ->exists();
+    }
+
+    /**
      * 期間重複チェック（バリデーション用）
      */
     public function hasEquipmentConflict($equipmentId, $excludePhaseId = null): bool

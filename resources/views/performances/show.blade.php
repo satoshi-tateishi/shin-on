@@ -221,10 +221,20 @@
                                         'upcoming' => 'bg-gray-100 text-gray-800',
                                         'in_progress' => 'bg-blue-100 text-blue-800',
                                         'completed' => 'bg-green-100 text-green-800',
+                                        'pending_return' => 'bg-orange-100 text-orange-800',
                                     ];
+
+                                    $displayStatus = $phase->phase_status;
+                                    $displayLabel = $phase->phase_status_label;
+
+                                    // 完了かつ未返却機材がある場合
+                                    if ($phase->phase_status === 'completed' && $phase->hasUnreturnedEquipment()) {
+                                        $displayStatus = 'pending_return';
+                                        $displayLabel = '返却処理待ち';
+                                    }
                                 @endphp
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$phase->phase_status] ?? 'bg-gray-100 text-gray-800' }}">
-                                    {{ $phase->phase_status_label }}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$displayStatus] ?? 'bg-gray-100 text-gray-800' }}">
+                                    {{ $displayLabel }}
                                 </span>
                             </td>
                         </tr>
