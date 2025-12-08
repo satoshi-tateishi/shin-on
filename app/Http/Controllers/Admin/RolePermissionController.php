@@ -49,6 +49,7 @@ class RolePermissionController extends Controller
                     ['name' => '公演詳細 - 編集ボタン', 'general' => 'staff', 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => '公演詳細 - フェーズ追加', 'general' => 'staff', 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => '公演詳細 - フェーズ編集', 'general' => 'staff', 'viewer' => false, 'editor' => true, 'admin' => true],
+                    ['name' => '公演詳細 - 削除ボタン', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
                     ['name' => 'フェーズ詳細 - 閲覧', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true],
                     ['name' => 'フェーズ詳細 - 編集ボタン', 'general' => 'staff', 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => 'フェーズ詳細 - 削除ボタン', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],

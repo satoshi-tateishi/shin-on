@@ -80,9 +80,18 @@ class PerformanceController extends Controller
 
     public function destroy(Performance $performance): RedirectResponse
     {
+        // 管理者のみ削除可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '公演を削除する権限がありません。');
+        }
+
+        $performanceTitle = $performance->title;
         $performance->delete();
 
         return redirect()->route('performances.index')
-            ->with('success', '公演が正常に削除されました。');
+            ->with('deleted', [
+                'name' => $performanceTitle,
+                'number' => null,
+            ]);
     }
 }

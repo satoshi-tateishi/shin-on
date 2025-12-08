@@ -365,8 +365,8 @@
                 <div class="flex items-center">
                     <input type="checkbox" name="is_active" id="is_active" value="1"
                            {{ old('is_active', $performance->is_active) ? 'checked' : '' }}
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <label for="is_active" class="ml-2 block text-xs sm:text-sm text-gray-900">有効にする</label>
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
+                    <label for="is_active" class="ml-2 block text-xs sm:text-sm text-gray-900 dark:text-white">有効にする</label>
                 </div>
                 @error('is_active')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>

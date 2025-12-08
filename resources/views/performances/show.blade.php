@@ -18,17 +18,82 @@
                 </svg>
                 一覧
             </a>
-            @if(auth()->user()->role === 'editor' ||
-                auth()->user()->role === 'admin' ||
-                $performance->staff->contains('user_id', auth()->id()))
-                <a href="{{ route('performances.edit', $performance) }}"
-                   class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    編集
-                </a>
-            @endif
+            <div class="flex items-center gap-2">
+                @if(auth()->user()->role === 'editor' ||
+                    auth()->user()->role === 'admin' ||
+                    $performance->staff->contains('user_id', auth()->id()))
+                    <a href="{{ route('performances.edit', $performance) }}"
+                       class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        編集
+                    </a>
+                @endif
+                @if(auth()->user()->role === 'admin')
+                    <div x-data="{ showDeleteModal: false }">
+                        <button type="button" @click="showDeleteModal = true"
+                                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-red-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-red-700">
+                            <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            削除
+                        </button>
+
+                        <!-- 削除確認モーダル -->
+                        <div x-show="showDeleteModal"
+                             x-cloak
+                             class="fixed inset-0 z-50 overflow-y-auto"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0">
+                            <div class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70" @click="showDeleteModal = false"></div>
+                            <div class="flex items-center justify-center min-h-screen p-4">
+                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-auto border border-gray-200 dark:border-gray-700"
+                                     @click.stop>
+                                    <div class="p-4 sm:p-6">
+                                        <div class="flex items-center mb-4">
+                                            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <h3 class="ml-3 text-base sm:text-lg font-medium text-gray-900 dark:text-white">公演の削除</h3>
+                                        </div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                            以下の公演を削除しますか？
+                                        </p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white mb-4 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                            {{ $performance->title }}
+                                        </p>
+                                        <p class="text-xs text-red-600 dark:text-red-400 mb-6">
+                                            ※ 関連するフェーズや機材使用記録もすべて削除されます。この操作は取り消せません。
+                                        </p>
+                                        <div class="flex justify-end gap-2 sm:gap-3">
+                                            <button type="button"
+                                                    @click="showDeleteModal = false"
+                                                    class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
+                                                キャンセル
+                                            </button>
+                                            <form action="{{ route('performances.destroy', $performance) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                                                    削除する
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 @endsection
