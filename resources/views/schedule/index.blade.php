@@ -316,6 +316,7 @@
                         <span class="text-xs">修理中</span>
                     </div>
                 </div>
+                <p class="text-xs text-gray-500 mt-2">※フェーズ期間が反映されています</p>
             </div>
 
             <!-- Excel風テーブル -->
