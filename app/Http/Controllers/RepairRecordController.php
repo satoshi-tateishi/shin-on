@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Equipment;
 use App\Models\CompanyInfo;
+use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentSubcategory;
 use App\Models\RepairRecord;
@@ -96,8 +96,7 @@ class RepairRecordController extends Controller
      * パフォーマンス最適化により、初期ページロードでは最小限のデータのみ取得。
      * サブカテゴリと機材データは、ユーザーの選択に応じてAPIで動的取得する。
      *
-     * @param Request $request equipment_id パラメータで特定機材を事前選択可能
-     * @return View
+     * @param  Request  $request  equipment_id パラメータで特定機材を事前選択可能
      */
     public function create(Request $request): View
     {
@@ -360,6 +359,11 @@ class RepairRecordController extends Controller
      */
     public function destroy(RepairRecord $repairRecord): RedirectResponse
     {
+        // admin のみ削除可能
+        if (auth()->user()->role !== 'admin') {
+            abort(403, '削除権限がありません。');
+        }
+
         $repairRecord->delete();
 
         return redirect()
@@ -615,7 +619,7 @@ class RepairRecordController extends Controller
         $repairRecord->load([
             'equipment.subcategory.category',
             'reportedBy',
-            'staffUser'
+            'staffUser',
         ]);
 
         // 会社情報を取得

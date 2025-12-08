@@ -57,6 +57,17 @@
                     編集
                 </a>
 
+                <!-- 削除ボタン（admin のみ） -->
+                @if(auth()->user()->role === 'admin')
+                    <button type="button" onclick="openDeleteModal()"
+                            class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-red-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-red-700">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span class="hidden sm:inline">削除</span>
+                    </button>
+                @endif
+
                 <!-- PDF伝票ダウンロードボタン -->
                 <a href="{{ route('repair-records.export-pdf', $repairRecord) }}"
                    class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -503,6 +514,45 @@
         </div>
     </div>
 
+    <!-- 削除確認モーダル（admin のみ） -->
+    @if(auth()->user()->role === 'admin')
+    <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 sm:top-20 mx-3 sm:mx-auto p-3 sm:p-5 border w-auto sm:w-96 max-w-sm sm:max-w-none shadow-lg rounded-md bg-white">
+            <div class="mt-2 sm:mt-3">
+                <h3 class="text-base sm:text-lg font-medium text-red-600 mb-3 sm:mb-4">修理記録の削除</h3>
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-2">この修理記録を削除しますか？</p>
+                    <div class="p-3 bg-gray-50 rounded-lg text-sm">
+                        <div class="font-medium text-gray-900">{{ $repairRecord->equipment->name }}</div>
+                        <div class="text-gray-500">{{ Str::limit($repairRecord->problem_description, 50) }}</div>
+                    </div>
+                    <p class="text-xs text-red-500 mt-2">※ この操作は取り消せません。</p>
+                </div>
+                <div class="mb-4">
+                    <label for="delete_confirmation" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">確認のため「delete」と入力してください</label>
+                    <input type="text" id="delete_confirmation"
+                           class="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                           placeholder="delete">
+                </div>
+                <form action="{{ route('repair-records.destroy', $repairRecord) }}" method="POST" id="deleteForm">
+                    @csrf
+                    @method('DELETE')
+                    <div class="flex justify-end space-x-2 sm:space-x-3 pt-3 sm:pt-4">
+                        <button type="button" onclick="closeDeleteModal()"
+                                class="px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            キャンセル
+                        </button>
+                        <button type="submit" id="deleteSubmitBtn" disabled
+                                class="px-2 sm:px-4 py-1.5 sm:py-2 bg-red-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            削除する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
 @push('scripts')
 <script>
 // 画像拡大表示用関数
@@ -545,9 +595,46 @@ function closeCancelModal() {
     document.getElementById('cancelModal').classList.add('hidden');
 }
 
+// 削除モーダル（admin のみ）
+function openDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.getElementById('delete_confirmation').value = '';
+        document.getElementById('deleteSubmitBtn').disabled = true;
+    }
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// 削除確認入力の監視
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteConfirmInput = document.getElementById('delete_confirmation');
+    const deleteSubmitBtn = document.getElementById('deleteSubmitBtn');
+
+    if (deleteConfirmInput && deleteSubmitBtn) {
+        deleteConfirmInput.addEventListener('input', function() {
+            deleteSubmitBtn.disabled = this.value.toLowerCase() !== 'delete';
+        });
+
+        // Enterキーで削除実行
+        deleteConfirmInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.toLowerCase() === 'delete') {
+                e.preventDefault();
+                document.getElementById('deleteForm').submit();
+            }
+        });
+    }
+});
+
 // モーダル外クリックで閉じる
 document.addEventListener('click', function(event) {
-    const modals = ['startModal', 'completeModal', 'cancelModal'];
+    const modals = ['startModal', 'completeModal', 'cancelModal', 'deleteModal'];
     modals.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (event.target === modal) {
