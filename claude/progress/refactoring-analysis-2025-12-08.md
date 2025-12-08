@@ -136,6 +136,29 @@ bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300
 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white
 ```
 
+### FOIT（フラッシュ）防止
+
+ページ読み込み時のライトモード→ダークモードのフラッシュを防ぐため、`<head>`の最初にインラインスクリプトを配置：
+
+```html
+<html lang="ja" x-data="darkMode()">
+<head>
+    <script>
+        // 即座にダークモードを適用（FOIT防止）
+        (function() {
+            var isDark = localStorage.getItem('darkMode') === 'true' ||
+                (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <!-- 以降のmeta, CSS読み込み -->
+</head>
+```
+
+**注意**: `<html>`タグから`:class="{ 'dark': isDark }"`を削除し、Alpine.jsの`toggle()`内で`applyTheme()`を呼び出す。
+
 ---
 
 *リファクタリング完了。今後は機能改修に合わせて段階的に改善を継続。*
