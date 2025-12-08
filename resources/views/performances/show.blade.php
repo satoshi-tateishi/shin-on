@@ -230,7 +230,7 @@
                                     // 完了かつ未返却機材がある場合
                                     if ($phase->phase_status === 'completed' && $phase->hasUnreturnedEquipment()) {
                                         $displayStatus = 'pending_return';
-                                        $displayLabel = '返却処理待ち';
+                                        $displayLabel = '返却待ち';
                                     }
                                 @endphp
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$displayStatus] ?? 'bg-gray-100 text-gray-800' }}">
