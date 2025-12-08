@@ -4,12 +4,12 @@
 
 @section('content')
 <div class="container mx-auto px-2 sm:px-4 py-3 sm:py-8">
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="px-3 sm:px-6 py-2 sm:py-4 border-b border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="px-3 sm:px-6 py-2 sm:py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
-                <h1 class="text-lg sm:text-2xl font-bold text-gray-900">Role権限設定</h1>
+                <h1 class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Role権限設定</h1>
                 <a href="{{ route('dashboard') }}"
-                   class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                   class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
@@ -20,91 +20,91 @@
 
         <div class="p-2 sm:p-6">
             <!-- 凡例 -->
-            <div class="mb-4 sm:mb-6 p-2 sm:p-4 bg-gray-50 rounded-lg">
-                <h3 class="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">凡例</h3>
+            <div class="mb-4 sm:mb-6 p-2 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h3 class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">凡例</h3>
                 <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
                     <div class="flex items-center gap-1.5 sm:gap-2">
-                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-green-100 text-green-600 rounded">
+                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded">
                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
-                        <span class="text-gray-600">許可</span>
+                        <span class="text-gray-600 dark:text-gray-400">許可</span>
                     </div>
                     <div class="flex items-center gap-1.5 sm:gap-2">
-                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-red-100 text-red-600 rounded">
+                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded">
                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </span>
-                        <span class="text-gray-600">禁止</span>
+                        <span class="text-gray-600 dark:text-gray-400">禁止</span>
                     </div>
                     <div class="flex items-center gap-1.5 sm:gap-2">
-                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded text-[10px] sm:text-xs font-bold">
+                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded text-[10px] sm:text-xs font-bold">
                             👤
                         </span>
-                        <span class="text-gray-600">担当者のみ</span>
+                        <span class="text-gray-600 dark:text-gray-400">担当者のみ</span>
                     </div>
                 </div>
             </div>
 
             <!-- Role説明 -->
             <div class="mb-4 sm:mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
-                <div class="p-2 sm:p-4 bg-gray-100 rounded-lg border-l-4 border-gray-400">
-                    <h4 class="text-sm sm:text-base font-semibold text-gray-700">viewer（閲覧者）</h4>
-                    <p class="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">閲覧のみ</p>
+                <div class="p-2 sm:p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border-l-4 border-gray-400">
+                    <h4 class="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300">viewer（閲覧者）</h4>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">閲覧のみ</p>
                 </div>
-                <div class="p-2 sm:p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
-                    <h4 class="text-sm sm:text-base font-semibold text-green-700">general（一般）</h4>
-                    <p class="text-xs sm:text-sm text-green-600 mt-0.5 sm:mt-1">基本操作可（担当公演編集+修理管理）</p>
+                <div class="p-2 sm:p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border-l-4 border-green-400">
+                    <h4 class="text-sm sm:text-base font-semibold text-green-700 dark:text-green-400">general（一般）</h4>
+                    <p class="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-0.5 sm:mt-1">基本操作可（担当公演編集+修理管理）</p>
                 </div>
-                <div class="p-2 sm:p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                    <h4 class="text-sm sm:text-base font-semibold text-blue-700">editor（編集者）</h4>
-                    <p class="text-xs sm:text-sm text-blue-600 mt-0.5 sm:mt-1">編集・削除可（ユーザー管理除く）</p>
+                <div class="p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-400">
+                    <h4 class="text-sm sm:text-base font-semibold text-blue-700 dark:text-blue-400">editor（編集者）</h4>
+                    <p class="text-xs sm:text-sm text-blue-600 dark:text-blue-400 mt-0.5 sm:mt-1">編集・削除可（ユーザー管理除く）</p>
                 </div>
-                <div class="p-2 sm:p-4 bg-purple-50 rounded-lg border-l-4 border-purple-400">
-                    <h4 class="text-sm sm:text-base font-semibold text-purple-700">admin（管理者）</h4>
-                    <p class="text-xs sm:text-sm text-purple-600 mt-0.5 sm:mt-1">全機能へのフルアクセス</p>
+                <div class="p-2 sm:p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border-l-4 border-purple-400">
+                    <h4 class="text-sm sm:text-base font-semibold text-purple-700 dark:text-purple-400">admin（管理者）</h4>
+                    <p class="text-xs sm:text-sm text-purple-600 dark:text-purple-400 mt-0.5 sm:mt-1">全機能へのフルアクセス</p>
                 </div>
             </div>
 
             @foreach($permissions as $sectionKey => $section)
             <!-- {{ $section['title'] }} -->
             <div class="mb-6 sm:mb-8">
-                <h2 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">{{ $section['title'] }}</h2>
+                <h2 class="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2">{{ $section['title'] }}</h2>
                 @if(isset($section['description']))
-                    <p class="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">{{ $section['description'] }}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">{{ $section['description'] }}</p>
                 @endif
 
                 <div class="overflow-x-auto -mx-2 sm:mx-0">
-                    <table class="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     機能
                                 </th>
-                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-20">
+                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-20">
                                     <span class="hidden sm:inline">viewer</span>
                                     <span class="sm:hidden">V</span>
                                 </th>
-                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-20">
+                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-20">
                                     <span class="hidden sm:inline">general</span>
                                     <span class="sm:hidden">G</span>
                                 </th>
-                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-20">
+                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-20">
                                     <span class="hidden sm:inline">editor</span>
                                     <span class="sm:hidden">E</span>
                                 </th>
-                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-20">
+                                <th class="px-1 sm:px-4 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-20">
                                     <span class="hidden sm:inline">admin</span>
                                     <span class="sm:hidden">A</span>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             @foreach($section['items'] as $item)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-sm text-gray-900 {{ isset($item['indent']) && $item['indent'] ? 'pl-4 sm:pl-8' : '' }}">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-sm text-gray-900 dark:text-white {{ isset($item['indent']) && $item['indent'] ? 'pl-4 sm:pl-8' : '' }}">
                                     {{ $item['name'] }}
                                 </td>
                                 <td class="px-1 sm:px-4 py-1.5 sm:py-3 text-center">
@@ -196,9 +196,9 @@
             @endforeach
 
             <!-- 注記 -->
-            <div class="mt-4 sm:mt-8 p-2 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <h3 class="text-xs sm:text-sm font-semibold text-amber-800 mb-1 sm:mb-2">注記</h3>
-                <ul class="text-[10px] sm:text-sm text-amber-700 space-y-0.5 sm:space-y-1">
+            <div class="mt-4 sm:mt-8 p-2 sm:p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <h3 class="text-xs sm:text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1 sm:mb-2">注記</h3>
+                <ul class="text-[10px] sm:text-sm text-amber-700 dark:text-amber-300 space-y-0.5 sm:space-y-1">
                     <li>・ユーザーマスタはadminのみ編集可能</li>
                     <li>・👤 = 公演スタッフとして登録されているユーザー</li>
                 </ul>

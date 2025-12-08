@@ -3,12 +3,12 @@
 @section('title', '機材セットマスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材セットマスタ 一覧</span>
+    > <span class="text-gray-400 dark:text-gray-500">機材関連マスタ</span> > <span class="text-gray-800 dark:text-gray-200">機材セットマスタ 一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">機材セットマスタ</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">機材セットマスタ</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
@@ -25,30 +25,30 @@
             <!-- CSV Menu (Dropdown) - Admin Only -->
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" type="button"
-                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
                 <div x-show="open" @click.away="open = false" x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                     class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
                     <div class="py-1">
                         <a href="{{ route('master.equipment-sets.export-csv') }}"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             CSVエクスポート
                         </a>
-                        <button type="button" @click="open = false; showImportModal('{{ route('master.equipment-sets.import-csv') }}')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                        <button type="button" @click="open = false; window.dispatchEvent(new CustomEvent('open-csv-import-modal', { detail: { actionUrl: '{{ route('master.equipment-sets.import-csv') }}' }}))"
+                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             CSVインポート
                         </button>
                         <a href="{{ route('master.equipment-sets.template-csv') }}"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -68,26 +68,26 @@
         <!-- Results Table -->
         @if($equipmentSets->count() > 0)
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             @if(in_array(auth()->user()->role, ['editor', 'admin']))
-                                <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">順序</th>
+                                <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-16">順序</th>
                             @endif
-                            <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-16">
+                            <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-16">
                                 No.
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 セット名
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-16">
                                 状態
                             </th>
                         </tr>
                     </thead>
-                    <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
+                    <tbody id="sortable-tbody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($equipmentSets as $equipmentSet)
-                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif @if(!$equipmentSet->is_active) bg-red-50 opacity-75 @endif"
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif @if(!$equipmentSet->is_active) bg-red-50 dark:bg-red-900/30 opacity-75 @endif"
                                 data-id="{{ $equipmentSet->id }}"
                                 @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
                                 @if(in_array(auth()->user()->role, ['editor', 'admin']))
@@ -97,17 +97,17 @@
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
+                                <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 dark:text-white text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
                                     {{ $equipmentSet->sort ?? '-' }}
                                 </td>
                                 <td class="px-2 sm:px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
-                                    <div class="text-sm font-medium text-gray-900 @if(!$equipmentSet->is_active) line-through text-gray-500 @endif">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white @if(!$equipmentSet->is_active) line-through text-gray-500 dark:text-gray-400 @endif">
                                         {{ $equipmentSet->name }}
                                     </div>
                                 </td>
                                 <td class="px-2 sm:px-4 py-2 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-sets.show', $equipmentSet) }}'" @endif>
                                     <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full
-                                        {{ $equipmentSet->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                        {{ $equipmentSet->is_active ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' }}">
                                         {{ $equipmentSet->is_active ? '有効' : '無効' }}
                                     </span>
                                 </td>
@@ -123,8 +123,8 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">データがありません</h3>
-                <p class="mt-1 text-sm text-gray-500">新しい機材セットを作成してください。</p>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">データがありません</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">新しい機材セットを作成してください。</p>
                 @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
                     <div class="mt-6">
                         <a href="{{ route('master.equipment-sets.create') }}"

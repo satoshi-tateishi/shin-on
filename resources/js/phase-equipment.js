@@ -108,7 +108,6 @@ class PhaseEquipmentManager {
         const subcategorySelect = document.getElementById('subcategory_id');
 
         if (!categorySelect || !subcategorySelect) {
-            console.error('❌ [DEBUG] Required elements not found');
             return;
         }
 
@@ -277,7 +276,6 @@ class PhaseEquipmentManager {
     selectEquipment(equipmentId) {
         this.selectedEquipment = this.availableEquipments.find(eq => eq.id === equipmentId);
         if (!this.selectedEquipment) {
-            console.error('❌ [DEBUG] Equipment not found:', equipmentId);
             return;
         }
 
@@ -298,7 +296,6 @@ class PhaseEquipmentManager {
 
         const equipment = this.availableEquipments.find(eq => eq.id === equipmentId);
         if (!equipment) {
-            console.error('❌ [DEBUG] Equipment not found:', equipmentId);
             return;
         }
 
@@ -509,7 +506,6 @@ class PhaseEquipmentManager {
      */
     addIndividualEquipmentToList() {
         if (!this.selectedEquipment) {
-            console.error('❌ [DEBUG] No equipment selected');
             return;
         }
 
@@ -882,7 +878,7 @@ class PhaseEquipmentManager {
     /**
      * アクションモーダル表示
      */
-    showActionModal(title, action, buttonClass, buttonText, showNote = false, method = 'PATCH') {
+    showActionModal(title, action, buttonClass, buttonText, method = 'PATCH') {
         const modal = document.getElementById('actionModal');
         const titleElement = document.getElementById('modalTitle');
         const form = document.getElementById('actionForm');
@@ -1021,8 +1017,7 @@ class PhaseEquipmentManager {
             '出庫実行の確認',
             `/phases/${phaseId}/equipment/${phaseEquipmentId}/checkout`,
             'bg-green-600 hover:bg-green-700',
-            '出庫実行',
-            false
+            '出庫実行'
         );
     }
 
@@ -1064,7 +1059,6 @@ class PhaseEquipmentManager {
                 `/phases/${phaseId}/equipment/${phaseEquipmentId}/checkin`,
                 'bg-purple-600 hover:bg-purple-700',
                 '返却実行',
-                false,
                 'PATCH'
             );
 
@@ -1083,7 +1077,6 @@ class PhaseEquipmentManager {
             `/phases/${phaseId}/equipment/${phaseEquipmentId}`,
             'bg-red-600 hover:bg-red-700',
             '削除',
-            false,
             'DELETE'
         );
     }
@@ -1114,16 +1107,12 @@ window.searchEquipments = function() {
 window.selectEquipment = function(equipmentId) {
     if (phaseEquipmentManager) {
         phaseEquipmentManager.selectEquipment(equipmentId);
-    } else {
-        console.error('❌ [DEBUG] phaseEquipmentManager not available');
     }
 }
 
 window.deselectEquipment = function(equipmentId) {
     if (phaseEquipmentManager) {
         phaseEquipmentManager.deselectEquipment(equipmentId);
-    } else {
-        console.error('❌ [DEBUG] phaseEquipmentManager not available');
     }
 }
 

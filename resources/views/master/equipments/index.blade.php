@@ -3,12 +3,12 @@
 @section('title', '機材マスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材マスタ 一覧</span>
+    > <span class="text-gray-400 dark:text-gray-500">機材関連マスタ</span> > <span class="text-gray-800 dark:text-gray-200">機材マスタ 一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">機材マスタ 一覧</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">機材マスタ 一覧</h1>
     </div>
 
     <div class="flex gap-2 sm:gap-3 ml-auto">
@@ -45,24 +45,24 @@
         <!-- PDF Menu (All roles) -->
         <div x-data="{ open: false }" class="relative">
             <button @click="open = !open" type="button"
-                    class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
             </button>
             <div x-show="open" @click.away="open = false" x-transition
-                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                 class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
                 <div class="py-1">
-                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">PDF出力</div>
+                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">PDF出力</div>
                     <a href="{{ route('master.equipments.export-pdf', request()->query()) }}"
                        target="_blank"
-                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         ダウンロード
                     </a>
-                    <button type="button" onclick="showLineWorksConfirmation()"
+                    <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-lineworks-modal'))"
                             class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -77,23 +77,23 @@
         <!-- CSV Menu (Admin Only) -->
         <div x-data="{ open: false }" class="relative">
             <button @click="open = !open" type="button"
-                    class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
             </button>
             <div x-show="open" @click.away="open = false" x-transition
-                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                 class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
                 <div class="py-1">
-                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">CSV</div>
+                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">CSV</div>
                     <a href="{{ route('master.equipments.export-csv') }}"
-                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         CSVエクスポート
                     </a>
-                    <button type="button" @click="open = false; document.getElementById('csv-import-modal').classList.remove('hidden')"
+                    <button type="button" @click="open = false; window.dispatchEvent(new CustomEvent('open-csv-import-modal'))"
                             class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -101,7 +101,7 @@
                         CSVインポート
                     </button>
                     <a href="{{ route('master.equipments.template-csv') }}"
-                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -115,9 +115,13 @@
 @endsection
 
 @section('content')
+<div x-data="equipmentIndexPage()"
+     @keydown.escape.window="showCsvImportModal = false; showLineWorksModal = false"
+     @open-csv-import-modal.window="showCsvImportModal = true"
+     @open-lineworks-modal.window="showLineWorksModal = true">
     <div class="p-3 sm:p-6">
         <!-- Search and Filters -->
-        <div class="mb-4 sm:mb-6 bg-gray-50 p-3 sm:p-4 rounded-lg @if(request('sort_mode') === 'all') opacity-50 pointer-events-none @endif">
+        <div class="mb-4 sm:mb-6 bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg @if(request('sort_mode') === 'all') opacity-50 pointer-events-none @endif">
             @if(request('sort_mode') === 'all')
                 <div class="mb-2 p-2 bg-orange-100 border border-orange-200 rounded-md">
                     <p class="text-xs sm:text-sm text-orange-800">
@@ -130,14 +134,14 @@
             @endif
             <form method="GET" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4" autocomplete="off">
                 <div class="col-span-2 sm:col-span-1">
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">検索</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">検索</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="機材名・モデル名・シリアル番号で検索"
-                           class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-                    <select name="category_id" id="category-select" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">カテゴリ</label>
+                    <select name="category_id" id="category-select" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">すべて</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
@@ -148,8 +152,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">サブカテゴリ</label>
-                    <select name="subcategory_id" id="subcategory-select" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">サブカテゴリ</label>
+                    <select name="subcategory_id" id="subcategory-select" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">すべて</option>
                         @php
                             $groupedSubcategories = $subcategories->groupBy('category.name');
@@ -169,8 +173,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">基本倉庫</label>
-                    <select name="location_id" id="location-select" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">基本倉庫</label>
+                    <select name="location_id" id="location-select" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">すべて</option>
                         @foreach($locations as $location)
                             <option value="{{ $location->id }}" {{ request('location_id') == $location->id ? 'selected' : '' }}>
@@ -181,8 +185,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">状態</label>
-                    <select name="status" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">状態</label>
+                    <select name="status" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">すべて</option>
                         <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>利用可能</option>
                         <option value="in_use" {{ request('status') == 'in_use' ? 'selected' : '' }}>使用中</option>
@@ -202,35 +206,35 @@
         <!-- Results Table -->
         @if($equipments->count() > 0)
             <div class="overflow-x-auto">
-                <table class="w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
-                                <th class="pl-3 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-16">順序</th>
+                                <th class="pl-3 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-16">順序</th>
                             @endif
-                            <th class="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-auto">
+                            <th class="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-auto">
                                 カテゴリ
                             </th>
-                            <th class="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 機材名
                             </th>
-                            <th class="px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-14 sm:w-auto">
+                            <th class="px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-14 sm:w-auto">
                                 新音番号
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                                 数量
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
                                 基本倉庫
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
                                 現在地
                             </th>
                         </tr>
                     </thead>
-                    <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
+                    <tbody id="sortable-tbody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($equipments as $equipment)
-                            <tr class="hover:bg-gray-50 cursor-pointer @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif"
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif"
                                 data-id="{{ $equipment->id }}"
                                 onclick="window.location.href='{{ route('master.equipments.show', $equipment) }}'">
                                 @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
@@ -240,32 +244,32 @@
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-1 sm:px-3 py-2 text-[10px] sm:text-xs text-gray-500 align-top">
+                                <td class="px-1 sm:px-3 py-2 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 align-top">
                                     <div class="truncate max-w-[80px] sm:max-w-none">{{ $equipment->category->name ?? '---' }}</div>
                                     @if($equipment->subcategory)
                                         <div class="text-gray-400 truncate max-w-[80px] sm:max-w-none">{{ $equipment->subcategory->name }}</div>
                                     @endif
                                 </td>
-                                <td class="px-1 sm:px-3 py-2 text-xs sm:text-sm text-gray-500 align-top max-w-0">
+                                <td class="px-1 sm:px-3 py-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 align-top max-w-0">
                                     @if($equipment->manufacturer)
                                         <div class="truncate">{{ $equipment->manufacturer }}</div>
                                     @endif
-                                    <div class="text-gray-900 truncate">{{ $equipment->name }}</div>
+                                    <div class="text-gray-900 dark:text-white truncate">{{ $equipment->name }}</div>
                                 </td>
                                 <td class="px-1 py-2 whitespace-nowrap text-left align-middle">
                                     @if($equipment->company_number)
-                                        <span class="px-1 py-0.5 border border-gray-300 rounded text-xs text-gray-600">
+                                        <span class="px-1 py-0.5 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-300">
                                             {{ $equipment->company_number }}
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden sm:table-cell">
+                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                                     {{ $equipment->quantity }}{{ $equipment->unit }}
                                 </td>
-                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden md:table-cell">
+                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                     {{ $equipment->location->name ?? '---' }}
                                 </td>
-                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden lg:table-cell">
+                                <td class="px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
                                     @if($equipment->now_location_id)
                                         @if($equipment->now_location_id !== $equipment->location_id)
                                             <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -314,26 +318,29 @@
 
     <!-- CSV Import Modal -->
     @if(in_array(auth()->user()->role, ['editor', 'admin']))
-    <div id="csv-import-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-10 sm:top-20 mx-4 sm:mx-auto p-4 sm:p-5 border w-full sm:w-96 shadow-lg rounded-md bg-white">
+    <div x-show="showCsvImportModal"
+         x-cloak
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center"
+         @click.self="showCsvImportModal = false">
+        <div class="relative top-10 sm:top-20 mx-4 sm:mx-auto p-4 sm:p-5 border dark:border-gray-600 w-full sm:w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div class="mt-2 sm:mt-3">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">CSVファイル取込</h3>
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">CSVファイル取込</h3>
 
                 <form action="{{ route('master.equipments.import-csv') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
                     @csrf
                     <div class="mb-3 sm:mb-4">
-                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">CSVファイルを選択</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CSVファイルを選択</label>
                         <input type="file" name="csv_file" accept=".csv,.txt" required
-                               class="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        <p class="mt-1 text-xs text-gray-500">
+                               class="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             ※ CSVファイル（UTF-8形式）を選択してください。<br>
                             ※ ファイルサイズは2MB以内でお願いします
                         </p>
                     </div>
 
-                    <div class="flex items-center justify-end pt-3 sm:pt-4 border-t border-gray-200">
-                        <button type="button" onclick="document.getElementById('csv-import-modal').classList.add('hidden')"
-                                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-gray-800 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium hover:bg-gray-50 mr-2 sm:mr-3">
+                    <div class="flex items-center justify-end pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
+                        <button type="button" @click="showCsvImportModal = false"
+                                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm text-xs sm:text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-500 mr-2 sm:mr-3">
                             キャンセル
                         </button>
                         <button type="submit"
@@ -348,16 +355,19 @@
     @endif
 
     <!-- LINE WORKS送信確認モーダル -->
-    <div id="lineworksModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4">
-            <div class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-blue-100 rounded-full mb-3 sm:mb-4">
+    <div x-show="showLineWorksModal"
+         x-cloak
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"
+         @click.self="showLineWorksModal = false">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-blue-100 dark:bg-blue-900 rounded-full mb-3 sm:mb-4">
                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
             </div>
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 text-center mb-2">LINE WORKSに送信</h3>
-            <div class="bg-gray-50 rounded-md p-3 sm:p-4 mb-3 sm:mb-4">
-                <div class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white text-center mb-2">LINE WORKSに送信</h3>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-md p-3 sm:p-4 mb-3 sm:mb-4">
+                <div class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                     <div class="flex justify-between">
                         <span class="font-medium">送信先:</span>
                         <span>{{ auth()->user()->name }}</span>
@@ -368,14 +378,14 @@
                     </div>
                 </div>
             </div>
-            <p class="text-xs sm:text-sm text-gray-500 text-center mb-3 sm:mb-4">
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center mb-3 sm:mb-4">
                 機材マスタ一覧のPDFファイルをあなたのLINE WORKSアカウントに送信します。
             </p>
-            <form method="POST" action="{{ route('master.equipments.send-lineworks', request()->query()) }}" id="lineworksSendForm">
+            <form method="POST" action="{{ route('master.equipments.send-lineworks', request()->query()) }}">
                 @csrf
                 <div class="flex space-x-2 sm:space-x-3">
-                    <button type="button" onclick="hideLineWorksConfirmation()"
-                            class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <button type="button" @click="showLineWorksModal = false"
+                            class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500">
                         キャンセル
                     </button>
                     <button type="submit"
@@ -390,23 +400,13 @@
     <!-- 機材マスタ専用JavaScript -->
     <script src="{{ asset('js/master/equipment-index.js') }}"></script>
 
-    <!-- LINE WORKS送信確認モーダル関数 -->
     <script>
-        function showLineWorksConfirmation() {
-            document.getElementById('lineworksModal').classList.remove('hidden');
-            document.getElementById('lineworksModal').classList.add('flex');
+    function equipmentIndexPage() {
+        return {
+            showCsvImportModal: false,
+            showLineWorksModal: false
         }
-
-        function hideLineWorksConfirmation() {
-            document.getElementById('lineworksModal').classList.add('hidden');
-            document.getElementById('lineworksModal').classList.remove('flex');
-        }
-
-        // Escapeキーでモーダルを閉じる
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                hideLineWorksConfirmation();
-            }
-        });
+    }
     </script>
+</div><!-- Alpine.js x-data scope end -->
 @endsection

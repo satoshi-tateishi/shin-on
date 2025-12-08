@@ -3,16 +3,16 @@
 @section('title', '公演詳細')
 
 @section('breadcrumb')
-    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
-    > <span class="text-gray-800">詳細</span>
+    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">公演一覧</a>
+    > <span class="text-gray-800 dark:text-gray-200">詳細</span>
 @endsection
 
 @section('header')
     <div class="w-full">
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 mb-2">{{ $performance->title }}</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ $performance->title }}</h1>
         <div class="flex items-center justify-between">
             <a href="{{ route('performances.index') }}"
-               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -36,40 +36,40 @@
 @section('content')
 <div class="p-3 sm:p-6 space-y-4 sm:space-y-6">
     <!-- 基本情報 -->
-    <div class="bg-white border border-gray-200 rounded-lg">
-        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900">基本情報</h3>
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">基本情報</h3>
         </div>
         <div class="px-4 sm:px-6 py-3 sm:py-4">
             <table class="w-full text-xs sm:text-sm">
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     <!-- 公演種別 -->
                     <tr>
-                        <th class="py-2 pr-4 text-left font-medium text-gray-500 w-24 sm:w-32 align-top">公演種別</th>
-                        <td class="py-2 text-gray-900">{{ $performance->performance_type }}</td>
+                        <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400 w-24 sm:w-32 align-top">公演種別</th>
+                        <td class="py-2 text-gray-900 dark:text-white">{{ $performance->performance_type }}</td>
                     </tr>
 
                     <!-- 略称 -->
                     @if($performance->short_name)
                     <tr>
-                        <th class="py-2 pr-4 text-left font-medium text-gray-500 w-24 sm:w-32 align-top">略称</th>
-                        <td class="py-2 text-gray-900">{{ $performance->short_name }}</td>
+                        <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400 w-24 sm:w-32 align-top">略称</th>
+                        <td class="py-2 text-gray-900 dark:text-white">{{ $performance->short_name }}</td>
                     </tr>
                     @endif
 
                     <!-- 期間 -->
                     <tr>
-                        <th class="py-2 pr-4 text-left font-medium text-gray-500 w-24 sm:w-32 align-top">期間</th>
-                        <td class="py-2 text-gray-900">
+                        <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400 w-24 sm:w-32 align-top">期間</th>
+                        <td class="py-2 text-gray-900 dark:text-white">
                             @if($performance->start_date && $performance->end_date)
                                 {{ $performance->start_date }} 〜 {{ $performance->end_date }}
                                 @if($performance->duration_days)
-                                    <span class="text-xs text-gray-500 ml-1">({{ $performance->duration_days }}日間)</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">({{ $performance->duration_days }}日間)</span>
                                 @endif
                             @elseif($performance->phases->count() > 0)
-                                <span class="text-gray-500">フェーズで設定</span>
+                                <span class="text-gray-500 dark:text-gray-400">フェーズで設定</span>
                             @else
-                                <span class="text-gray-400">期間未設定</span>
+                                <span class="text-gray-400 dark:text-gray-500">期間未設定</span>
                             @endif
                         </td>
                     </tr>
@@ -77,24 +77,24 @@
                     <!-- 演出 -->
                     @if($performance->director)
                     <tr>
-                        <th class="py-2 pr-4 text-left font-medium text-gray-500 w-24 sm:w-32 align-top">演出</th>
-                        <td class="py-2 text-gray-900">{{ $performance->director }}</td>
+                        <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400 w-24 sm:w-32 align-top">演出</th>
+                        <td class="py-2 text-gray-900 dark:text-white">{{ $performance->director }}</td>
                     </tr>
                     @endif
 
                     <!-- プロダクション -->
                     @if($performance->productions->count() > 0)
                     <tr>
-                        <th class="py-2 pr-4 text-left font-medium text-gray-500 w-24 sm:w-32 align-top whitespace-nowrap">プロダクション</th>
-                        <td class="py-2 text-gray-900 whitespace-nowrap">{{ $performance->productions->pluck('name')->implode(', ') }}</td>
+                        <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400 w-24 sm:w-32 align-top whitespace-nowrap">プロダクション</th>
+                        <td class="py-2 text-gray-900 dark:text-white whitespace-nowrap">{{ $performance->productions->pluck('name')->implode(', ') }}</td>
                     </tr>
                     @endif
 
                     <!-- 備考 -->
                     @if($performance->note)
                     <tr>
-                        <th class="py-2 pr-4 text-left font-medium text-gray-500 w-24 sm:w-32 align-top">備考</th>
-                        <td class="py-2 text-gray-900 whitespace-pre-wrap">{{ $performance->note }}</td>
+                        <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400 w-24 sm:w-32 align-top">備考</th>
+                        <td class="py-2 text-gray-900 dark:text-white whitespace-pre-wrap">{{ $performance->note }}</td>
                     </tr>
                     @endif
                 </tbody>
@@ -102,18 +102,18 @@
 
             <!-- 担当者と公演チラシ画像 -->
             @if($performance->staff->count() > 0 || ($performance->attachments && $performance->attachments->count() > 0))
-            <div class="mt-4 pt-4 border-t border-gray-100 space-y-4 sm:space-y-0 sm:flex sm:gap-6">
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-4 sm:space-y-0 sm:flex sm:gap-6">
                 <!-- 担当者 -->
                 @if($performance->staff->count() > 0)
                 <div class="flex-shrink-0">
-                    <div class="text-xs sm:text-sm font-medium text-gray-500 mb-2">担当者</div>
-                    <div class="overflow-hidden border border-gray-200 rounded-lg inline-block">
-                        <table class="table-auto divide-y divide-gray-200 text-xs sm:text-sm">
-                            <tbody class="bg-white divide-y divide-gray-200">
+                    <div class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">担当者</div>
+                    <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg inline-block">
+                        <table class="table-auto divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($performance->staff->sortBy([['position.sort', 'asc'], ['user.sort', 'asc']]) as $staff)
                                     <tr>
-                                        <td class="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-gray-500 text-right border-r border-gray-200">{{ $staff->position->name }}</td>
-                                        <td class="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-gray-900">{{ $staff->user->name }}</td>
+                                        <td class="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-gray-500 dark:text-gray-400 text-right border-r border-gray-200 dark:border-gray-700">{{ $staff->position->name }}</td>
+                                        <td class="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-gray-900 dark:text-white">{{ $staff->user->name }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -125,7 +125,7 @@
                 <!-- 公演チラシ画像 -->
                 @if($performance->attachments && $performance->attachments->count() > 0)
                 <div class="flex-grow">
-                    <div class="text-xs sm:text-sm font-medium text-gray-500 mb-2">公演チラシ画像</div>
+                    <div class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">公演チラシ画像</div>
                     <div class="flex flex-wrap gap-2">
                         @foreach($performance->attachments as $attachment)
                             @if($attachment->isImage())
@@ -133,7 +133,7 @@
                                     <a href="{{ $attachment->file_url }}" target="_blank" class="block w-full h-full">
                                         <img src="{{ $attachment->thumbnail_url ?? $attachment->file_url }}"
                                              alt="{{ $attachment->original_name }}"
-                                             class="w-full h-full object-contain hover:opacity-80 transition-opacity border border-gray-200 rounded">
+                                             class="w-full h-full object-contain hover:opacity-80 transition-opacity border border-gray-200 dark:border-gray-700 rounded">
                                     </a>
                                 </div>
                             @endif
@@ -148,9 +148,9 @@
 
     <!-- フェーズ一覧 -->
     @if($performance->phases->count() > 0)
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900">フェーズ一覧</h3>
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">フェーズ一覧</h3>
             @if(auth()->user()->role === 'editor' ||
                 auth()->user()->role === 'admin' ||
                 $performance->staff->contains('user_id', auth()->id()))
@@ -165,25 +165,25 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">フェーズ名</th>
-                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">期間</th>
-                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">場所</th>
-                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状態</th>
+                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">フェーズ名</th>
+                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">期間</th>
+                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">場所</th>
+                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">状態</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @foreach($performance->phases->sortBy('start_date') as $phase)
-                        <tr class="hover:bg-gray-50 active:bg-gray-100 cursor-pointer" onclick="window.location='{{ route('phases.show', $phase) }}'">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 cursor-pointer" onclick="window.location='{{ route('phases.show', $phase) }}'">
                             <td class="px-3 sm:px-6 py-3 sm:py-4">
-                                <div class="text-xs sm:text-sm font-medium text-gray-900">{{ $phase->name }}</div>
+                                <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{{ $phase->name }}</div>
                                 @if($phase->description)
-                                    <div class="text-xs text-gray-500">{{ Str::limit($phase->description, 30) }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ Str::limit($phase->description, 30) }}</div>
                                 @endif
                                 <!-- モバイル用: 期間・場所表示 -->
-                                <div class="sm:hidden mt-1 text-xs text-gray-500">
+                                <div class="sm:hidden mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     @if($phase->start_date && $phase->end_date)
                                         {{ $phase->start_date->format('m/d') }} 〜 {{ $phase->end_date->format('m/d') }}
                                     @else
@@ -194,34 +194,34 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900 hidden sm:table-cell">
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900 dark:text-white hidden sm:table-cell">
                                 @if($phase->start_date && $phase->end_date)
                                     <div>{{ $phase->start_date->format('Y-m-d') }}</div>
-                                    <div class="text-xs text-gray-500">〜 {{ $phase->end_date->format('Y-m-d') }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">〜 {{ $phase->end_date->format('Y-m-d') }}</div>
                                 @else
-                                    <span class="text-gray-400">日程未設定</span>
+                                    <span class="text-gray-400 dark:text-gray-500">日程未設定</span>
                                 @endif
                             </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900 hidden md:table-cell">
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900 dark:text-white hidden md:table-cell">
                                 @if($phase->location)
                                     <div>{{ $phase->location->name }}</div>
                                     @if($phase->note)
-                                        <div class="text-xs text-gray-500 mt-1">{{ Str::limit($phase->note, 30) }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ Str::limit($phase->note, 30) }}</div>
                                     @endif
                                 @else
-                                    <div><span class="text-gray-400">場所未設定</span></div>
+                                    <div><span class="text-gray-400 dark:text-gray-500">場所未設定</span></div>
                                     @if($phase->note)
-                                        <div class="text-xs text-gray-500 mt-1">{{ Str::limit($phase->note, 30) }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ Str::limit($phase->note, 30) }}</div>
                                     @endif
                                 @endif
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4">
                                 @php
                                     $statusColors = [
-                                        'upcoming' => 'bg-gray-100 text-gray-800',
-                                        'in_progress' => 'bg-blue-100 text-blue-800',
-                                        'completed' => 'bg-green-100 text-green-800',
-                                        'pending_return' => 'bg-orange-100 text-orange-800',
+                                        'upcoming' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+                                        'in_progress' => 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300',
+                                        'completed' => 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300',
+                                        'pending_return' => 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300',
                                     ];
 
                                     $displayStatus = $phase->phase_status;
@@ -233,7 +233,7 @@
                                         $displayLabel = '返却待ち';
                                     }
                                 @endphp
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$displayStatus] ?? 'bg-gray-100 text-gray-800' }}">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$displayStatus] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200' }}">
                                     {{ $displayLabel }}
                                 </span>
                             </td>
@@ -244,14 +244,14 @@
         </div>
     </div>
     @else
-    <div class="bg-white border border-gray-200 rounded-lg">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
         <div class="px-4 sm:px-6 py-6 sm:py-8">
             <div class="text-center">
                 <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h3 class="mt-2 text-xs sm:text-sm font-medium text-gray-900">フェーズが登録されていません</h3>
-                <p class="mt-1 text-xs sm:text-sm text-gray-500">まずは最初のフェーズを作成しましょう。</p>
+                <h3 class="mt-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">フェーズが登録されていません</h3>
+                <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">まずは最初のフェーズを作成しましょう。</p>
                 @if(auth()->user()->role === 'editor' ||
                     auth()->user()->role === 'admin' ||
                     $performance->staff->contains('user_id', auth()->id()))

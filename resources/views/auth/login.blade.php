@@ -13,7 +13,7 @@
         @endif
 
         @if ($errors->any())
-            <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded-md mb-4">
+            <div class="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-2 rounded-md mb-4">
                 @foreach ($errors->all() as $error)
                     <p>{{ $error }}</p>
                 @endforeach
@@ -21,7 +21,7 @@
         @endif
 
         @if (session('error'))
-            <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded-md mb-4">
+            <div class="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-2 rounded-md mb-4">
                 {{ session('error') }}
             </div>
         @endif

@@ -31,7 +31,8 @@
 
 @section('content')
     <div class="p-3 sm:p-6">
-        <form id="create-form" method="POST" action="{{ route('master.equipments.store') }}" class="max-w-2xl" autocomplete="off">
+        <form id="create-form" method="POST" action="{{ route('master.equipments.store') }}" class="max-w-2xl" autocomplete="off"
+              x-data="{ managementType: '{{ old('management_type', 'individual') }}' }">
             @csrf
 
             <div class="space-y-4 sm:space-y-6">
@@ -117,7 +118,10 @@
                                 <label for="company_number" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     新音番号
                                 </label>
-                                <input type="text" name="company_number" id="company_number" value="{{ old('company_number') }}"
+                                <input type="text" name="company_number" id="company_number"
+                                       :value="managementType === 'quantity' ? '' : '{{ old('company_number') }}'"
+                                       :disabled="managementType === 'quantity'"
+                                       :class="managementType === 'quantity' ? 'bg-gray-100 cursor-not-allowed' : ''"
                                        class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                               @error('company_number') border-red-300 @enderror">
                                 @error('company_number')
@@ -159,11 +163,11 @@
                                 <label for="management_type" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     管理方式 <span class="text-red-500">*</span>
                                 </label>
-                                <select name="management_type" id="management_type" required onchange="toggleQuantityField()"
+                                <select name="management_type" id="management_type" required x-model="managementType"
                                         class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                                @error('management_type') border-red-300 @enderror">
-                                    <option value="individual" {{ old('management_type', 'individual') == 'individual' ? 'selected' : '' }}>個体管理</option>
-                                    <option value="quantity" {{ old('management_type') == 'quantity' ? 'selected' : '' }}>数量管理</option>
+                                    <option value="individual">個体管理</option>
+                                    <option value="quantity">数量管理</option>
                                 </select>
                                 @error('management_type')
                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -175,7 +179,11 @@
                                 <label for="quantity" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     在庫数量
                                 </label>
-                                <input type="number" name="quantity" id="quantity" value="{{ old('quantity', 1) }}" min="1" step="1"
+                                <input type="number" name="quantity" id="quantity"
+                                       :value="managementType === 'individual' ? 1 : '{{ old('quantity', 1) }}'"
+                                       :disabled="managementType === 'individual'"
+                                       :class="managementType === 'individual' ? 'bg-gray-100 cursor-not-allowed' : ''"
+                                       min="1" step="1"
                                        class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                               @error('quantity') border-red-300 @enderror">
                                 @error('quantity')
@@ -324,34 +332,3 @@
     </div>
 @endsection
 
-@push('scripts')
-<script>
-    function toggleQuantityField() {
-        const managementType = document.getElementById('management_type').value;
-        const quantityField = document.getElementById('quantity');
-        const companyNumberField = document.getElementById('company_number');
-
-        if (managementType === 'individual') {
-            // 個体管理：在庫数量1固定、新音番号入力可能
-            quantityField.value = 1;
-            quantityField.disabled = true;
-            quantityField.classList.add('bg-gray-100', 'cursor-not-allowed');
-
-            companyNumberField.disabled = false;
-            companyNumberField.classList.remove('bg-gray-100', 'cursor-not-allowed');
-        } else {
-            // 数量管理：在庫数量入力可能、新音番号削除&無効化
-            quantityField.disabled = false;
-            quantityField.classList.remove('bg-gray-100', 'cursor-not-allowed');
-
-            companyNumberField.value = '';
-            companyNumberField.disabled = true;
-            companyNumberField.classList.add('bg-gray-100', 'cursor-not-allowed');
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        toggleQuantityField();
-    });
-</script>
-@endpush

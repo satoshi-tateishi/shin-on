@@ -32,7 +32,11 @@
 
 @section('content')
     <div class="p-3 sm:p-6">
-        <form id="edit-form" method="POST" action="{{ route('master.equipments.update', $equipment) }}" class="max-w-2xl" autocomplete="off">
+        <form id="edit-form" method="POST" action="{{ route('master.equipments.update', $equipment) }}" class="max-w-2xl" autocomplete="off"
+              x-data="{
+                  managementType: '{{ old('management_type', $equipment->management_type) }}',
+                  isDiscard: {{ old('is_discard', $equipment->is_discard) ? 'true' : 'false' }}
+              }">
             @csrf
             @method('PUT')
 
@@ -119,7 +123,10 @@
                                 <label for="company_number" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     新音番号
                                 </label>
-                                <input type="text" name="company_number" id="company_number" value="{{ old('company_number', $equipment->company_number) }}"
+                                <input type="text" name="company_number" id="company_number"
+                                       :value="managementType === 'quantity' ? '' : '{{ old('company_number', $equipment->company_number) }}'"
+                                       :disabled="managementType === 'quantity'"
+                                       :class="managementType === 'quantity' ? 'bg-gray-100 cursor-not-allowed' : ''"
                                        class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                               @error('company_number') border-red-300 @enderror">
                                 @error('company_number')
@@ -161,11 +168,11 @@
                                 <label for="management_type" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     管理方式 <span class="text-red-500">*</span>
                                 </label>
-                                <select name="management_type" id="management_type" required onchange="toggleQuantityField()"
+                                <select name="management_type" id="management_type" required x-model="managementType"
                                         class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                                @error('management_type') border-red-300 @enderror">
-                                    <option value="individual" {{ old('management_type', $equipment->management_type) == 'individual' ? 'selected' : '' }}>個体管理</option>
-                                    <option value="quantity" {{ old('management_type', $equipment->management_type) == 'quantity' ? 'selected' : '' }}>数量管理</option>
+                                    <option value="individual">個体管理</option>
+                                    <option value="quantity">数量管理</option>
                                 </select>
                                 @error('management_type')
                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -177,7 +184,11 @@
                                 <label for="quantity" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     在庫数量
                                 </label>
-                                <input type="number" name="quantity" id="quantity" value="{{ old('quantity', $equipment->quantity) }}" min="1" step="1"
+                                <input type="number" name="quantity" id="quantity"
+                                       :value="managementType === 'individual' ? 1 : '{{ old('quantity', $equipment->quantity) }}'"
+                                       min="1" step="1"
+                                       :disabled="managementType === 'individual'"
+                                       :class="managementType === 'individual' ? 'bg-gray-100 cursor-not-allowed' : ''"
                                        class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                               @error('quantity') border-red-300 @enderror">
                                 @error('quantity')
@@ -339,8 +350,7 @@
                                 </label>
                                 <div class="flex items-center">
                                     <input type="checkbox" name="is_discard" id="is_discard" value="1"
-                                           {{ old('is_discard', $equipment->is_discard) ? 'checked' : '' }}
-                                           onchange="toggleDiscardDate()"
+                                           x-model="isDiscard"
                                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                     <label for="is_discard" class="ml-2 block text-xs sm:text-sm text-gray-900">
                                         廃棄
@@ -356,7 +366,10 @@
                                 <label for="discard_at" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                                     廃棄日
                                 </label>
-                                <input type="date" name="discard_at" id="discard_at" value="{{ old('discard_at', $equipment->discard_at?->format('Y-m-d')) }}"
+                                <input type="date" name="discard_at" id="discard_at"
+                                       :value="isDiscard ? '{{ old('discard_at', $equipment->discard_at?->format('Y-m-d')) }}' : ''"
+                                       :disabled="!isDiscard"
+                                       :class="!isDiscard ? 'bg-gray-100 cursor-not-allowed' : ''"
                                        class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
                                               @error('discard_at') border-red-300 @enderror">
                                 @error('discard_at')
@@ -386,51 +399,3 @@
     </div>
 @endsection
 
-@push('scripts')
-<script>
-    function toggleQuantityField() {
-        const managementType = document.getElementById('management_type').value;
-        const quantityField = document.getElementById('quantity');
-        const companyNumberField = document.getElementById('company_number');
-
-        if (managementType === 'individual') {
-            // 個体管理：在庫数量1固定、新音番号入力可能
-            quantityField.value = 1;
-            quantityField.disabled = true;
-            quantityField.classList.add('bg-gray-100', 'cursor-not-allowed');
-
-            companyNumberField.disabled = false;
-            companyNumberField.classList.remove('bg-gray-100', 'cursor-not-allowed');
-        } else {
-            // 数量管理：在庫数量入力可能、新音番号削除&無効化
-            quantityField.disabled = false;
-            quantityField.classList.remove('bg-gray-100', 'cursor-not-allowed');
-
-            companyNumberField.value = '';
-            companyNumberField.disabled = true;
-            companyNumberField.classList.add('bg-gray-100', 'cursor-not-allowed');
-        }
-    }
-
-    function toggleDiscardDate() {
-        const discardFlag = document.getElementById('is_discard');
-        const discardDate = document.getElementById('discard_at');
-
-        if (discardFlag && discardDate) {
-            if (discardFlag.checked) {
-                discardDate.disabled = false;
-                discardDate.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            } else {
-                discardDate.disabled = true;
-                discardDate.value = '';
-                discardDate.classList.add('bg-gray-100', 'cursor-not-allowed');
-            }
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        toggleQuantityField();
-        toggleDiscardDate();
-    });
-</script>
-@endpush

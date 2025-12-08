@@ -3,12 +3,12 @@
 @section('title', '機材サブカテゴリマスタ')
 
 @section('breadcrumb')
-    > <span class="text-gray-400">機材関連マスタ</span> > <span class="text-gray-800">機材サブカテゴリマスタ 一覧</span>
+    > <span class="text-gray-400 dark:text-gray-500">機材関連マスタ</span> > <span class="text-gray-800 dark:text-gray-200">機材サブカテゴリマスタ 一覧</span>
 @endsection
 
 @section('header')
     <div>
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">機材サブカテゴリマスタ</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">機材サブカテゴリマスタ</h1>
     </div>
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
@@ -25,30 +25,30 @@
             <!-- CSV Menu (Dropdown) - Admin Only -->
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" type="button"
-                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
                 <div x-show="open" @click.away="open = false" x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                     class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
                     <div class="py-1">
                         <a href="{{ route('master.equipment-subcategories.export-csv') }}"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             CSVエクスポート
                         </a>
-                        <button type="button" @click="open = false; showImportModal('{{ route('master.equipment-subcategories.import-csv') }}')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                        <button type="button" @click="open = false; window.dispatchEvent(new CustomEvent('open-csv-import-modal', { detail: { actionUrl: '{{ route('master.equipment-subcategories.import-csv') }}' }}))"
+                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             CSVインポート
                         </button>
                         <a href="{{ route('master.equipment-subcategories.template-csv') }}"
-                           class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -68,26 +68,26 @@
         <!-- Results Table -->
         @if($subcategories->count() > 0)
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             @if(in_array(auth()->user()->role, ['editor', 'admin']))
-                                <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">順序</th>
+                                <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-16">順序</th>
                             @endif
-                            <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-10 sm:w-16">
+                            <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10 sm:w-16">
                                 No.
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 サブカテゴリ名
                             </th>
-                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sm:w-16">
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-16">
                                 状態
                             </th>
                         </tr>
                     </thead>
-                    <tbody id="sortable-tbody" class="bg-white divide-y divide-gray-200">
+                    <tbody id="sortable-tbody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($subcategories as $subcategory)
-                            <tr class="hover:bg-gray-50 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $subcategory->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.equipment-subcategories.show', $subcategory) }}'" @endif>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 @if(in_array(auth()->user()->role, ['editor', 'admin'])) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $subcategory->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.equipment-subcategories.show', $subcategory) }}'" @endif>
                                 @if(in_array(auth()->user()->role, ['editor', 'admin']))
                                     <td class="pl-4 sm:pl-6 pr-2 py-2 whitespace-nowrap text-center">
                                         <svg class="drag-handle w-4 h-4 sm:w-5 sm:h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
@@ -95,20 +95,20 @@
                                         </svg>
                                     </td>
                                 @endif
-                                <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-subcategories.show', $subcategory) }}'" @endif>
+                                <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 dark:text-white text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-subcategories.show', $subcategory) }}'" @endif>
                                     {{ $subcategory->sort }}
                                 </td>
                                 <td class="px-2 sm:px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-subcategories.show', $subcategory) }}'" @endif>
-                                    <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 mb-0.5">
+                                    <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 mb-0.5">
                                         {{ $subcategory->category->name ?? '' }}
                                     </span>
-                                    <div class="text-sm font-medium text-gray-900 pl-1.5">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white pl-1.5">
                                         {{ $subcategory->name }}
                                     </div>
                                 </td>
                                 <td class="px-2 sm:px-4 py-2 text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.equipment-subcategories.show', $subcategory) }}'" @endif>
                                     <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full
-                                        {{ $subcategory->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                        {{ $subcategory->is_active ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' }}">
                                         {{ $subcategory->is_active ? '有効' : '無効' }}
                                     </span>
                                 </td>
@@ -124,8 +124,8 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.713-3.714M14 40v-4c0-1.313.253-2.566.713-3.714m0 0A10.003 10.003 0 0124 26c4.21 0 7.813 2.602 9.288 6.286M30 14a6 6 0 11-12 0 6 6 0 0112 0zm12 6a4 4 0 11-8 0 4 4 0 018 0zm-28 0a4 4 0 11-8 0 4 4 0 018 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">データがありません</h3>
-                <p class="mt-1 text-sm text-gray-500">新しいサブカテゴリを作成してください。</p>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">データがありません</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">新しいサブカテゴリを作成してください。</p>
                 @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
                     <div class="mt-6">
                         <a href="{{ route('master.equipment-subcategories.create') }}"

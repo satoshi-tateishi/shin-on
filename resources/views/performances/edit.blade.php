@@ -3,17 +3,17 @@
 @section('title', '公演編集')
 
 @section('breadcrumb')
-    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800">公演一覧</a>
-    > <a href="{{ route('performances.show', $performance) }}" class="text-blue-600 hover:text-blue-800">{{ $performance->title }}</a>
-    > <span class="text-gray-800">編集</span>
+    > <a href="{{ route('performances.index') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">公演一覧</a>
+    > <a href="{{ route('performances.show', $performance) }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">{{ $performance->title }}</a>
+    > <span class="text-gray-800 dark:text-gray-200">編集</span>
 @endsection
 
 @section('header')
     <div class="w-full">
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 mb-2">公演編集</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">公演編集</h1>
         <div class="flex items-center justify-between">
             <a href="{{ route('performances.show', $performance) }}"
-               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+               class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -37,19 +37,19 @@
         @method('PUT')
 
         <!-- 基本情報 -->
-        <div class="bg-white border border-gray-200 rounded-lg">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">基本情報</h3>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">基本情報</h3>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <!-- 公演種別 -->
                     <div>
-                        <label for="performance_type" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        <label for="performance_type" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             公演種別 <span class="text-red-500">*</span>
                         </label>
                         <select name="performance_type" id="performance_type" required
-                                class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('performance_type') border-red-300 @enderror">
+                                class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('performance_type') border-red-300 @enderror">
                             <option value="">選択してください</option>
                             <option value="演劇" {{ old('performance_type', $performance->performance_type) === '演劇' ? 'selected' : '' }}>演劇</option>
                             <option value="ミュージカル" {{ old('performance_type', $performance->performance_type) === 'ミュージカル' ? 'selected' : '' }}>ミュージカル</option>
@@ -66,11 +66,11 @@
 
                     <!-- 公演名 -->
                     <div>
-                        <label for="title" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        <label for="title" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             公演名 <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="title" id="title" value="{{ old('title', $performance->title) }}" required
-                               class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('title') border-red-300 @enderror">
+                               class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('title') border-red-300 @enderror">
                         @error('title')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -78,21 +78,21 @@
 
                     <!-- 略称 -->
                     <div>
-                        <label for="short_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">略称</label>
+                        <label for="short_name" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">略称</label>
                         <input type="text" name="short_name" id="short_name" value="{{ old('short_name', $performance->short_name) }}" maxlength="50"
-                               class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('short_name') border-red-300 @enderror"
+                               class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('short_name') border-red-300 @enderror"
                                placeholder="スケジュール表での表示名">
                         @error('short_name')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
-                        <p class="mt-1 text-xs text-gray-500">空欄の場合は公演名が使用されます</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">空欄の場合は公演名が使用されます</p>
                     </div>
 
                     <!-- 演出 -->
                     <div class="sm:col-span-2">
-                        <label for="director" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">演出</label>
+                        <label for="director" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">演出</label>
                         <input type="text" name="director" id="director" value="{{ old('director', $performance->director) }}"
-                               class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('director') border-red-300 @enderror">
+                               class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('director') border-red-300 @enderror">
                         @error('director')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -103,9 +103,9 @@
 
         <!-- プロダクション選択 -->
         @if($productions->count() > 0)
-        <div class="bg-white border border-gray-200 rounded-lg">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">プロダクション</h3>
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">プロダクション</h3>
                 <button type="button" id="add-production" class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs sm:text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -114,7 +114,7 @@
                 </button>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
-                <p class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">この公演に関連するプロダクションを選択してください。</p>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">この公演に関連するプロダクションを選択してください。</p>
                 @php
                     $selectedProductions = old('production_ids', $performance->productions->pluck('id')->toArray());
                 @endphp
@@ -122,7 +122,7 @@
                     @if(count($selectedProductions) > 0)
                         @foreach($selectedProductions as $index => $productionId)
                             <div class="production-row flex items-center space-x-2 sm:space-x-3">
-                                <select name="production_ids[]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <select name="production_ids[]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">プロダクションを選択</option>
                                     @foreach($productions as $production)
                                         <option value="{{ $production->id }}" {{ $production->id == $productionId ? 'selected' : '' }}>
@@ -139,7 +139,7 @@
                         @endforeach
                     @else
                         <div class="production-row flex items-center space-x-2 sm:space-x-3">
-                            <select name="production_ids[]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <select name="production_ids[]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                 <option value="">プロダクションを選択</option>
                                 @foreach($productions as $production)
                                     <option value="{{ $production->id }}">{{ $production->display_name }}</option>
@@ -162,9 +162,9 @@
 
         <!-- サウンドデザイナー選択 -->
         @if($designers->count() > 0)
-        <div class="bg-white border border-gray-200 rounded-lg">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">サウンドデザイナー</h3>
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">サウンドデザイナー</h3>
                 <button type="button" id="add-sound-designer" class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs sm:text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -173,7 +173,7 @@
                 </button>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
-                <p class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">この公演のサウンドデザイナーを選択してください。</p>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">この公演のサウンドデザイナーを選択してください。</p>
                 @php
                     $currentSoundDesigners = $performance->staff->where('position_id', 1);
                 @endphp
@@ -181,7 +181,7 @@
                     @if($currentSoundDesigners->count() > 0)
                         @foreach($currentSoundDesigners as $soundDesigner)
                             <div class="sound-designer-row flex items-center space-x-2 sm:space-x-3">
-                                <select name="sound_designers[]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <select name="sound_designers[]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">サウンドデザイナーを選択</option>
                                     @foreach($designers as $designer)
                                         <option value="{{ $designer->id }}" {{ $designer->id == $soundDesigner->user_id ? 'selected' : '' }}>
@@ -198,7 +198,7 @@
                         @endforeach
                     @else
                         <div class="sound-designer-row flex items-center space-x-2 sm:space-x-3">
-                            <select name="sound_designers[]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <select name="sound_designers[]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                 <option value="">サウンドデザイナーを選択</option>
                                 @foreach($designers as $designer)
                                     <option value="{{ $designer->id }}">{{ $designer->name }}</option>
@@ -221,9 +221,9 @@
 
         <!-- 担当者・ポジション選択 -->
         @if($users->count() > 0 && $positions->count() > 0)
-        <div class="bg-white border border-gray-200 rounded-lg">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">担当者</h3>
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">担当者</h3>
                 <button type="button" id="add-staff" class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs sm:text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -232,7 +232,7 @@
                 </button>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
-                <p class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">この公演の担当者とポジションを選択してください。</p>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">この公演の担当者とポジションを選択してください。</p>
                 @php
                     $existingStaff = $performance->staff->where('position_id', '!=', 1);
                 @endphp
@@ -240,7 +240,7 @@
                     @if($existingStaff->count() > 0)
                         @foreach($existingStaff as $index => $staff)
                             <div class="staff-row flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                                <select name="staff[{{ $index }}][user_id]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <select name="staff[{{ $index }}][user_id]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">担当者を選択</option>
                                     @foreach($users->sortBy('sort')->where('is_staff', true) as $user)
                                         <option value="{{ $user->id }}" {{ $user->id == $staff->user_id ? 'selected' : '' }}>
@@ -249,7 +249,7 @@
                                     @endforeach
                                 </select>
                                 <div class="flex items-center space-x-2 sm:space-x-3">
-                                    <select name="staff[{{ $index }}][position_id]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <select name="staff[{{ $index }}][position_id]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                         <option value="">ポジションを選択</option>
                                         @foreach($positions->sortBy('sort')->where('id', '!=', 1) as $position)
                                             <option value="{{ $position->id }}" {{ $position->id == $staff->position_id ? 'selected' : '' }}>
@@ -267,14 +267,14 @@
                         @endforeach
                     @else
                         <div class="staff-row flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                            <select name="staff[0][user_id]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <select name="staff[0][user_id]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                 <option value="">担当者を選択</option>
                                 @foreach($users->sortBy('sort')->where('is_staff', true) as $user)
                                     <option value="{{ $user->id }}">{{ $user->name }}</option>
                                 @endforeach
                             </select>
                             <div class="flex items-center space-x-2 sm:space-x-3">
-                                <select name="staff[0][position_id]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <select name="staff[0][position_id]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">ポジションを選択</option>
                                     @foreach($positions->sortBy('sort')->where('id', '!=', 1) as $position)
                                         <option value="{{ $position->id }}">{{ $position->name }}</option>
@@ -298,9 +298,9 @@
 
         <!-- 既存の公演チラシ画像 -->
         @if($performance->attachments && $performance->attachments->count() > 0)
-        <div class="bg-white border border-gray-200 rounded-lg">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">既存の公演チラシ画像</h3>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">既存の公演チラシ画像</h3>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
                 <div class="flex flex-wrap gap-2 mb-3">
@@ -320,21 +320,21 @@
                         @endif
                     @endforeach
                 </div>
-                <p class="text-xs text-gray-500">右上のチェックボックスにチェックを入れたファイルは削除されます。</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">右上のチェックボックスにチェックを入れたファイルは削除されます。</p>
             </div>
         </div>
         @endif
 
         <!-- 新しい公演チラシ画像 -->
-        <div class="bg-white border border-gray-200 rounded-lg">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">新しい公演チラシ画像</h3>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">新しい公演チラシ画像</h3>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
                 <input type="file" name="attachments[]" id="attachments" multiple
                        accept=".pdf,.jpg,.jpeg,.png"
                        class="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                <p class="mt-2 text-xs text-gray-500">PDF、JPEG、PNG形式。最大10ファイル、各5MBまで。</p>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">PDF、JPEG、PNG形式。最大10ファイル、各5MBまで。</p>
                 @error('attachments')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -346,13 +346,13 @@
         </div>
 
         <!-- 備考 -->
-        <div class="bg-white border border-gray-200 rounded-lg">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900">備考</h3>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">備考</h3>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4">
                 <textarea name="note" id="note" rows="8"
-                          class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('note') border-red-300 @enderror">{{ old('note', $performance->note) }}</textarea>
+                          class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('note') border-red-300 @enderror">{{ old('note', $performance->note) }}</textarea>
                 @error('note')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -360,7 +360,7 @@
         </div>
 
         <!-- アクティブフラグ -->
-        <div class="bg-white border border-gray-200 rounded-lg">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div class="px-4 sm:px-6 py-3 sm:py-4">
                 <div class="flex items-center">
                     <input type="checkbox" name="is_active" id="is_active" value="1"
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newRow = document.createElement('div');
             newRow.className = 'sound-designer-row flex items-center space-x-2 sm:space-x-3';
             newRow.innerHTML = `
-                <select name="sound_designers[]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <select name="sound_designers[]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">サウンドデザイナーを選択</option>
                     ${designerOptions.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
                 </select>
@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newRow = document.createElement('div');
             newRow.className = 'production-row flex items-center space-x-2 sm:space-x-3';
             newRow.innerHTML = `
-                <select name="production_ids[]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <select name="production_ids[]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">プロダクションを選択</option>
                     ${productionOptions.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                 </select>
@@ -516,12 +516,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const newRow = document.createElement('div');
             newRow.className = 'staff-row flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3';
             newRow.innerHTML = `
-                <select name="staff[${currentIndex}][user_id]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <select name="staff[${currentIndex}][user_id]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">担当者を選択</option>
                     ${userOptions.map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
                 </select>
                 <div class="flex items-center space-x-2 sm:space-x-3">
-                    <select name="staff[${currentIndex}][position_id]" class="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <select name="staff[${currentIndex}][position_id]" class="flex-1 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="">ポジションを選択</option>
                         ${positionOptions.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                     </select>

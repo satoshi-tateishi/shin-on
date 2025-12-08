@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Dark Mode - class-based strategy for Tailwind CSS v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Alpine.js x-cloak - hide elements until Alpine.js is initialized */
+[x-cloak] {
+    display: none !important;
+}
+
 @source "../**/*.blade.php";
 @source "../**/*.js";
 @source "../**/*.vue";
