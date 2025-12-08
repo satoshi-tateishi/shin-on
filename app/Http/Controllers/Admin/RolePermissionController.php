@@ -62,6 +62,7 @@ class RolePermissionController extends Controller
                     ['name' => '修理管理一覧 - 編集', 'general' => true, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => '修理詳細 - 閲覧', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true],
                     ['name' => '修理詳細 - 編集/ステータス変更', 'general' => true, 'viewer' => false, 'editor' => true, 'admin' => true],
+                    ['name' => '修理詳細 - 削除', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
                     ['name' => '修理詳細 - PDF出力', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true],
                 ],
             ],
