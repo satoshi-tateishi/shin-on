@@ -98,7 +98,6 @@
                                         <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">機材名</th>
                                         <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">新音番号</th>
                                         <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">状態</th>
-                                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">場所</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -123,9 +122,6 @@
                                                     @endswitch">
                                                     {{ $equipment->status_label }}
                                                 </span>
-                                            </td>
-                                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $equipment->location->name ?? '---' }}
                                             </td>
                                         </tr>
                                     @endforeach
