@@ -430,7 +430,7 @@
                 </thead>
                 <tbody>
                     @if($performance->staff->count() > 0)
-                        @foreach($performance->staff as $staff)
+                        @foreach($performance->staff->sortBy([['position.sort', 'asc'], ['user.sort', 'asc']]) as $staff)
                         <tr>
                             <td>{{ $staff->position->name }}</td>
                             <td>{{ $staff->user->name }}</td>
