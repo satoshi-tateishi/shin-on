@@ -93,7 +93,7 @@
                         </svg>
                         CSVエクスポート
                     </a>
-                    <button type="button" @click="open = false; window.dispatchEvent(new CustomEvent('open-csv-import-modal'))"
+                    <button type="button" @click="open = false; window.dispatchEvent(new CustomEvent('open-csv-import-modal', { detail: { actionUrl: '{{ route('master.equipments.import-csv') }}' }}))"
                             class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -116,8 +116,7 @@
 
 @section('content')
 <div x-data="equipmentIndexPage()"
-     @keydown.escape.window="showCsvImportModal = false; showLineWorksModal = false"
-     @open-csv-import-modal.window="showCsvImportModal = true"
+     @keydown.escape.window="showLineWorksModal = false"
      @open-lineworks-modal.window="showLineWorksModal = true">
     <div class="p-3 sm:p-6">
         <!-- Search and Filters -->
@@ -321,44 +320,6 @@
         @endif
     </div>
 
-    <!-- CSV Import Modal -->
-    @if(in_array(auth()->user()->role, ['editor', 'admin']))
-    <div x-show="showCsvImportModal"
-         x-cloak
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center"
-         @click.self="showCsvImportModal = false">
-        <div class="relative top-10 sm:top-20 mx-4 sm:mx-auto p-4 sm:p-5 border dark:border-gray-600 w-full sm:w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-            <div class="mt-2 sm:mt-3">
-                <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">CSVファイル取込</h3>
-
-                <form action="{{ route('master.equipments.import-csv') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
-                    @csrf
-                    <div class="mb-3 sm:mb-4">
-                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CSVファイルを選択</label>
-                        <input type="file" name="csv_file" accept=".csv,.txt" required
-                               class="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            ※ CSVファイル（UTF-8形式）を選択してください。<br>
-                            ※ ファイルサイズは2MB以内でお願いします
-                        </p>
-                    </div>
-
-                    <div class="flex items-center justify-end pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
-                        <button type="button" @click="showCsvImportModal = false"
-                                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm text-xs sm:text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-500 mr-2 sm:mr-3">
-                            キャンセル
-                        </button>
-                        <button type="submit"
-                                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium hover:bg-blue-700">
-                            取込実行
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <!-- LINE WORKS送信確認モーダル -->
     <div x-show="showLineWorksModal"
          x-cloak
@@ -408,7 +369,6 @@
     <script>
     function equipmentIndexPage() {
         return {
-            showCsvImportModal: false,
             showLineWorksModal: false
         }
     }
