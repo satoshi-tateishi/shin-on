@@ -23,7 +23,9 @@
         @endif
 
         <!-- PDF Menu (All roles) -->
-        <div x-data="{ open: false }" class="relative">
+        <div x-data="{ open: false, showLineWorksModal: false }" class="relative"
+             @keydown.escape.window="showLineWorksModal = false"
+             @open-users-lineworks-modal.window="showLineWorksModal = true">
             <button @click="open = !open" type="button"
                     class="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,6 +44,56 @@
                         </svg>
                         ダウンロード
                     </a>
+                    <button type="button" @click="open = false; showLineWorksModal = true"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        LINE WORKSに送信
+                    </button>
+                </div>
+            </div>
+
+            <!-- LINE WORKS送信確認モーダル -->
+            <div x-show="showLineWorksModal"
+                 x-cloak
+                 class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"
+                 @click.self="showLineWorksModal = false">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 max-w-md w-full mx-4">
+                    <div class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-blue-100 dark:bg-blue-900 rounded-full mb-3 sm:mb-4">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white text-center mb-2">LINE WORKSに送信</h3>
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-md p-3 sm:p-4 mb-3 sm:mb-4">
+                        <div class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                            <div class="flex justify-between">
+                                <span class="font-medium">送信先:</span>
+                                <span>{{ auth()->user()->name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">内容:</span>
+                                <span>ユーザーマスタ一覧PDF</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center mb-3 sm:mb-4">
+                        ユーザーマスタ一覧のPDFファイルをあなたのLINE WORKSアカウントに送信します。
+                    </p>
+                    <form method="POST" action="{{ route('master.users.send-lineworks') }}">
+                        @csrf
+                        <div class="flex space-x-2 sm:space-x-3">
+                            <button type="button" @click="showLineWorksModal = false"
+                                    class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500">
+                                キャンセル
+                            </button>
+                            <button type="submit"
+                                    class="flex-1 px-3 sm:px-4 py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                                送信
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

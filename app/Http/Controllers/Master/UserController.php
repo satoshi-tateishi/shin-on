@@ -9,9 +9,12 @@ use App\Http\Controllers\Controller;
 use App\Models\CompanyLogo;
 use App\Models\User;
 use App\Rules\ValidationRules;
+use App\Services\LineWorksBotService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -528,6 +531,91 @@ class UserController extends Controller
             ]);
 
             return redirect()->back()->with('error', 'PDF出力中にエラーが発生しました: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * ユーザーマスタ一覧PDFをLINE WORKSに送信
+     */
+    public function sendPdfToLineWorks(Request $request): RedirectResponse
+    {
+        $tempFilePath = null;
+
+        try {
+            $user = auth()->user();
+
+            if (! $user->lineworks_id) {
+                return redirect()->route('master.users.index')
+                    ->with('error', 'LINE WORKS IDが設定されていません。');
+            }
+
+            // 在籍している社員のみを取得
+            $users = User::where('affiliation', 'employee')
+                ->where('is_resigned', false)
+                ->where('is_on_leave', false)
+                ->orderBy('sort')
+                ->get();
+
+            // 所属別にグループ化（社員のみなので1グループ）
+            $groupedUsers = $users->groupBy(function ($u) {
+                return '社員';
+            });
+
+            // アクティブなロゴを取得
+            $companyLogo = CompanyLogo::getActiveLogo();
+            $logoPath = $companyLogo ? public_path('storage/'.$companyLogo->file_path) : null;
+
+            // フィルター情報
+            $filterInfo = [];
+
+            $pdf = Pdf::loadView('master.users.pdf', [
+                'groupedUsers' => $groupedUsers,
+                'totalCount' => $users->count(),
+                'filterInfo' => $filterInfo,
+                'exportDate' => now()->format('Y年m月d日 H:i'),
+                'logoPath' => $logoPath,
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = 'ユーザーマスタ一覧_'.now()->format('Ymd_His').'.pdf';
+
+            // 一時ディレクトリに保存
+            $tempDir = 'temp';
+            if (! Storage::exists($tempDir)) {
+                Storage::makeDirectory($tempDir);
+            }
+
+            $tempFileName = uniqid('user_pdf_').'.pdf';
+            $tempFilePath = storage_path("app/{$tempDir}/{$tempFileName}");
+
+            file_put_contents($tempFilePath, $pdf->output());
+
+            // LINE WORKSに送信
+            $botService = app(LineWorksBotService::class);
+            $botService->sendPdfToUser($user->lineworks_id, $tempFilePath, $filename);
+
+            Log::info('User PDF sent to LINE WORKS', [
+                'user_id' => $user->id,
+                'lineworks_id' => $user->lineworks_id,
+                'filename' => $filename,
+            ]);
+
+            return redirect()->route('master.users.index')
+                ->with('success', 'PDFファイルをLINE WORKSに送信しました。');
+        } catch (\Exception $e) {
+            Log::error('Failed to send User PDF to LINE WORKS', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->route('master.users.index')
+                ->with('error', 'PDFの送信に失敗しました: '.$e->getMessage());
+        } finally {
+            if ($tempFilePath && file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
         }
     }
 }

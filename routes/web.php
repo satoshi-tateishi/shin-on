@@ -181,6 +181,7 @@ Route::middleware('auth')->group(function () {
         // ユーザーマスタ
         Route::get('users/export-csv', [UserController::class, 'exportCsv'])->name('users.export-csv');
         Route::get('users/export-pdf', [UserController::class, 'exportPdf'])->name('users.export-pdf');
+        Route::post('users/send-lineworks', [UserController::class, 'sendPdfToLineWorks'])->name('users.send-lineworks');
         Route::get('users/template-csv', [UserController::class, 'templateCsv'])->name('users.template-csv');
         // 管理者のみ：ユーザーCRUD操作
         Route::middleware('role:admin')->group(function () {
