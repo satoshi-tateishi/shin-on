@@ -4,13 +4,13 @@
 
 @section('breadcrumb')
     > <a href="{{ route('master.equipments.index') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">機材マスタ 一覧</a>
-    > <span class="text-gray-800 dark:text-gray-200">{{ str_replace(["\r\n", "\r", "\n"], ' ', $equipment->name) }}@if($equipment->company_number) <span class="inline-block px-2 py-1 font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif</span>
+    > <span class="text-gray-800 dark:text-gray-200">{{ str_replace(["\r\n", "\r", "\n"], ' ', $equipment->name) }}@if($equipment->company_number) <span class="inline-block px-2 py-1 font-mono bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded">{{ $equipment->company_number }}</span>@endif</span>
     > <span class="text-gray-800 dark:text-gray-200">詳細</span>
 @endsection
 
 @section('header')
     <div class="w-full">
-        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white whitespace-pre-line mb-2">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-1 sm:px-2 py-0.5 sm:py-1 text-base sm:text-xl font-mono bg-gray-100 border border-gray-300 rounded">{{ $equipment->company_number }}</span>@endif</h1>
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white whitespace-pre-line mb-2">{{ $equipment->name }}@if($equipment->company_number) <span class="inline-block px-1 sm:px-2 py-0.5 sm:py-1 text-base sm:text-xl font-mono bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded">{{ $equipment->company_number }}</span>@endif</h1>
         <div class="flex items-center justify-between">
             <a href="{{ route('master.equipments.index') }}"
                class="inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
@@ -60,7 +60,7 @@
 
                         <div>
                             <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">機材名</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 font-bold whitespace-pre-line">{{ $equipment->name }}</dd>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-white font-bold whitespace-pre-line">{{ $equipment->name }}</dd>
                         </div>
 
                         <div>
@@ -190,14 +190,14 @@
                     @if($equipment->notes)
                         <div class="mt-4 sm:mt-6">
                             <dt class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">備考</dt>
-                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 whitespace-pre-wrap">{{ $equipment->notes }}</dd>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ $equipment->notes }}</dd>
                         </div>
                     @endif
                 </div>
             </div>
 
             <!-- 使用履歴 -->
-            <div class="mt-4 sm:mt-6 bg-white border border-gray-200 rounded-lg">
+            <div class="mt-4 sm:mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">使用履歴</h3>
                 </div>
@@ -205,8 +205,8 @@
                     <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    <h4 class="mt-2 text-xs sm:text-sm font-medium text-gray-900">使用履歴管理機能</h4>
-                    <p class="mt-1 text-xs sm:text-sm text-gray-500">
+                    <h4 class="mt-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">使用履歴管理機能</h4>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         機材の使用履歴管理機能は今後実装予定です。<br>
                         現在は基本的な機材情報の管理のみ対応しています。
                     </p>
@@ -214,7 +214,7 @@
             </div>
 
             <!-- 修理履歴 -->
-            <div class="mt-4 sm:mt-6 bg-white border border-gray-200 rounded-lg">
+            <div class="mt-4 sm:mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">修理履歴</h3>
                 </div>
@@ -223,8 +223,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <h4 class="mt-2 text-xs sm:text-sm font-medium text-gray-900">修理履歴管理機能</h4>
-                    <p class="mt-1 text-xs sm:text-sm text-gray-500">
+                    <h4 class="mt-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">修理履歴管理機能</h4>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         機材の修理履歴管理機能は今後実装予定です。<br>
                         現在は基本的な機材情報の管理のみ対応しています。
                     </p>
