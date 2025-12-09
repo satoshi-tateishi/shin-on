@@ -62,4 +62,7 @@ jobs:
             docker compose -f docker-compose.production.yml exec -T app php artisan route:cache
             docker compose -f docker-compose.production.yml exec -T app php artisan view:cache
 
+            # OPcacheをクリアするためにPHP-FPMを再起動
+            docker compose -f docker-compose.production.yml restart app
+
             echo "Deployment completed successfully!"
