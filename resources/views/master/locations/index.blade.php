@@ -140,7 +140,7 @@
                                 @endif
                                 @if(request('sort_mode') !== 'all')
                                     <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 dark:text-white text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.locations.show', $location) }}'" @endif>
-                                        {{ $loop->iteration + ($locations instanceof \Illuminate\Pagination\LengthAwarePaginator ? ($locations->currentPage() - 1) * $locations->perPage() : 0) }}
+                                        {{ $loop->iteration + (method_exists($locations, 'currentPage') ? ($locations->currentPage() - 1) * $locations->perPage() : 0) }}
                                     </td>
                                 @endif
                                 <td class="px-3 sm:px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.locations.show', $location) }}'" @endif>
@@ -154,9 +154,14 @@
                 </table>
             </div>
 
-            @if(request('sort_mode') !== 'all' && method_exists($locations, 'links'))
-                <div class="mt-4">
-                    {{ $locations->appends(request()->query())->links() }}
+            @if(request('sort_mode') !== 'all' && method_exists($locations, 'hasPages') && $locations->hasPages())
+                <div class="mt-4 flex items-center justify-between">
+                    <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                        {{ $locations->currentPage() }} / {{ ceil($totalLocations / 50) }} ページ
+                    </span>
+                    <div>
+                        {{ $locations->appends(request()->query())->links() }}
+                    </div>
                 </div>
             @endif
 
