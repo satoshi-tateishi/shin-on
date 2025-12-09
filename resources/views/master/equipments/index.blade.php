@@ -289,9 +289,14 @@
             </div>
 
             <!-- Pagination (通常モード時のみ) -->
-            @if(request('sort_mode') !== 'all' && method_exists($equipments, 'links'))
-                <div class="mt-4 sm:mt-6">
-                    {{ $equipments->appends(request()->query())->links() }}
+            @if(request('sort_mode') !== 'all' && method_exists($equipments, 'hasPages') && $equipments->hasPages())
+                <div class="mt-4 sm:mt-6 flex items-center justify-between">
+                    <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                        {{ $equipments->currentPage() }} / {{ ceil($totalEquipments / 50) }} ページ
+                    </span>
+                    <div>
+                        {{ $equipments->appends(request()->query())->links() }}
+                    </div>
                 </div>
             @endif
         @else

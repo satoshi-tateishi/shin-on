@@ -62,8 +62,10 @@ class EquipmentController extends Controller
         // ソートモード判定
         if ($request->get('sort_mode') === 'all') {
             $equipments = $query->get();
+            $totalEquipments = $equipments->count();
         } else {
-            $equipments = $query->paginate(50);
+            $totalEquipments = (clone $query)->count();
+            $equipments = $query->simplePaginate(50);
         }
 
         // パフォーマンス向上のためマスターデータをキャッシュ（30分）
@@ -79,7 +81,7 @@ class EquipmentController extends Controller
             return Location::warehouses()->ordered()->get();
         });
 
-        return view('master.equipments.index', compact('equipments', 'categories', 'subcategories', 'locations'));
+        return view('master.equipments.index', compact('equipments', 'categories', 'subcategories', 'locations', 'totalEquipments'));
     }
 
     public function create(): View
