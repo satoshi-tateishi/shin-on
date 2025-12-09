@@ -33,8 +33,8 @@ jobs:
             GIT_SSH_COMMAND='ssh -i ~/.ssh/id_ed25519_deploy_shinon -o StrictHostKeyChecking=no' git fetch origin
             git reset --hard origin/release
 
-            # storage と bootstrap/cache の所有者をwww-data(33)に戻す
-            sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache
+            # storage, bootstrap/cache, vendor の所有者をwww-data(33)に設定
+            sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache ${{ secrets.DEPLOY_PATH }}/vendor
 
             # Dockerイメージを再ビルドしてコンテナを再起動（Dockerfile変更時に必要）
             docker compose -f docker-compose.production.yml build app
