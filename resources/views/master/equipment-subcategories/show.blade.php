@@ -104,9 +104,7 @@
                                     @foreach($equipmentSubcategory->equipments->take(10) as $equipment)
                                         <tr>
                                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
-                                                <a href="{{ route('master.equipments.show', $equipment) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
-                                                    {{ $equipment->name }}
-                                                </a>
+                                                {{ $equipment->name }}
                                             </td>
                                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $equipment->company_number ?: '---' }}
