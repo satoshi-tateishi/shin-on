@@ -44,6 +44,22 @@
             </div>
         </div>
 
+        <!-- PDF Loading Spinner -->
+        <div x-show="pdfLoading" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-10 sm:top-20 mx-3 sm:mx-auto p-3 sm:p-5 border border-gray-200 dark:border-gray-700 w-auto sm:w-96 max-w-sm shadow-lg rounded-md bg-white dark:bg-gray-800">
+                <div class="mt-2 sm:mt-3 text-center">
+                    <div class="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 dark:bg-red-900/50">
+                        <svg class="animate-spin h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg leading-6 font-medium text-gray-900 dark:text-white mt-2">PDF生成中...</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1" x-text="pdfMessage"></p>
+                </div>
+            </div>
+        </div>
+
         <!-- Error Message -->
         <div x-show="error" x-transition class="mb-4">
             <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-3 sm:p-4">
@@ -124,24 +140,24 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <!-- 選択中の倉庫のPDF出力 -->
-                    <a :href="`{{ route('inventory.export-pdf') }}?as_of_date=${asOfDate}&location_id=${filters.location_id}`"
-                       target="_blank"
-                       class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-sm">
+                    <button @click="downloadPdf(false)"
+                       :disabled="pdfLoading"
+                       class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xs sm:text-sm font-medium rounded-md shadow-sm">
                         <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <span class="hidden sm:inline">この倉庫を</span>PDF
-                    </a>
+                    </button>
 
                     <!-- 全倉庫のPDF出力 -->
-                    <a :href="`{{ route('inventory.export-pdf') }}?as_of_date=${asOfDate}&all_locations=1`"
-                       target="_blank"
-                       class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-sm">
+                    <button @click="downloadPdf(true)"
+                       :disabled="pdfLoading"
+                       class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-xs sm:text-sm font-medium rounded-md shadow-sm">
                         <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                         </svg>
                         <span class="hidden sm:inline">全倉庫を</span>PDF
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -241,6 +257,8 @@
         function inventoryDashboard() {
             return {
                 loading: false,
+                pdfLoading: false,
+                pdfMessage: '',
                 error: null,
                 asOfDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 inventoryData: [],
@@ -262,6 +280,54 @@
                 closeDetailModal() {
                     this.showDetailModal = false;
                     this.selectedItem = null;
+                },
+
+                async downloadPdf(allLocations) {
+                    this.pdfLoading = true;
+                    this.pdfMessage = allLocations ? '全倉庫の在庫データを処理中...' : '在庫データを処理中...';
+
+                    try {
+                        let url = `{{ route('inventory.export-pdf') }}?as_of_date=${this.asOfDate}`;
+                        if (allLocations) {
+                            url += '&all_locations=1';
+                        } else {
+                            url += `&location_id=${this.filters.location_id}`;
+                        }
+
+                        const response = await fetch(url);
+
+                        if (!response.ok) {
+                            throw new Error('PDF生成に失敗しました');
+                        }
+
+                        // Content-Dispositionヘッダーからファイル名を取得
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        let filename = allLocations ? '在庫一覧_全倉庫.pdf' : '在庫一覧.pdf';
+                        if (contentDisposition) {
+                            const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+                            if (filenameMatch) {
+                                filename = decodeURIComponent(filenameMatch[1]);
+                            }
+                        }
+
+                        // Blobを作成してダウンロード
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(downloadUrl);
+                        document.body.removeChild(a);
+
+                    } catch (error) {
+                        console.error('PDF download error:', error);
+                        alert('PDF出力に失敗しました: ' + error.message);
+                    } finally {
+                        this.pdfLoading = false;
+                        this.pdfMessage = '';
+                    }
                 },
 
                 async init() {
