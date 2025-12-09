@@ -28,7 +28,12 @@ class LocationController extends Controller
             $query->where('type', $request->type);
         }
 
-        $locations = $query->get();
+        // ソートモード判定
+        if ($request->get('sort_mode') === 'all') {
+            $locations = $query->get();
+        } else {
+            $locations = $query->paginate(50);
+        }
         $types = ['劇場', '稽古場', '倉庫'];
 
         return view('master.locations.index', compact('locations', 'types'));

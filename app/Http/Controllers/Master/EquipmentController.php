@@ -63,7 +63,7 @@ class EquipmentController extends Controller
         if ($request->get('sort_mode') === 'all') {
             $equipments = $query->get();
         } else {
-            $equipments = $query->paginate(200);
+            $equipments = $query->paginate(50);
         }
 
         // パフォーマンス向上のためマスターデータをキャッシュ（30分）

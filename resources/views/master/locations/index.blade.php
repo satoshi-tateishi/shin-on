@@ -13,6 +13,25 @@
 
     @if(auth()->user()->role === 'editor' || auth()->user()->role === 'admin')
         <div class="flex gap-2 sm:gap-3 ml-auto">
+            @if(request('sort_mode') === 'all')
+                <a href="{{ route('master.locations.index', array_merge(request()->query(), ['sort_mode' => null])) }}"
+                   class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-gray-700">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    <span class="hidden sm:inline">ページ表示に戻る</span>
+                    <span class="sm:hidden">戻る</span>
+                </a>
+            @else
+                <a href="{{ route('master.locations.index', array_merge(request()->query(), ['sort_mode' => 'all'])) }}"
+                   class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-purple-700">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span class="hidden sm:inline">全件表示してソート</span>
+                    <span class="sm:hidden">ソート</span>
+                </a>
+            @endif
             <a href="{{ route('master.locations.create') }}"
                class="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,10 +115,10 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('is_active'))
+                            @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
                                 <th class="pl-4 sm:pl-6 pr-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-16">順序</th>
                             @endif
-                            @if(!request('search') && !request('is_active'))
+                            @if(request('sort_mode') !== 'all')
                                 <th class="px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12 sm:w-16">
                                     No.
                                 </th>
@@ -111,17 +130,17 @@
                     </thead>
                     <tbody id="sortable-tbody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($locations as $location)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('is_active')) sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $location->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.locations.show', $location) }}'" @endif>
-                                @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('is_active'))
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all') sortable-row @endif @if(auth()->user()->role !== 'admin') cursor-pointer @endif" data-id="{{ $location->id }}" @if(auth()->user()->role !== 'admin') onclick="window.location.href='{{ route('master.locations.show', $location) }}'" @endif>
+                                @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
                                     <td class="pl-4 sm:pl-6 pr-2 py-2 whitespace-nowrap text-center">
                                         <svg class="drag-handle w-4 h-4 sm:w-5 sm:h-5 text-gray-400 cursor-move" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zM7 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zM7 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zM13 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 2zM13 8a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zM13 14a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"></path>
                                         </svg>
                                     </td>
                                 @endif
-                                @if(!request('search') && !request('is_active'))
+                                @if(request('sort_mode') !== 'all')
                                     <td class="px-2 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 dark:text-white text-center @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.locations.show', $location) }}'" @endif>
-                                        {{ $location->sort }}
+                                        {{ $loop->iteration + ($locations instanceof \Illuminate\Pagination\LengthAwarePaginator ? ($locations->currentPage() - 1) * $locations->perPage() : 0) }}
                                     </td>
                                 @endif
                                 <td class="px-3 sm:px-4 py-2 @if(auth()->user()->role === 'admin') cursor-pointer @endif" @if(auth()->user()->role === 'admin') onclick="window.location.href='{{ route('master.locations.show', $location) }}'" @endif>
@@ -134,6 +153,12 @@
                     </tbody>
                 </table>
             </div>
+
+            @if(request('sort_mode') !== 'all' && method_exists($locations, 'links'))
+                <div class="mt-4">
+                    {{ $locations->appends(request()->query())->links() }}
+                </div>
+            @endif
 
             </div>
         @else
@@ -158,7 +183,7 @@
         @endif
     </div>
 
-    @if(in_array(auth()->user()->role, ['editor', 'admin']) && !request('search') && !request('is_active'))
+    @if(in_array(auth()->user()->role, ['editor', 'admin']) && request('sort_mode') === 'all')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const tbody = document.getElementById('sortable-tbody');
