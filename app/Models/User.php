@@ -35,6 +35,7 @@ class User extends Authenticatable
         'hired_at',
         'resigned_at',
         'birthday',
+        'blood_type',
         'address',
         'emergency_contact_name',
         'emergency_contact_phone',

@@ -72,7 +72,6 @@
                                     <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-normal text-gray-500 dark:text-gray-400">{{ $user->furigana }}</span>
                                 @endif
                             </h2>
-                            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ $user->email }}</p>
                         </div>
                     </div>
 
@@ -129,6 +128,16 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 text-right">血液型</td>
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-gray-900 dark:text-white">
+                                    @if($user->blood_type)
+                                        {{ $user->blood_type }}型
+                                    @else
+                                        ---
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="px-2 sm:px-3 py-2 sm:py-3 font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 text-right">職種</td>
                                 <td class="px-2 sm:px-3 py-2 sm:py-3">
                                     <div class="flex flex-wrap gap-1">
@@ -171,6 +180,11 @@
                                 <td class="px-2 sm:px-3 py-2 sm:py-3 text-gray-900 dark:text-white">{{ $user->mobile_phone ?: '---' }}</td>
                             </tr>
                             <tr>
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 text-right">メールアドレス</td>
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-gray-900 dark:text-white">{{ $user->email ?: '---' }}</td>
+                            </tr>
+                            @if(in_array(auth()->user()->role, ['editor', 'admin']))
+                            <tr>
                                 <td class="px-2 sm:px-3 py-2 sm:py-3 font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 text-right">郵便番号</td>
                                 <td class="px-2 sm:px-3 py-2 sm:py-3 text-gray-900 dark:text-white">{{ $user->postal_code ?: '---' }}</td>
                             </tr>
@@ -186,6 +200,7 @@
                                 <td class="px-2 sm:px-3 py-2 sm:py-3 font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 text-right">緊急連絡先TEL</td>
                                 <td class="px-2 sm:px-3 py-2 sm:py-3 text-gray-900 dark:text-white">{{ $user->emergency_contact_phone ?: '---' }}</td>
                             </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>

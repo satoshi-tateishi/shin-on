@@ -6,8 +6,10 @@ use App\Http\Controllers\Concerns\HasCsvOperations;
 use App\Http\Controllers\Concerns\HasMasterOperations;
 use App\Http\Controllers\Concerns\HasSortableRecords;
 use App\Http\Controllers\Controller;
+use App\Models\CompanyLogo;
 use App\Models\User;
 use App\Rules\ValidationRules;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -43,6 +45,7 @@ class UserController extends Controller
             'hired_at' => ValidationRules::date(),
             'resigned_at' => ValidationRules::date(),
             'birthday' => ValidationRules::date(),
+            'blood_type' => 'nullable|in:A,B,O,AB',
             'mobile_phone' => ValidationRules::phone(),
             'postal_code' => ValidationRules::postalCode(),
             'address' => 'nullable|string|max:500',
@@ -121,6 +124,7 @@ class UserController extends Controller
             'hired_at' => ValidationRules::date(),
             'resigned_at' => ValidationRules::date(),
             'birthday' => ValidationRules::date(),
+            'blood_type' => 'nullable|in:A,B,O,AB',
             'phone' => ValidationRules::phone(),
             'mobile_phone' => ValidationRules::phone(),
             'postal_code' => ValidationRules::postalCode(),
@@ -475,6 +479,55 @@ class UserController extends Controller
             return response()->json(['success' => true, 'message' => 'ソート順を更新しました。']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'ソート順の更新に失敗しました: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * ユーザーマスタ一覧をPDF出力
+     */
+    public function exportPdf(Request $request)
+    {
+        set_time_limit(120);
+
+        try {
+            // 在籍している社員のみを取得
+            $users = User::where('affiliation', 'employee')
+                ->where('is_resigned', false)
+                ->where('is_on_leave', false)
+                ->orderBy('sort')
+                ->get();
+
+            // 所属別にグループ化（社員のみなので1グループ）
+            $groupedUsers = $users->groupBy(function ($user) {
+                return '社員';
+            });
+
+            // アクティブなロゴを取得
+            $companyLogo = CompanyLogo::getActiveLogo();
+            $logoPath = $companyLogo ? public_path('storage/'.$companyLogo->file_path) : null;
+
+            // フィルター情報
+            $filterInfo = [];
+
+            $pdf = Pdf::loadView('master.users.pdf', [
+                'groupedUsers' => $groupedUsers,
+                'totalCount' => $users->count(),
+                'filterInfo' => $filterInfo,
+                'exportDate' => now()->format('Y年m月d日 H:i'),
+                'logoPath' => $logoPath,
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = 'ユーザーマスタ一覧_'.now()->format('Ymd_His').'.pdf';
+
+            return $pdf->stream($filename);
+        } catch (\Exception $e) {
+            \Log::error('PDF出力エラー: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->back()->with('error', 'PDF出力中にエラーが発生しました: '.$e->getMessage());
         }
     }
 }

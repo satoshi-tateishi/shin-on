@@ -189,6 +189,25 @@
                                 @enderror
                             </div>
 
+                            <!-- 血液型 -->
+                            <div>
+                                <label for="blood_type" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    血液型
+                                </label>
+                                <select name="blood_type" id="blood_type"
+                                        class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500
+                                               @error('blood_type') border-red-300 @enderror">
+                                    <option value="">選択してください</option>
+                                    <option value="A" {{ old('blood_type', $user->blood_type) == 'A' ? 'selected' : '' }}>A型</option>
+                                    <option value="B" {{ old('blood_type', $user->blood_type) == 'B' ? 'selected' : '' }}>B型</option>
+                                    <option value="O" {{ old('blood_type', $user->blood_type) == 'O' ? 'selected' : '' }}>O型</option>
+                                    <option value="AB" {{ old('blood_type', $user->blood_type) == 'AB' ? 'selected' : '' }}>AB型</option>
+                                </select>
+                                @error('blood_type')
+                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <!-- 退職日 -->
                             <div id="resigned_at_field" class="col-span-2">
                                 <label for="resigned_at" class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

@@ -84,6 +84,7 @@ class RolePermissionController extends Controller
                     ['name' => '機材セット詳細 - 削除', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => '機材セット詳細 - 機材追加/削除', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => 'ユーザーマスタ一覧 - 新規作成', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
+                    ['name' => 'ユーザーマスタ一覧 - PDF出力', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true],
                     ['name' => 'ユーザー詳細 - 編集', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
                     ['name' => 'その他マスタ - 新規作成/編集', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => 'その他マスタ - 行クリック→詳細', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true],
