@@ -127,8 +127,13 @@
                             </table>
                         </div>
                         @if($equipments->hasPages())
-                            <div class="mt-4">
-                                {{ $equipments->links() }}
+                            <div class="mt-4 flex items-center justify-between">
+                                <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                    {{ $equipments->currentPage() }} / {{ $equipments->lastPage() }} ページ
+                                </span>
+                                <div>
+                                    {{ $equipments->links() }}
+                                </div>
                             </div>
                         @endif
                     </div>
