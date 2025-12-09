@@ -69,9 +69,11 @@ class EquipmentSubcategoryController extends Controller
 
     public function show(EquipmentSubcategory $equipmentSubcategory): View
     {
-        $equipmentSubcategory->load(['category', 'equipments']);
+        $equipmentSubcategory->load('category');
 
-        return view('master.equipment-subcategories.show', compact('equipmentSubcategory'));
+        $equipments = $equipmentSubcategory->equipments()->paginate(20);
+
+        return view('master.equipment-subcategories.show', compact('equipmentSubcategory', 'equipments'));
     }
 
     public function edit(EquipmentSubcategory $equipmentSubcategory): View

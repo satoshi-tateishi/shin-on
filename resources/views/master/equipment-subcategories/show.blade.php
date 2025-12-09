@@ -85,10 +85,10 @@
             </div>
 
             <!-- 関連機材 -->
-            @if($equipmentSubcategory->equipments && $equipmentSubcategory->equipments->count() > 0)
+            @if($equipments->total() > 0)
                 <div class="mt-4 sm:mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">関連機材 ({{ $equipmentSubcategory->equipments->count() }}件)</h3>
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">関連機材 ({{ $equipments->total() }}件)</h3>
                     </div>
                     <div class="px-4 sm:px-6 py-3 sm:py-4">
                         <div class="overflow-x-auto">
@@ -101,7 +101,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    @foreach($equipmentSubcategory->equipments->take(10) as $equipment)
+                                    @foreach($equipments as $equipment)
                                         <tr>
                                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                                                 {{ $equipment->name }}
@@ -126,9 +126,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        @if($equipmentSubcategory->equipments->count() > 10)
-                            <div class="mt-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                他 {{ $equipmentSubcategory->equipments->count() - 10 }} 件の機材があります
+                        @if($equipments->hasPages())
+                            <div class="mt-4">
+                                {{ $equipments->links() }}
                             </div>
                         @endif
                     </div>
