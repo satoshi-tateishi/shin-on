@@ -45,14 +45,14 @@
                      x-transition:leave-end="transform opacity-0 scale-95"
                      class="origin-top-right absolute right-0 mt-2 w-48 sm:w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 dark:ring-gray-700 z-10">
                     <div class="py-1" role="menu">
-                        <a href="{{ route('phases.export-pdf', $phase) }}"
-                           class="flex items-center px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        <button type="button" @click="open = false; window.dispatchEvent(new CustomEvent('download-phase-pdf'))"
+                           class="flex items-center w-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                            role="menuitem">
                             <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             ダウンロード
-                        </a>
+                        </button>
                         <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-lineworks-modal'))"
                                 class="flex items-center w-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                                 role="menuitem">
@@ -95,7 +95,8 @@
      x-data="phaseShowPage()"
      @keydown.escape.window="showLineWorksModal = false; showDeleteModal = false"
      @open-lineworks-modal.window="showLineWorksModal = true"
-     @open-delete-modal.window="showDeleteModal = true; deleteConfirmation = ''">
+     @open-delete-modal.window="showDeleteModal = true; deleteConfirmation = ''"
+     @download-phase-pdf.window="downloadPdf()">
     <!-- 成功/エラーメッセージ -->
     @if(session('success'))
         <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg flex items-start text-xs sm:text-sm">
@@ -286,6 +287,22 @@
         @endif
     </div>
 
+    <!-- PDF Loading Spinner -->
+    <div x-show="pdfLoading"
+         x-cloak
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-sm w-full mx-4 text-center">
+            <div class="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-red-100 dark:bg-red-900/50 rounded-full mb-4">
+                <svg class="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2">PDF生成中...</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400" x-text="pdfMessage"></p>
+        </div>
+    </div>
+
     <!-- LINE WORKS送信確認モーダル -->
     <div x-show="showLineWorksModal"
          x-cloak
@@ -389,8 +406,42 @@ function phaseShowPage() {
         showLineWorksModal: false,
         showDeleteModal: false,
         deleteConfirmation: '',
+        pdfLoading: false,
+        pdfMessage: '',
         get canDelete() {
             return this.deleteConfirmation.toLowerCase() === 'delete';
+        },
+        async downloadPdf() {
+            this.pdfLoading = true;
+            this.pdfMessage = 'フェーズPDFを生成中...';
+            try {
+                const response = await fetch('{{ route('phases.export-pdf', $phase) }}');
+                if (!response.ok) {
+                    throw new Error('PDF生成に失敗しました');
+                }
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'phase_{{ $phase->id }}_{{ now()->format("Ymd") }}.pdf';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?([^;\s]+)/i);
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
+                    }
+                }
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } catch (error) {
+                console.error('PDF download error:', error);
+                alert('PDFのダウンロードに失敗しました。');
+            } finally {
+                this.pdfLoading = false;
+            }
         }
     }
 }
