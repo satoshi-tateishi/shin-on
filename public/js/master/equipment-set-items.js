@@ -116,9 +116,46 @@ class EquipmentSetItems {
             </div>
         `;
 
+        // 機材削除確認モーダル
+        const deleteModalHTML = `
+            <div id="delete-equipment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                機材をセットから削除
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    機材「<strong id="delete-equipment-name" class="text-gray-700 dark:text-gray-300"></strong>」をセットから削除しますか？
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse gap-2">
+                        <button type="button" id="confirm-delete-equipment"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto sm:text-sm">
+                            削除する
+                        </button>
+                        <button type="button" onclick="equipmentSetItems.hideDeleteEquipmentModal()"
+                                class="mt-3 sm:mt-0 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm">
+                            キャンセル
+                        </button>
+                    </div>
+                    <input type="hidden" id="delete-equipment-id">
+                </div>
+            </div>
+        `;
+
         // DOM に追加
         document.body.insertAdjacentHTML('beforeend', addModalHTML);
         document.body.insertAdjacentHTML('beforeend', editModalHTML);
+        document.body.insertAdjacentHTML('beforeend', deleteModalHTML);
     }
 
     /**
@@ -150,6 +187,11 @@ class EquipmentSetItems {
             if (!searchResults.contains(e.target) && e.target !== searchInput) {
                 searchResults.classList.add('hidden');
             }
+        });
+
+        // 機材削除確認ボタン
+        document.getElementById('confirm-delete-equipment').addEventListener('click', () => {
+            this.confirmDeleteEquipment();
         });
     }
 
@@ -321,6 +363,24 @@ class EquipmentSetItems {
     }
 
     /**
+     * 機材削除確認モーダル表示
+     */
+    showDeleteEquipmentModal(equipmentId, equipmentName) {
+        document.getElementById('delete-equipment-id').value = equipmentId;
+        document.getElementById('delete-equipment-name').textContent = equipmentName;
+        document.getElementById('delete-equipment-modal').classList.remove('hidden');
+    }
+
+    /**
+     * 機材削除確認モーダル非表示
+     */
+    hideDeleteEquipmentModal() {
+        document.getElementById('delete-equipment-modal').classList.add('hidden');
+        document.getElementById('delete-equipment-id').value = '';
+        document.getElementById('delete-equipment-name').textContent = '';
+    }
+
+    /**
      * 機材追加
      */
     async addEquipment() {
@@ -399,10 +459,19 @@ class EquipmentSetItems {
     }
 
     /**
-     * 機材削除
+     * 機材削除確認モーダル表示（removeEquipmentから呼び出し）
      */
-    async removeEquipment(equipmentId, equipmentName) {
-        if (!confirm(`機材「${equipmentName}」をセットから削除しますか？`)) {
+    removeEquipment(equipmentId, equipmentName) {
+        this.showDeleteEquipmentModal(equipmentId, equipmentName);
+    }
+
+    /**
+     * 機材削除実行
+     */
+    async confirmDeleteEquipment() {
+        const equipmentId = document.getElementById('delete-equipment-id').value;
+
+        if (!equipmentId) {
             return;
         }
 
@@ -417,6 +486,7 @@ class EquipmentSetItems {
             const data = await response.json();
 
             if (data.success) {
+                this.hideDeleteEquipmentModal();
                 window.location.reload(); // 簡単な実装のためリロード
             } else {
                 alert(data.message || '機材の削除に失敗しました。');
