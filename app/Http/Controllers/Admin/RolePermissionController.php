@@ -87,6 +87,7 @@ class RolePermissionController extends Controller
                     ['name' => 'ユーザー詳細 - 編集', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
                     ['name' => 'その他マスタ - 新規作成/編集', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => 'その他マスタ - 行クリック→詳細', 'general' => true, 'viewer' => true, 'editor' => true, 'admin' => true],
+                    ['name' => 'その他マスタ - 並び替え', 'general' => false, 'viewer' => false, 'editor' => true, 'admin' => true],
                     ['name' => 'CSVインポート/エクスポート', 'general' => false, 'viewer' => false, 'editor' => false, 'admin' => true],
                 ],
             ],
