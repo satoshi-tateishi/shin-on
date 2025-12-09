@@ -21,44 +21,44 @@ class EquipmentSetItems {
     initModals() {
         // 機材追加モーダル
         const addModalHTML = `
-            <div id="add-equipment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div id="add-equipment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
                     <div class="mt-3">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">機材をセットに追加</h3>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">機材をセットに追加</h3>
                         <form id="add-equipment-form">
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">機材検索</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">機材検索</label>
                                 <input type="text" id="equipment-search" placeholder="機材名で検索..." autocomplete="off"
-                                       class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <div id="equipment-search-results" class="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md hidden"></div>
+                                       class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <div id="equipment-search-results" class="mt-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 dark:bg-gray-700 rounded-md hidden"></div>
                                 <input type="hidden" id="selected-equipment-id">
                             </div>
 
                             <div class="mb-4" style="display: none;">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">数量</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">数量</label>
                                 <input type="number" id="equipment-quantity" min="1" value="1"
-                                       class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                       class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500">
                             </div>
 
                             <div class="mb-4">
                                 <label class="flex items-center">
                                     <input type="checkbox" id="equipment-required" checked
-                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-700">必須機材</span>
+                                           class="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">必須機材</span>
                                 </label>
                             </div>
 
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">備考</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">備考</label>
                                 <textarea id="equipment-notes" rows="3"
-                                          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                          class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
                                           placeholder="備考があれば入力してください"></textarea>
                             </div>
 
 
-                            <div class="flex items-center justify-end pt-4 border-t border-gray-200">
+                            <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <button type="button" onclick="equipmentSetItems.hideAddEquipmentModal()"
-                                        class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 mr-3">
+                                        class="px-4 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 mr-3">
                                     キャンセル
                                 </button>
                                 <button type="submit"
@@ -74,35 +74,35 @@ class EquipmentSetItems {
 
         // 機材編集モーダル
         const editModalHTML = `
-            <div id="edit-equipment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div id="edit-equipment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
                     <div class="mt-3">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">機材設定編集</h3>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">機材設定編集</h3>
                         <form id="edit-equipment-form">
                             <input type="hidden" id="edit-equipment-id">
 
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">機材名</label>
-                                <div id="edit-equipment-name" class="p-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700"></div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">機材名</label>
+                                <div id="edit-equipment-name" class="p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300"></div>
                             </div>
 
                             <div class="mb-4" style="display: none;">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">数量</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">数量</label>
                                 <input type="number" id="edit-equipment-quantity" min="1" value="1"
-                                       class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                       class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500">
                             </div>
 
                             <div class="mb-4">
                                 <label class="flex items-center">
                                     <input type="checkbox" id="edit-equipment-required"
-                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-700">必須機材</span>
+                                           class="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">必須機材</span>
                                 </label>
                             </div>
 
-                            <div class="flex items-center justify-end pt-4 border-t border-gray-200">
+                            <div class="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <button type="button" onclick="equipmentSetItems.hideEditEquipmentModal()"
-                                        class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 mr-3">
+                                        class="px-4 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 mr-3">
                                     キャンセル
                                 </button>
                                 <button type="submit"
@@ -181,7 +181,7 @@ class EquipmentSetItems {
                 let html = '';
                 data.equipments.forEach(equipment => {
                     const companyNumber = equipment.company_number ?
-                        `<span class="inline-block ml-2 px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">${equipment.company_number}</span>` : '';
+                        `<span class="inline-block ml-2 px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded">${equipment.company_number}</span>` : '';
 
                     let categoryText = '';
                     if (equipment.category) {
@@ -192,10 +192,10 @@ class EquipmentSetItems {
                     }
 
                     html += `
-                        <div class="p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        <div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                              data-equipment-id="${equipment.id}" onclick="equipmentSetItems.selectEquipmentFromSearch(this)">
-                            ${categoryText ? `<div class="text-xs text-gray-500 mb-1">${categoryText}</div>` : ''}
-                            <div class="font-medium text-sm text-gray-900">${equipment.name}${companyNumber}</div>
+                            ${categoryText ? `<div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${categoryText}</div>` : ''}
+                            <div class="font-medium text-sm text-gray-900 dark:text-white">${equipment.name}${companyNumber}</div>
                         </div>
                     `;
                 });
@@ -203,12 +203,12 @@ class EquipmentSetItems {
                 resultsDiv.innerHTML = html;
                 resultsDiv.classList.remove('hidden');
             } else {
-                resultsDiv.innerHTML = '<div class="p-2 text-sm text-gray-500">該当する機材が見つかりません</div>';
+                resultsDiv.innerHTML = '<div class="p-2 text-sm text-gray-500 dark:text-gray-400">該当する機材が見つかりません</div>';
                 resultsDiv.classList.remove('hidden');
             }
         } catch (error) {
             console.error('機材検索エラー:', error);
-            resultsDiv.innerHTML = '<div class="p-2 text-sm text-red-500">検索中にエラーが発生しました</div>';
+            resultsDiv.innerHTML = '<div class="p-2 text-sm text-red-500 dark:text-red-400">検索中にエラーが発生しました</div>';
             resultsDiv.classList.remove('hidden');
         }
     }
