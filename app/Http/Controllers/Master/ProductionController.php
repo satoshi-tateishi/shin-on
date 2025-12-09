@@ -24,10 +24,18 @@ class ProductionController extends Controller
             $query->where('type', $request->type);
         }
 
-        $productions = $query->get();
+        // ソートモード判定
+        if ($request->get('sort_mode') === 'all') {
+            $productions = $query->get();
+            $totalProductions = $productions->count();
+        } else {
+            $totalProductions = (clone $query)->count();
+            $productions = $query->simplePaginate(50);
+        }
+
         $types = ['株式会社', '有限会社', '合同会社', '財団法人', '公益財団法人', '公益社団法人', 'その他'];
 
-        return view('master.productions.index', compact('productions', 'types'));
+        return view('master.productions.index', compact('productions', 'types', 'totalProductions'));
     }
 
     public function create(): View
