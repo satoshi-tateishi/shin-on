@@ -107,6 +107,15 @@
         </div>
     @endif
 
+    <!-- JavaScript経由の成功メッセージ -->
+    <div x-show="flashSuccess" x-cloak
+         class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg flex items-start text-xs sm:text-sm">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span x-text="flashSuccess"></span>
+    </div>
+
     @if(session('error'))
         <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg flex items-start text-xs sm:text-sm">
             <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -334,19 +343,16 @@
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center mb-3 sm:mb-4">
                 フェーズ詳細のPDFファイルをあなたのLINE WORKSアカウントに送信します。
             </p>
-            <form method="POST" action="{{ route('phases.send-lineworks', $phase) }}">
-                @csrf
-                <div class="flex space-x-2 sm:space-x-3">
-                    <button type="button" @click="showLineWorksModal = false"
-                            class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        キャンセル
-                    </button>
-                    <button type="submit"
-                            class="flex-1 px-3 sm:px-4 py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
-                        送信
-                    </button>
-                </div>
-            </form>
+            <div class="flex space-x-2 sm:space-x-3">
+                <button type="button" @click="showLineWorksModal = false"
+                        class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    キャンセル
+                </button>
+                <button type="button" @click="sendToLineWorks()"
+                        class="flex-1 px-3 sm:px-4 py-2 bg-blue-600 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white hover:bg-blue-700">
+                    送信
+                </button>
+            </div>
         </div>
     </div>
 
@@ -408,6 +414,15 @@ function phaseShowPage() {
         deleteConfirmation: '',
         pdfLoading: false,
         pdfMessage: '',
+        flashSuccess: '',
+        init() {
+            // sessionStorageからフラッシュメッセージを取得
+            const msg = sessionStorage.getItem('flashSuccess');
+            if (msg) {
+                this.flashSuccess = msg;
+                sessionStorage.removeItem('flashSuccess');
+            }
+        },
         get canDelete() {
             return this.deleteConfirmation.toLowerCase() === 'delete';
         },
@@ -440,6 +455,34 @@ function phaseShowPage() {
                 console.error('PDF download error:', error);
                 alert('PDFのダウンロードに失敗しました。');
             } finally {
+                this.pdfLoading = false;
+            }
+        },
+        async sendToLineWorks() {
+            this.showLineWorksModal = false;
+            this.pdfLoading = true;
+            this.pdfMessage = 'LINE WORKSに送信中...';
+            try {
+                const response = await fetch('{{ route('phases.send-lineworks', $phase) }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                this.pdfLoading = false;
+                if (data.success) {
+                    // 成功メッセージを表示してからリロード
+                    sessionStorage.setItem('flashSuccess', data.message);
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'LINE WORKSへの送信に失敗しました。');
+                }
+            } catch (error) {
+                console.error('LINE WORKS send error:', error);
+                alert('LINE WORKSへの送信に失敗しました。');
                 this.pdfLoading = false;
             }
         }

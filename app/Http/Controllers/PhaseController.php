@@ -10,7 +10,9 @@ use App\Models\Phase;
 use App\Services\ActivityLogService;
 use App\Services\LineWorksBotService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -151,7 +153,7 @@ class PhaseController extends Controller
         return $pdf->download($filename);
     }
 
-    public function sendPdfToLineWorks(Phase $phase): RedirectResponse
+    public function sendPdfToLineWorks(Request $request, Phase $phase): RedirectResponse|JsonResponse
     {
         $tempFilePath = null;
 
@@ -160,6 +162,10 @@ class PhaseController extends Controller
             $user = auth()->user();
 
             if (! $user->lineworks_id) {
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'LINE WORKS IDが設定されていません。']);
+                }
+
                 return redirect()->route('phases.show', $phase)
                     ->with('error', 'LINE WORKS IDが設定されていません。');
             }
@@ -245,6 +251,10 @@ class PhaseController extends Controller
                 'filename' => $filename,
             ]);
 
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'PDFファイルをLINE WORKSに送信しました。']);
+            }
+
             return redirect()->route('phases.show', $phase)
                 ->with('success', 'PDFファイルをLINE WORKSに送信しました。');
         } catch (\Exception $e) {
@@ -254,6 +264,10 @@ class PhaseController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'PDFの送信に失敗しました: '.$e->getMessage()]);
+            }
 
             return redirect()->route('phases.show', $phase)
                 ->with('error', 'PDFの送信に失敗しました: '.$e->getMessage());
