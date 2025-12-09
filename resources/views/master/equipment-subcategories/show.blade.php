@@ -85,10 +85,10 @@
             </div>
 
             <!-- 関連機材 -->
-            @if($equipments->total() > 0)
+            @if($totalEquipments > 0)
                 <div class="mt-4 sm:mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">関連機材 ({{ $equipments->total() }}件)</h3>
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white">関連機材 ({{ $totalEquipments }}件)</h3>
                     </div>
                     <div class="px-4 sm:px-6 py-3 sm:py-4">
                         <div class="overflow-x-auto">
@@ -116,7 +116,7 @@
                         @if($equipments->hasPages())
                             <div class="mt-4 flex items-center justify-between">
                                 <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $equipments->currentPage() }} / {{ $equipments->lastPage() }} ページ
+                                    {{ $equipments->currentPage() }} / {{ ceil($totalEquipments / 20) }} ページ
                                 </span>
                                 <div>
                                     {{ $equipments->links() }}
