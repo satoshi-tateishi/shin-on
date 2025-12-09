@@ -97,7 +97,6 @@
                                     <tr>
                                         <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">機材名</th>
                                         <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">新音番号</th>
-                                        <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">状態</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -108,18 +107,6 @@
                                             </td>
                                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $equipment->company_number ?: '---' }}
-                                            </td>
-                                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                                                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full
-                                                    @switch($equipment->status)
-                                                        @case('available') bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 @break
-                                                        @case('in_use') bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 @break
-                                                        @case('maintenance') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 @break
-                                                        @case('broken') bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 @break
-                                                        @case('retired') bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 @break
-                                                    @endswitch">
-                                                    {{ $equipment->status_label }}
-                                                </span>
                                             </td>
                                         </tr>
                                     @endforeach
