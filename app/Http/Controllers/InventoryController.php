@@ -273,26 +273,26 @@ class InventoryController extends Controller
 
     /**
      * 在庫一覧PDF出力
+     * N+1クエリ最適化版：ループ外で一括取得→ループ内でメモリ参照
      */
     public function exportPdf(Request $request)
     {
         try {
             $validated = $request->validate([
                 'as_of_date' => 'required|date',
-                'location_id' => 'nullable|exists:locations,id', // nullableに変更
+                'location_id' => 'nullable|exists:locations,id',
                 'category_id' => 'nullable|exists:equipment_categories,id',
                 'search' => 'nullable|string|max:255',
-                'all_locations' => 'nullable|boolean', // 全倉庫出力フラグ
+                'all_locations' => 'nullable|boolean',
             ]);
 
             $asOfDate = Carbon::parse($validated['as_of_date']);
+            $asOfDateStr = $asOfDate->format('Y-m-d H:i:s');
 
             // 全倉庫出力 or 単一倉庫出力
             if (! empty($validated['all_locations'])) {
-                // 全倉庫の在庫を取得
                 $locations = Location::forInventoryFilter()->get();
             } else {
-                // 単一倉庫の在庫を取得
                 $location = Location::findOrFail($validated['location_id']);
                 if (! $location->is_inventory_visible) {
                     throw new \Exception('選択された倉庫は在庫表示対象外です。');
@@ -300,11 +300,67 @@ class InventoryController extends Controller
                 $locations = collect([$location]);
             }
 
+            $locationIds = $locations->pluck('id')->toArray();
+
+            // ========================================
+            // 一括取得クエリ（N+1問題解消）
+            // ========================================
+
+            // 1. 使用中データを一括取得
+            $inUseData = DB::table('phase_equipment')
+                ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
+                ->where('phase_equipment.status', 'checked_out')
+                ->where('phase_equipment.checkout_date', '<=', $asOfDateStr)
+                ->where(function ($q) use ($asOfDateStr) {
+                    $q->whereNull('phase_equipment.checkin_date')
+                        ->orWhere('phase_equipment.checkin_date', '>', $asOfDateStr);
+                })
+                ->whereIn('equipments.now_location_id', $locationIds)
+                ->where('equipments.is_discard', false)
+                ->select([
+                    'equipments.name',
+                    'equipments.now_location_id',
+                    'equipments.id as equipment_id',
+                    'equipments.management_type',
+                    'phase_equipment.quantity',
+                ])
+                ->get()
+                ->groupBy(fn ($row) => $row->name.'_'.$row->now_location_id);
+
+            // 2. 修理中データを一括取得
+            $repairData = DB::table('repair_records')
+                ->join('equipments', 'repair_records.equipment_id', '=', 'equipments.id')
+                ->where('repair_records.status', 'in_progress')
+                ->where('repair_records.failure_occurred_at', '<=', $asOfDateStr)
+                ->where(function ($q) use ($asOfDateStr) {
+                    $q->whereNull('repair_records.completed_at')
+                        ->orWhere('repair_records.completed_at', '>', $asOfDateStr);
+                })
+                ->whereIn('equipments.now_location_id', $locationIds)
+                ->where('equipments.is_discard', false)
+                ->select([
+                    'equipments.name',
+                    'equipments.now_location_id',
+                    'equipments.id as equipment_id',
+                ])
+                ->get()
+                ->groupBy(fn ($row) => $row->name.'_'.$row->now_location_id);
+
+            // 3. 全機材の番号情報を一括取得
+            $allCompanyNumbers = Equipment::active()
+                ->whereIn('now_location_id', $locationIds)
+                ->whereNotNull('company_number')
+                ->where('company_number', '!=', '')
+                ->select(['id', 'name', 'now_location_id', 'company_number', 'sort'])
+                ->orderBy('sort')
+                ->get()
+                ->groupBy(fn ($eq) => $eq->name.'_'.$eq->now_location_id);
+
             // 各倉庫ごとに在庫データを取得
-            $locationInventories = $locations->map(function ($location) use ($asOfDate, $validated) {
-                // 在庫データ取得
+            $locationInventories = $locations->map(function ($location) use ($validated, $inUseData, $repairData, $allCompanyNumbers) {
+                // 在庫データ取得（グループ化）
                 $query = Equipment::active()
-                    ->with(['subcategory.category', 'location'])
+                    ->with(['subcategory.category'])
                     ->select([
                         'name',
                         'now_location_id',
@@ -313,10 +369,8 @@ class InventoryController extends Controller
                         DB::raw('SUM(CASE WHEN management_type = "quantity" THEN quantity ELSE 1 END) as total_quantity'),
                         DB::raw('GROUP_CONCAT(DISTINCT company_number ORDER BY sort SEPARATOR ", ") as company_numbers'),
                         DB::raw('MIN(id) as sample_equipment_id'),
-                    ]);
-
-                // 特定倉庫フィルター適用
-                $query->where('now_location_id', $location->id);
+                    ])
+                    ->where('now_location_id', $location->id);
 
                 if (! empty($validated['category_id'])) {
                     $query->whereHas('subcategory.category', function ($q) use ($validated) {
@@ -336,77 +390,42 @@ class InventoryController extends Controller
                     ->orderBy('sort')
                     ->get();
 
-                // 基準日時点での使用中・修理中数量を計算して在庫数量を算出
-                $inventoryData = $equipments->map(function ($equipment) use ($asOfDate) {
-                    // サンプル機材から詳細情報取得
-                    $sampleEquipment = Equipment::with(['subcategory.category', 'location'])
-                        ->find($equipment->sample_equipment_id);
+                // サンプル機材を一括取得
+                $sampleEquipmentIds = $equipments->pluck('sample_equipment_id')->toArray();
+                $sampleEquipments = Equipment::with(['subcategory.category'])
+                    ->whereIn('id', $sampleEquipmentIds)
+                    ->get()
+                    ->keyBy('id');
 
-                    // 基準日時点での使用中数量を計算
-                    $inUseCount = DB::table('phase_equipment')
-                        ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
-                        ->where('equipments.name', $equipment->name)
-                        ->where('equipments.now_location_id', $equipment->now_location_id)
-                        ->where('phase_equipment.status', 'checked_out')
-                        ->where('phase_equipment.checkout_date', '<=', $asOfDate->format('Y-m-d H:i:s'))
-                        ->where(function ($query) use ($asOfDate) {
-                            $query->whereNull('phase_equipment.checkin_date')
-                                ->orWhere('phase_equipment.checkin_date', '>', $asOfDate->format('Y-m-d H:i:s'));
-                        })
-                        ->sum(DB::raw('CASE WHEN equipments.management_type = "quantity" THEN phase_equipment.quantity ELSE 1 END'));
+                // メモリ上でデータを計算（DBクエリなし）
+                $inventoryData = $equipments->map(function ($equipment) use ($sampleEquipments, $inUseData, $repairData, $allCompanyNumbers) {
+                    $key = $equipment->name.'_'.$equipment->now_location_id;
 
-                    // 基準日時点での修理中数量を計算
-                    $repairCount = DB::table('repair_records')
-                        ->join('equipments', 'repair_records.equipment_id', '=', 'equipments.id')
-                        ->where('equipments.name', $equipment->name)
-                        ->where('equipments.now_location_id', $equipment->now_location_id)
-                        ->where('repair_records.status', 'in_progress')
-                        ->where('repair_records.failure_occurred_at', '<=', $asOfDate->format('Y-m-d H:i:s'))
-                        ->where(function ($query) use ($asOfDate) {
-                            $query->whereNull('repair_records.completed_at')
-                                ->orWhere('repair_records.completed_at', '>', $asOfDate->format('Y-m-d H:i:s'));
-                        })
-                        ->count();
+                    // サンプル機材（メモリから取得）
+                    $sampleEquipment = $sampleEquipments->get($equipment->sample_equipment_id);
 
+                    // 使用中データ（メモリから取得）
+                    $inUseItems = $inUseData->get($key, collect());
+                    $inUseCount = $inUseItems->sum(function ($item) {
+                        return $item->management_type === 'quantity' ? $item->quantity : 1;
+                    });
+                    $inUseEquipmentIds = $inUseItems->pluck('equipment_id')->toArray();
+
+                    // 修理中データ（メモリから取得）
+                    $repairItems = $repairData->get($key, collect());
+                    $repairCount = $repairItems->count();
+                    $repairEquipmentIds = $repairItems->pluck('equipment_id')->toArray();
+
+                    // 利用可能数量
                     $availableQuantity = max(0, $equipment->total_quantity - $inUseCount - $repairCount);
 
-                    // 使用中の機材IDを取得
-                    $inUseEquipmentIds = DB::table('phase_equipment')
-                        ->join('equipments', 'phase_equipment.equipment_id', '=', 'equipments.id')
-                        ->where('equipments.name', $equipment->name)
-                        ->where('equipments.now_location_id', $equipment->now_location_id)
-                        ->where('phase_equipment.status', 'checked_out')
-                        ->where('phase_equipment.checkout_date', '<=', $asOfDate->format('Y-m-d H:i:s'))
-                        ->where(function ($query) use ($asOfDate) {
-                            $query->whereNull('phase_equipment.checkin_date')
-                                ->orWhere('phase_equipment.checkin_date', '>', $asOfDate->format('Y-m-d H:i:s'));
-                        })
-                        ->pluck('equipments.id');
-
-                    // 修理中の機材IDを取得
-                    $repairEquipmentIds = DB::table('repair_records')
-                        ->join('equipments', 'repair_records.equipment_id', '=', 'equipments.id')
-                        ->where('equipments.name', $equipment->name)
-                        ->where('equipments.now_location_id', $equipment->now_location_id)
-                        ->where('repair_records.status', 'in_progress')
-                        ->where('repair_records.failure_occurred_at', '<=', $asOfDate->format('Y-m-d H:i:s'))
-                        ->where(function ($query) use ($asOfDate) {
-                            $query->whereNull('repair_records.completed_at')
-                                ->orWhere('repair_records.completed_at', '>', $asOfDate->format('Y-m-d H:i:s'));
-                        })
-                        ->pluck('equipments.id');
-
                     // 除外IDをマージ
-                    $excludeIds = $inUseEquipmentIds->merge($repairEquipmentIds)->unique()->toArray();
+                    $excludeIds = array_unique(array_merge($inUseEquipmentIds, $repairEquipmentIds));
 
-                    // 利用可能な機材の新音番号のみを取得
-                    $availableCompanyNumbers = Equipment::active()
-                        ->where('name', $equipment->name)
-                        ->where('now_location_id', $equipment->now_location_id)
-                        ->when(! empty($excludeIds), fn ($q) => $q->whereNotIn('id', $excludeIds))
-                        ->whereNotNull('company_number')
-                        ->where('company_number', '!=', '')
-                        ->orderBy('sort')
+                    // 利用可能な機材の新音番号（メモリから取得）
+                    $companyNumbers = $allCompanyNumbers->get($key, collect());
+                    $availableCompanyNumbers = $companyNumbers
+                        ->filter(fn ($eq) => ! in_array($eq->id, $excludeIds))
                         ->pluck('company_number')
                         ->unique()
                         ->implode(', ');
@@ -447,12 +466,9 @@ class InventoryController extends Controller
 
             // PDF生成
             $pdf = Pdf::loadView('inventory.pdf', $data);
-
-            // DOMPDFの設定を取得して日本語フォントを設定
             $pdf->getDomPDF()->set_option('isHtml5ParserEnabled', true);
             $pdf->getDomPDF()->set_option('isFontSubsettingEnabled', true);
-            $pdf->getDomPDF()->set_option('isPhpEnabled', true); // PHPスクリプト有効化
-
+            $pdf->getDomPDF()->set_option('isPhpEnabled', true);
             $pdf->setPaper('A4', 'portrait');
 
             // ファイル名生成
