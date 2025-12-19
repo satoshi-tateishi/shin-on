@@ -108,7 +108,7 @@
                                                {{ old('is_main_warehouse') ? 'checked' : '' }}
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
                                         <label for="is_main_warehouse" class="ml-2 block text-xs sm:text-sm text-gray-900 dark:text-white">
-                                            主要倉庫（機材返却対象）
+                                            主要倉庫（大型機材返却対象）
                                         </label>
                                     </div>
                                 </div>
