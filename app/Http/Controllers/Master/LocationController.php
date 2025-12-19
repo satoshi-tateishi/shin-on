@@ -75,6 +75,7 @@ class LocationController extends Controller
             'is_active' => 'sometimes|boolean',
             'is_inventory_visible' => 'sometimes|boolean',
             'is_transfer_visible' => 'sometimes|boolean',
+            'is_main_warehouse' => 'sometimes|boolean',
         ], [
             'type.required' => '場所タイプは必須です。',
             'name.required' => '場所名は必須です。',
@@ -86,6 +87,7 @@ class LocationController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
         $validated['is_inventory_visible'] = $request->boolean('is_inventory_visible');
         $validated['is_transfer_visible'] = $request->boolean('is_transfer_visible');
+        $validated['is_main_warehouse'] = $request->boolean('is_main_warehouse');
 
         Location::create($validated);
 
@@ -137,6 +139,7 @@ class LocationController extends Controller
             'is_active' => 'sometimes|boolean',
             'is_inventory_visible' => 'sometimes|boolean',
             'is_transfer_visible' => 'sometimes|boolean',
+            'is_main_warehouse' => 'sometimes|boolean',
         ], [
             'type.required' => '場所タイプは必須です。',
             'name.required' => '場所名は必須です。',
@@ -147,6 +150,7 @@ class LocationController extends Controller
         $validated['is_active'] = $request->boolean('is_active', false);
         $validated['is_inventory_visible'] = $request->boolean('is_inventory_visible', false);
         $validated['is_transfer_visible'] = $request->boolean('is_transfer_visible', false);
+        $validated['is_main_warehouse'] = $request->boolean('is_main_warehouse', false);
 
         $location->update($validated);
 
