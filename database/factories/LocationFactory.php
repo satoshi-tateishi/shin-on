@@ -24,6 +24,7 @@ class LocationFactory extends Factory
             'is_active' => true,
             'is_inventory_visible' => true,
             'is_transfer_visible' => true,
+            'is_main_warehouse' => false,
         ];
     }
 
@@ -31,6 +32,14 @@ class LocationFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => '倉庫',
+        ]);
+    }
+
+    public function mainWarehouse(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => '倉庫',
+            'is_main_warehouse' => true,
         ]);
     }
 

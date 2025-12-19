@@ -124,13 +124,38 @@ class EquipmentTransferTest extends TestCase
         }
     }
 
+    public function test_bulk_return_returns_multiple_equipment(): void
+    {
+        // 主要倉庫（is_main_warehouse=true）を基本倉庫とする機材を返却
+        $baseLocation = Location::factory()->mainWarehouse()->create();
+        $currentLocation = Location::factory()->create();
+        $equipments = Equipment::factory()->count(2)->create([
+            'location_id' => $baseLocation->id,
+            'now_location_id' => $currentLocation->id,
+        ]);
+
+        // APIは returns 配列形式を期待
+        $returns = $equipments->map(fn ($eq) => [
+            'equipment_id' => $eq->id,
+            'return_location_id' => $baseLocation->id,
+        ])->toArray();
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/equipment-transfer/api/bulk-return', [
+                'returns' => $returns,
+            ]);
+
+        $response->assertStatus(200);
+        foreach ($equipments as $equipment) {
+            $this->assertDatabaseHas('equipments', [
+                'id' => $equipment->id,
+                'now_location_id' => $baseLocation->id,
+            ]);
+        }
+    }
+
     public function test_bulk_return_requires_authentication(): void
     {
-        // bulk-return APIは認証が必要
-        // 注意: 実際のbulk return はlocation_id 92-94のハードコードされた
-        // 倉庫IDに依存するビジネスロジックがあるため、詳細なテストは
-        // 単体return（test_equipment_can_be_returned）で動作確認
-
         $response = $this->postJson('/equipment-transfer/api/bulk-return', [
             'returns' => [],
         ]);

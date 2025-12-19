@@ -278,10 +278,10 @@ class InventoryTransferController extends Controller
             // 特定の機材IDで検索（セッションストレージから来た場合）
             if ($request->filled('equipment_id')) {
                 $query->where('id', $request->equipment_id)
-                    ->whereIn('location_id', [92, 93, 94]);
+                    ->whereIn('location_id', Location::getMainWarehouseIds());
             } else {
                 // 通常のフィルタリング（全体表示の場合）
-                $query->whereIn('location_id', [92, 93, 94]);
+                $query->whereIn('location_id', Location::getMainWarehouseIds());
 
                 // カテゴリフィルタ
                 if ($request->filled('category_id')) {

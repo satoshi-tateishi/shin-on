@@ -111,8 +111,8 @@ class PhaseEquipmentCheckoutController extends Controller
 
         $equipment = $phaseEquipment->equipment;
 
-        // location_id=92-94の機材は返却先選択が必要
-        $requiresLocationSelection = in_array($equipment->location_id, [92, 93, 94]);
+        // 主要倉庫の機材は返却先選択が必要
+        $requiresLocationSelection = in_array($equipment->location_id, Location::getMainWarehouseIds());
 
         $validationRules = [
             'checkin_date' => 'required|date',
@@ -127,7 +127,7 @@ class PhaseEquipmentCheckoutController extends Controller
 
         $validated = $request->validate($validationRules);
 
-        // location_id=92-94で返却先が選択されていない場合のエラー
+        // 主要倉庫の機材で返却先が選択されていない場合のエラー
         if ($requiresLocationSelection && empty($validated['to_location_id'])) {
             return back()->withErrors([
                 'to_location_id' => 'この機材は返却先倉庫の選択が必要です。',
@@ -145,7 +145,7 @@ class PhaseEquipmentCheckoutController extends Controller
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
 
-            // location_id=92-94の機材の場合、機材の場所を更新
+            // 主要倉庫の機材の場合、機材の場所を更新
             $toLocationId = $validated['to_location_id'] ?? null;
             if ($requiresLocationSelection && $toLocationId) {
                 $equipment->update(['location_id' => $toLocationId]);

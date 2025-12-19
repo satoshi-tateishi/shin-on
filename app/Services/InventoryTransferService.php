@@ -26,7 +26,7 @@ class InventoryTransferService
         ])
             ->where('management_type', 'individual')
             ->where('is_discard', false)
-            ->whereIn('location_id', [92, 93, 94])
+            ->whereIn('location_id', Location::getMainWarehouseIds())
             // 使用中の機材を除外
             ->whereNotExists(function ($subQuery) {
                 $subQuery->select(DB::raw(1))
@@ -154,10 +154,10 @@ class InventoryTransferService
             ];
         }
 
-        if (! in_array($equipment->location_id, [92, 93, 94])) {
+        if (! in_array($equipment->location_id, Location::getMainWarehouseIds())) {
             return [
                 'success' => false,
-                'error' => "機材ID {$equipmentId}: 基本倉庫ID 92-94の機材のみが対象です",
+                'error' => "機材ID {$equipmentId}: 主要倉庫の機材のみが対象です",
             ];
         }
 
@@ -248,7 +248,7 @@ class InventoryTransferService
      */
     public function getTransferableCategories(): Collection
     {
-        $subcategoryIds = Equipment::whereIn('location_id', [92, 93, 94])
+        $subcategoryIds = Equipment::whereIn('location_id', Location::getMainWarehouseIds())
             ->where('management_type', 'individual')
             ->where('is_discard', false)
             ->distinct()

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Equipment;
+use App\Models\Location;
 use App\Models\Phase;
 use App\Models\PhaseEquipment;
 use Illuminate\Support\Facades\DB;
@@ -113,8 +114,8 @@ class PhaseEquipmentService
                 'checkin_user_id' => auth()->id(),
             ];
 
-            // 必要に応じて機材の場所を更新
-            if ($toLocationId && $phaseEquipment->equipment->location_id >= 92 && $phaseEquipment->equipment->location_id <= 94) {
+            // 必要に応じて機材の場所を更新（主要倉庫の機材のみ）
+            if ($toLocationId && in_array($phaseEquipment->equipment->location_id, Location::getMainWarehouseIds())) {
                 $phaseEquipment->equipment->update(['location_id' => $toLocationId]);
             }
 

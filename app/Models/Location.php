@@ -30,6 +30,7 @@ class Location extends Model
         'is_active',
         'is_inventory_visible',
         'is_transfer_visible',
+        'is_main_warehouse',
     ];
 
     protected function casts(): array
@@ -39,6 +40,7 @@ class Location extends Model
             'is_active' => 'boolean',
             'is_inventory_visible' => 'boolean',
             'is_transfer_visible' => 'boolean',
+            'is_main_warehouse' => 'boolean',
         ];
     }
 
@@ -88,6 +90,23 @@ class Location extends Model
             ->warehouses()
             ->where('is_transfer_visible', true)
             ->ordered();
+    }
+
+    // スコープ: 主要倉庫
+    public function scopeMainWarehouses($query)
+    {
+        return $query->where('is_main_warehouse', true);
+    }
+
+    /**
+     * 主要倉庫のIDリストを取得
+     *
+     * 機材移動・返却処理の対象となる倉庫のIDを取得します。
+     * この値は頻繁に変わらないため、必要に応じてキャッシュを検討してください。
+     */
+    public static function getMainWarehouseIds(): array
+    {
+        return static::where('is_main_warehouse', true)->pluck('id')->toArray();
     }
 
     // 表示名取得
