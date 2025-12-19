@@ -33,7 +33,7 @@ enum PerformanceType: string
     public static function options(): array
     {
         return array_map(
-            fn($type) => ['value' => $type->value, 'label' => $type->label()],
+            fn ($type) => ['value' => $type->value, 'label' => $type->label()],
             self::cases()
         );
     }

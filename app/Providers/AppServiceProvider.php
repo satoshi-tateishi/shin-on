@@ -40,12 +40,12 @@ class AppServiceProvider extends ServiceProvider
         // View Composers
         View::composer([
             'performances.*',
-            'phases.*'
+            'phases.*',
         ], PerformanceViewComposer::class);
 
         View::composer([
             'phase-equipment.*',
-            'equipment-transfer.*'
+            'equipment-transfer.*',
         ], EquipmentViewComposer::class);
     }
 }

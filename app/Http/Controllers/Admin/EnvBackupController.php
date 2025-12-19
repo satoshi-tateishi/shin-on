@@ -8,13 +8,14 @@ use App\Services\EnvEncryptionService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class EnvBackupController extends Controller
 {
     private EnvEncryptionService $encryptor;
+
     private DropboxService $dropboxService;
 
     public function __construct(EnvEncryptionService $encryptor, DropboxService $dropboxService)
@@ -25,7 +26,7 @@ class EnvBackupController extends Controller
 
     private function checkAdminAccess(): void
     {
-        if (!auth()->user() || auth()->user()->role !== 'admin') {
+        if (! auth()->user() || auth()->user()->role !== 'admin') {
             abort(403, 'Admin access required');
         }
     }
@@ -49,7 +50,7 @@ class EnvBackupController extends Controller
             $request->replace($request->except(['password']));
 
             // Dropbox認証チェック
-            if (!$this->dropboxService->isAuthenticated()) {
+            if (! $this->dropboxService->isAuthenticated()) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Dropbox認証が必要です',
@@ -58,7 +59,7 @@ class EnvBackupController extends Controller
 
             // .envファイル存在チェック
             $envPath = base_path('.env');
-            if (!file_exists($envPath)) {
+            if (! file_exists($envPath)) {
                 return response()->json([
                     'success' => false,
                     'error' => '.envファイルが見つかりません',
@@ -77,10 +78,10 @@ class EnvBackupController extends Controller
             $plaintext = file_get_contents($envPath);
 
             // 暗号化処理
-            if (!$skipEncryption) {
+            if (! $skipEncryption) {
                 // パスワード強度チェック
                 $errors = $this->encryptor->validatePasswordStrength($password);
-                if (!empty($errors)) {
+                if (! empty($errors)) {
                     return response()->json([
                         'success' => false,
                         'error' => 'パスワードが要件を満たしていません',
@@ -104,7 +105,7 @@ class EnvBackupController extends Controller
 
             // 一時ファイル作成
             $tempDir = storage_path('app/temp');
-            if (!File::exists($tempDir)) {
+            if (! File::exists($tempDir)) {
                 File::makeDirectory($tempDir, 0755, true);
             }
 
@@ -123,7 +124,7 @@ class EnvBackupController extends Controller
                     'user_id' => auth()->id(),
                     'filename' => $filename,
                     'size' => strlen($content),
-                    'encrypted' => !$skipEncryption,
+                    'encrypted' => ! $skipEncryption,
                     'remote_path' => $remotePath,
                 ]);
 
@@ -132,7 +133,7 @@ class EnvBackupController extends Controller
                     'message' => '環境設定のバックアップが完了しました',
                     'filename' => $filename,
                     'size' => strlen($content),
-                    'encrypted' => !$skipEncryption,
+                    'encrypted' => ! $skipEncryption,
                     'timestamp' => $timestamp,
                 ]);
 
@@ -153,7 +154,7 @@ class EnvBackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '環境設定バックアップに失敗しました: ' . $e->getMessage(),
+                'error' => '環境設定バックアップに失敗しました: '.$e->getMessage(),
             ], 500);
 
         } finally {
@@ -172,7 +173,7 @@ class EnvBackupController extends Controller
         $this->checkAdminAccess();
 
         try {
-            if (!$this->dropboxService->isAuthenticated()) {
+            if (! $this->dropboxService->isAuthenticated()) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Dropbox認証が必要です',
@@ -216,7 +217,7 @@ class EnvBackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '環境設定バックアップ一覧の取得に失敗しました: ' . $e->getMessage(),
+                'error' => '環境設定バックアップ一覧の取得に失敗しました: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -242,9 +243,9 @@ class EnvBackupController extends Controller
             $previewOnly = $request->boolean('preview_only', false);
 
             // 試行回数制限チェック
-            $attempts = Cache::get("env_restore_attempts_" . auth()->id(), 0);
+            $attempts = Cache::get('env_restore_attempts_'.auth()->id(), 0);
             if ($attempts >= 3) {
-                $lockUntil = Cache::get("env_restore_locked_until_" . auth()->id());
+                $lockUntil = Cache::get('env_restore_locked_until_'.auth()->id());
                 if ($lockUntil && now()->lessThan($lockUntil)) {
                     return response()->json([
                         'success' => false,
@@ -252,11 +253,11 @@ class EnvBackupController extends Controller
                     ], 429);
                 }
                 // ロック期間終了時にリセット
-                Cache::forget("env_restore_attempts_" . auth()->id());
-                Cache::forget("env_restore_locked_until_" . auth()->id());
+                Cache::forget('env_restore_attempts_'.auth()->id());
+                Cache::forget('env_restore_locked_until_'.auth()->id());
             }
 
-            if (!$this->dropboxService->isAuthenticated()) {
+            if (! $this->dropboxService->isAuthenticated()) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Dropbox認証が必要です',
@@ -270,7 +271,7 @@ class EnvBackupController extends Controller
             if ($isEncrypted) {
                 try {
                     $package = json_decode($content, true);
-                    if (!$package) {
+                    if (! $package) {
                         throw new Exception('Invalid JSON format in backup file');
                     }
 
@@ -278,15 +279,15 @@ class EnvBackupController extends Controller
                     $envContent = $decrypted;
 
                     // 成功時は試行回数をリセット
-                    Cache::forget("env_restore_attempts_" . auth()->id());
+                    Cache::forget('env_restore_attempts_'.auth()->id());
 
                 } catch (Exception $e) {
                     // 失敗時は試行回数を増加
                     $newAttempts = $attempts + 1;
-                    Cache::put("env_restore_attempts_" . auth()->id(), $newAttempts, now()->addHour());
+                    Cache::put('env_restore_attempts_'.auth()->id(), $newAttempts, now()->addHour());
 
                     if ($newAttempts >= 3) {
-                        Cache::put("env_restore_locked_until_" . auth()->id(), now()->addMinutes(30), now()->addHour());
+                        Cache::put('env_restore_locked_until_'.auth()->id(), now()->addMinutes(30), now()->addHour());
                     }
 
                     return response()->json([
@@ -336,7 +337,7 @@ class EnvBackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '環境設定の復元に失敗しました: ' . $e->getMessage(),
+                'error' => '環境設定の復元に失敗しました: '.$e->getMessage(),
             ], 500);
 
         } finally {
@@ -399,7 +400,7 @@ class EnvBackupController extends Controller
 
                 $preview[] = [
                     'key' => $key,
-                    'value' => substr($value, 0, 50) . (strlen($value) > 50 ? '...' : ''),
+                    'value' => substr($value, 0, 50).(strlen($value) > 50 ? '...' : ''),
                     'is_secret' => $isSecret,
                 ];
             }
@@ -417,7 +418,7 @@ class EnvBackupController extends Controller
         $envPath = base_path('.env');
 
         // 書き込み権限チェック
-        if (file_exists($envPath) && !is_writable($envPath)) {
+        if (file_exists($envPath) && ! is_writable($envPath)) {
             throw new Exception('.env file is not writable');
         }
 
@@ -428,20 +429,32 @@ class EnvBackupController extends Controller
     private function formatFileSize(int $bytes): string
     {
         if ($bytes >= 1024 * 1024) {
-            return round($bytes / (1024 * 1024), 2) . ' MB';
+            return round($bytes / (1024 * 1024), 2).' MB';
         } elseif ($bytes >= 1024) {
-            return round($bytes / 1024, 2) . ' KB';
+            return round($bytes / 1024, 2).' KB';
         }
-        return $bytes . ' B';
+
+        return $bytes.' B';
     }
 
     private function getPasswordStrengthText(int $score): string
     {
-        if ($score >= 90) return 'Very Strong';
-        if ($score >= 80) return 'Strong';
-        if ($score >= 70) return 'Good';
-        if ($score >= 60) return 'Fair';
-        if ($score >= 40) return 'Weak';
+        if ($score >= 90) {
+            return 'Very Strong';
+        }
+        if ($score >= 80) {
+            return 'Strong';
+        }
+        if ($score >= 70) {
+            return 'Good';
+        }
+        if ($score >= 60) {
+            return 'Fair';
+        }
+        if ($score >= 40) {
+            return 'Weak';
+        }
+
         return 'Very Weak';
     }
 }

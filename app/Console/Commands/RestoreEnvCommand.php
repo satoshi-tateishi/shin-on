@@ -19,6 +19,7 @@ class RestoreEnvCommand extends Command
     protected $description = 'Restore .env file from encrypted Dropbox backup';
 
     private EnvEncryptionService $encryptor;
+
     private DropboxService $dropbox;
 
     public function __construct(EnvEncryptionService $encryptor, DropboxService $dropbox)
@@ -34,9 +35,10 @@ class RestoreEnvCommand extends Command
         $this->info('=================================');
 
         // Dropbox認証チェック
-        if (!$this->dropbox->isAuthenticated()) {
+        if (! $this->dropbox->isAuthenticated()) {
             $this->error('❌ Dropbox authentication required');
             $this->info('Please authenticate at: /admin/backup');
+
             return 1;
         }
 
@@ -47,7 +49,7 @@ class RestoreEnvCommand extends Command
 
         // バックアップファイル選択
         $backupFile = $this->selectBackupFile();
-        if (!$backupFile) {
+        if (! $backupFile) {
             return 1;
         }
 
@@ -63,7 +65,7 @@ class RestoreEnvCommand extends Command
             if ($isEncrypted) {
                 // 暗号化ファイルの復号化
                 $decrypted = $this->decryptBackup($content);
-                if (!$decrypted) {
+                if (! $decrypted) {
                     return 1;
                 }
             } else {
@@ -78,17 +80,19 @@ class RestoreEnvCommand extends Command
             // ドライランモード
             if ($this->option('dry-run')) {
                 $this->info('✅ Dry-run mode - no changes applied');
+
                 return 0;
             }
 
             // 確認
-            if (!$this->confirm('Apply this configuration to .env?')) {
+            if (! $this->confirm('Apply this configuration to .env?')) {
                 $this->info('Operation cancelled');
+
                 return 0;
             }
 
             // 現在の.envをバックアップ
-            if (!$this->option('no-backup')) {
+            if (! $this->option('no-backup')) {
                 $this->backupCurrentEnv();
             }
 
@@ -103,7 +107,7 @@ class RestoreEnvCommand extends Command
             return 0;
 
         } catch (Exception $e) {
-            $this->error('❌ Restore failed: ' . $e->getMessage());
+            $this->error('❌ Restore failed: '.$e->getMessage());
 
             Log::error('Environment restore failed via CLI', [
                 'backup_file' => $backupFile['name'] ?? 'unknown',
@@ -124,6 +128,7 @@ class RestoreEnvCommand extends Command
 
             if (empty($backups)) {
                 $this->info('No environment backups found');
+
                 return 0;
             }
 
@@ -142,18 +147,19 @@ class RestoreEnvCommand extends Command
                     $backup['name'],
                     $size,
                     $modified,
-                    $type
+                    $type,
                 ];
             }, $backups);
 
             $this->table(['File', 'Size', 'Modified', 'Type'], $tableData);
 
-            $this->info("Found " . count($backups) . " environment backup(s)");
+            $this->info('Found '.count($backups).' environment backup(s)');
 
             return 0;
 
         } catch (Exception $e) {
-            $this->error('❌ Failed to list backups: ' . $e->getMessage());
+            $this->error('❌ Failed to list backups: '.$e->getMessage());
+
             return 1;
         }
     }
@@ -168,6 +174,7 @@ class RestoreEnvCommand extends Command
 
             if (empty($backups)) {
                 $this->error('❌ No environment backups found');
+
                 return null;
             }
 
@@ -184,11 +191,12 @@ class RestoreEnvCommand extends Command
                         return [
                             'name' => $backup['name'],
                             'path' => $backup['path_display'],
-                            'size' => $backup['size'] ?? 0
+                            'size' => $backup['size'] ?? 0,
                         ];
                     }
                 }
                 $this->error("❌ Backup file '{$specifiedFile}' not found");
+
                 return null;
             }
 
@@ -205,7 +213,9 @@ class RestoreEnvCommand extends Command
                 $label = "{$type} {$backup['name']} ({$size}) {$modified}";
                 $choices[$index] = $label;
 
-                if ($index >= 9) break; // 最新10件まで表示
+                if ($index >= 9) {
+                    break;
+                } // 最新10件まで表示
             }
 
             $choices['cancel'] = '❌ Cancel';
@@ -214,6 +224,7 @@ class RestoreEnvCommand extends Command
 
             if ($selected === '❌ Cancel') {
                 $this->info('Operation cancelled');
+
                 return null;
             }
 
@@ -224,11 +235,12 @@ class RestoreEnvCommand extends Command
             return [
                 'name' => $selectedBackup['name'],
                 'path' => $selectedBackup['path_display'],
-                'size' => $selectedBackup['size'] ?? 0
+                'size' => $selectedBackup['size'] ?? 0,
             ];
 
         } catch (Exception $e) {
-            $this->error('❌ Failed to get backup list: ' . $e->getMessage());
+            $this->error('❌ Failed to get backup list: '.$e->getMessage());
+
             return null;
         }
     }
@@ -238,12 +250,12 @@ class RestoreEnvCommand extends Command
         try {
             $package = json_decode($content, true);
 
-            if (!$package) {
+            if (! $package) {
                 throw new Exception('Invalid JSON format in backup file');
             }
 
             // データ整合性チェック
-            if (!$this->encryptor->validateEncryptedData($package)) {
+            if (! $this->encryptor->validateEncryptedData($package)) {
                 throw new Exception('Corrupted or invalid encrypted backup data');
             }
 
@@ -252,7 +264,7 @@ class RestoreEnvCommand extends Command
                 $metadata = $package['metadata'];
                 $this->info('📋 Backup Information:');
                 if (isset($metadata['created_at'])) {
-                    $this->info("   📅 Created: " . date('Y-m-d H:i:s', strtotime($metadata['created_at'])));
+                    $this->info('   📅 Created: '.date('Y-m-d H:i:s', strtotime($metadata['created_at'])));
                 }
                 if (isset($metadata['app_name'])) {
                     $this->info("   🏷️  App: {$metadata['app_name']}");
@@ -274,6 +286,7 @@ class RestoreEnvCommand extends Command
                 try {
                     $decrypted = $this->encryptor->decrypt($package, $password);
                     $this->info('✅ Decryption successful');
+
                     return $decrypted;
 
                 } catch (Exception $e) {
@@ -285,10 +298,12 @@ class RestoreEnvCommand extends Command
             }
 
             $this->error('❌ Maximum password attempts exceeded');
+
             return null;
 
         } catch (Exception $e) {
-            $this->error('❌ Decryption failed: ' . $e->getMessage());
+            $this->error('❌ Decryption failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -297,7 +312,7 @@ class RestoreEnvCommand extends Command
     {
         $this->info('🔍 Environment Preview:');
         $this->info("   📁 File: {$backupInfo['name']}");
-        $this->info("   📊 Size: " . $this->formatFileSize(strlen($content)));
+        $this->info('   📊 Size: '.$this->formatFileSize(strlen($content)));
         $this->line('');
 
         $lines = explode("\n", $content);
@@ -327,7 +342,7 @@ class RestoreEnvCommand extends Command
                     $secretCount++;
                 }
 
-                $preview[] = [$key, substr($value, 0, 50) . (strlen($value) > 50 ? '...' : '')];
+                $preview[] = [$key, substr($value, 0, 50).(strlen($value) > 50 ? '...' : '')];
             }
         }
 
@@ -350,15 +365,16 @@ class RestoreEnvCommand extends Command
     private function backupCurrentEnv(): void
     {
         $envPath = base_path('.env');
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             $this->warn('⚠️  No current .env file to backup');
+
             return;
         }
 
-        $backupPath = base_path('.env.before_restore_' . now()->format('YmdHis'));
+        $backupPath = base_path('.env.before_restore_'.now()->format('YmdHis'));
         copy($envPath, $backupPath);
 
-        $this->info("💾 Current .env backed up to: " . basename($backupPath));
+        $this->info('💾 Current .env backed up to: '.basename($backupPath));
     }
 
     private function applyConfiguration(string $content): void
@@ -366,12 +382,12 @@ class RestoreEnvCommand extends Command
         $envPath = base_path('.env');
 
         // 書き込み権限チェック
-        if (file_exists($envPath) && !is_writable($envPath)) {
+        if (file_exists($envPath) && ! is_writable($envPath)) {
             throw new Exception('.env file is not writable');
         }
 
         // ディレクトリの書き込み権限チェック
-        if (!is_writable(dirname($envPath))) {
+        if (! is_writable(dirname($envPath))) {
             throw new Exception('Cannot write to application directory');
         }
 
@@ -393,10 +409,11 @@ class RestoreEnvCommand extends Command
     private function formatFileSize(int $bytes): string
     {
         if ($bytes >= 1024 * 1024) {
-            return round($bytes / (1024 * 1024), 2) . ' MB';
+            return round($bytes / (1024 * 1024), 2).' MB';
         } elseif ($bytes >= 1024) {
-            return round($bytes / 1024, 2) . ' KB';
+            return round($bytes / 1024, 2).' KB';
         }
-        return $bytes . ' B';
+
+        return $bytes.' B';
     }
 }

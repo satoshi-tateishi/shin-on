@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
 use App\Models\Performance;
 use App\Models\Phase;
+use Closure;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckPerformanceAccess
@@ -29,7 +29,7 @@ class CheckPerformanceAccess
         $phase = $request->route('phase');
 
         // Phase から Performance を取得
-        if ($phase && !$performance) {
+        if ($phase && ! $performance) {
             $performance = $phase->performance;
         }
 

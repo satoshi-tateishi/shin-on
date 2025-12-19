@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Models\Equipment;
 use App\Models\Phase;
 use App\Models\PhaseEquipment;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class PhaseEquipmentService
@@ -132,7 +130,6 @@ class PhaseEquipmentService
             ->get()
             ->toArray();
     }
-
 
     private function validateEquipmentAvailability(Equipment $equipment, Phase $phase, int $quantity): void
     {

@@ -92,6 +92,7 @@ class DropboxService
 
         try {
             $this->refreshAccessToken();
+
             return true;
         } catch (Exception $e) {
             Log::error('Forced token refresh failed', [
@@ -277,14 +278,14 @@ class DropboxService
             $now->format('m'),
             $now->format('d'),
             $timestamp,
-            $fileName
+            $fileName,
         ];
 
         if (! empty($basePath)) {
             $pathParts = array_merge([$basePath], $pathParts);
         }
 
-        return '/' . implode('/', $pathParts);
+        return '/'.implode('/', $pathParts);
     }
 
     private function initializeClient(): void

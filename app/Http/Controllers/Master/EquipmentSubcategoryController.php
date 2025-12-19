@@ -219,9 +219,10 @@ class EquipmentSubcategoryController extends Controller
     protected function getUniqueIdentifier(array $recordData): array
     {
         // IDがある場合はIDで特定、なければcategory_idとnameで特定
-        if (!empty($recordData['id'])) {
+        if (! empty($recordData['id'])) {
             return ['id' => $recordData['id']];
         }
+
         return ['category_id' => $recordData['category_id'], 'name' => $recordData['name']];
     }
 
@@ -260,14 +261,14 @@ class EquipmentSubcategoryController extends Controller
      * 修理記録作成フォームでの段階的サブカテゴリ選択に使用。
      * 通信量削減のため、カテゴリ選択時に該当サブカテゴリのみ動的取得。
      *
-     * @param Request $request
-     *   - category: カテゴリ名（必須）
+     * @param  Request  $request
+     *                            - category: カテゴリ名（必須）
      * @return JsonResponse
-     *   - success: boolean
-     *   - subcategories: array サブカテゴリ一覧（sort順）
-     *     - id: サブカテゴリID
-     *     - name: サブカテゴリ名
-     *     - sort: ソート順
+     *                      - success: boolean
+     *                      - subcategories: array サブカテゴリ一覧（sort順）
+     *                      - id: サブカテゴリID
+     *                      - name: サブカテゴリ名
+     *                      - sort: ソート順
      */
     public function getSubcategoriesByCategory(Request $request)
     {

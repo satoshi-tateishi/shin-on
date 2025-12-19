@@ -20,6 +20,7 @@ class BackupEnvCommand extends Command
     protected $description = 'Backup .env file with strong encryption to Dropbox';
 
     private EnvEncryptionService $encryptor;
+
     private DropboxService $dropbox;
 
     public function __construct(EnvEncryptionService $encryptor, DropboxService $dropbox)
@@ -40,26 +41,29 @@ class BackupEnvCommand extends Command
         }
 
         // Dropbox認証チェック
-        if (!$this->dropbox->isAuthenticated()) {
+        if (! $this->dropbox->isAuthenticated()) {
             $this->error('❌ Dropbox authentication required');
             $this->info('Please authenticate at: /admin/backup');
+
             return 1;
         }
 
         // .envファイル存在チェック
         $envPath = base_path('.env');
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             $this->error('❌ .env file not found');
+
             return 1;
         }
 
         // 暗号化オプション確認
-        $useEncryption = !$this->option('no-encrypt');
+        $useEncryption = ! $this->option('no-encrypt');
 
-        if (!$useEncryption) {
+        if (! $useEncryption) {
             $this->warn('⚠️  WARNING: Saving .env without encryption');
-            if (!$this->confirm('This is NOT RECOMMENDED. Continue?')) {
+            if (! $this->confirm('This is NOT RECOMMENDED. Continue?')) {
                 $this->info('Operation cancelled');
+
                 return 0;
             }
         }
@@ -68,8 +72,9 @@ class BackupEnvCommand extends Command
         $password = null;
         if ($useEncryption) {
             $password = $this->getPassword();
-            if (!$password) {
+            if (! $password) {
                 $this->error('❌ Valid password required for encryption');
+
                 return 1;
             }
         }
@@ -99,7 +104,7 @@ class BackupEnvCommand extends Command
 
             // 一時ファイル作成
             $tempDir = storage_path('app/temp');
-            if (!File::exists($tempDir)) {
+            if (! File::exists($tempDir)) {
                 File::makeDirectory($tempDir, 0755, true);
             }
 
@@ -115,7 +120,7 @@ class BackupEnvCommand extends Command
             if ($uploadResult) {
                 $this->info('✅ Environment backup completed successfully');
                 $this->info("   📍 Location: {$remotePath}");
-                $this->info("   📊 Size: " . number_format(strlen($content)) . " bytes");
+                $this->info('   📊 Size: '.number_format(strlen($content)).' bytes');
 
                 if ($useEncryption) {
                     $this->warn('🔑 Remember your password! It cannot be recovered.');
@@ -145,7 +150,7 @@ class BackupEnvCommand extends Command
             return 0;
 
         } catch (Exception $e) {
-            $this->error('❌ Backup failed: ' . $e->getMessage());
+            $this->error('❌ Backup failed: '.$e->getMessage());
 
             Log::error('Environment backup failed via CLI', [
                 'error' => $e->getMessage(),
@@ -171,7 +176,7 @@ class BackupEnvCommand extends Command
     {
         $password = $this->option('password');
 
-        if (!$password) {
+        if (! $password) {
             // 対話式パスワード入力
             $this->info('🔐 Password Requirements:');
             $this->info('   • Minimum 12 characters');
@@ -180,7 +185,7 @@ class BackupEnvCommand extends Command
 
             $password = $this->secret('Enter encryption password:');
 
-            if (!$password) {
+            if (! $password) {
                 return null;
             }
 
@@ -188,6 +193,7 @@ class BackupEnvCommand extends Command
 
             if ($password !== $confirm) {
                 $this->error('❌ Passwords do not match');
+
                 return null;
             }
         }
@@ -195,11 +201,12 @@ class BackupEnvCommand extends Command
         // パスワード強度チェック
         $errors = $this->encryptor->validatePasswordStrength($password);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->error('❌ Password does not meet security requirements:');
             foreach ($errors as $error) {
                 $this->error("   • {$error}");
             }
+
             return null;
         }
 
@@ -210,7 +217,7 @@ class BackupEnvCommand extends Command
 
         if ($score < 70) {
             $this->warn('⚠️  Consider using a stronger password');
-            if (!$this->confirm('Continue with this password?')) {
+            if (! $this->confirm('Continue with this password?')) {
                 return null;
             }
         }
@@ -220,11 +227,22 @@ class BackupEnvCommand extends Command
 
     private function getPasswordStrengthText(int $score): string
     {
-        if ($score >= 90) return 'Very Strong';
-        if ($score >= 80) return 'Strong';
-        if ($score >= 70) return 'Good';
-        if ($score >= 60) return 'Fair';
-        if ($score >= 40) return 'Weak';
+        if ($score >= 90) {
+            return 'Very Strong';
+        }
+        if ($score >= 80) {
+            return 'Strong';
+        }
+        if ($score >= 70) {
+            return 'Good';
+        }
+        if ($score >= 60) {
+            return 'Fair';
+        }
+        if ($score >= 40) {
+            return 'Weak';
+        }
+
         return 'Very Weak';
     }
 
@@ -233,8 +251,9 @@ class BackupEnvCommand extends Command
         $this->info('🔍 Testing Dropbox connection...');
 
         try {
-            if (!$this->dropbox->isAuthenticated()) {
+            if (! $this->dropbox->isAuthenticated()) {
                 $this->error('❌ Not authenticated with Dropbox');
+
                 return 1;
             }
 
@@ -261,7 +280,8 @@ class BackupEnvCommand extends Command
             return 0;
 
         } catch (Exception $e) {
-            $this->error('❌ Connection test failed: ' . $e->getMessage());
+            $this->error('❌ Connection test failed: '.$e->getMessage());
+
             return 1;
         }
     }

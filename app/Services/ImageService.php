@@ -18,12 +18,12 @@ class ImageService
 
             // ディレクトリが存在しない場合は作成
             $thumbnailDir = dirname($fullThumbnailPath);
-            if (!file_exists($thumbnailDir)) {
+            if (! file_exists($thumbnailDir)) {
                 mkdir($thumbnailDir, 0755, true);
             }
 
             $imageInfo = getimagesize($fullOriginalPath);
-            if (!$imageInfo) {
+            if (! $imageInfo) {
                 return false;
             }
 
@@ -46,7 +46,7 @@ class ImageService
                     return false;
             }
 
-            if (!$originalImage) {
+            if (! $originalImage) {
                 return false;
             }
 
@@ -83,7 +83,8 @@ class ImageService
 
             return $result;
         } catch (\Exception $e) {
-            Log::error('サムネイル生成エラー: ' . $e->getMessage());
+            Log::error('サムネイル生成エラー: '.$e->getMessage());
+
             return false;
         }
     }
@@ -94,7 +95,8 @@ class ImageService
     public function getThumbnailPath(string $originalPath): string
     {
         $pathInfo = pathinfo($originalPath);
-        return $pathInfo['dirname'] . '/thumbnails/' . $pathInfo['filename'] . '_thumb.' . $pathInfo['extension'];
+
+        return $pathInfo['dirname'].'/thumbnails/'.$pathInfo['filename'].'_thumb.'.$pathInfo['extension'];
     }
 
     /**

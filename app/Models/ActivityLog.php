@@ -58,7 +58,7 @@ class ActivityLog extends Model
      */
     public function scopeActionPrefix($query, $prefix)
     {
-        return $query->where('action', 'like', $prefix . '%');
+        return $query->where('action', 'like', $prefix.'%');
     }
 
     /**

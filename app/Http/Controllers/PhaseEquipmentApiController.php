@@ -17,29 +17,28 @@ class PhaseEquipmentApiController extends Controller
      * Retrieves a list of available equipment for a specific phase based on filtering criteria.
      * This method handles equipment availability checking, conflict detection, and quantity calculations.
      *
-     * @param Request $request The HTTP request containing filter parameters
-     * @param Phase $phase The phase for which to retrieve available equipment
+     * @param  Request  $request  The HTTP request containing filter parameters
+     * @param  Phase  $phase  The phase for which to retrieve available equipment
      *
      * Query parameters:
      * - category_id: Filter by equipment category ID
      * - subcategory_id: Filter by equipment subcategory ID
      * - search: Search term for equipment name, company_number, or model_number
-     *
      * @return JsonResponse Returns JSON array of available equipment with the following structure:
-     * [
-     *   {
-     *     "id": int,
-     *     "name": string,
-     *     "company_number": string,
-     *     "model_number": string,
-     *     "management_type": string,
-     *     "quantity": int,
-     *     "available_quantity": int,
-     *     "has_conflict": bool,
-     *     "category": string,
-     *     "subcategory": string
-     *   }
-     * ]
+     *                      [
+     *                      {
+     *                      "id": int,
+     *                      "name": string,
+     *                      "company_number": string,
+     *                      "model_number": string,
+     *                      "management_type": string,
+     *                      "quantity": int,
+     *                      "available_quantity": int,
+     *                      "has_conflict": bool,
+     *                      "category": string,
+     *                      "subcategory": string
+     *                      }
+     *                      ]
      */
     public function getAvailableEquipment(Request $request, Phase $phase): JsonResponse
     {
@@ -108,28 +107,27 @@ class PhaseEquipmentApiController extends Controller
      * This method checks for conflicts and availability for each item in the set, providing
      * comprehensive availability information.
      *
-     * @param Request $request The HTTP request containing the set_id parameter
-     * @param Phase $phase The phase for which to check equipment set availability
+     * @param  Request  $request  The HTTP request containing the set_id parameter
+     * @param  Phase  $phase  The phase for which to check equipment set availability
      *
      * Query parameters:
      * - set_id: The ID of the equipment set to check availability for
-     *
      * @return JsonResponse Returns JSON object with availability details:
-     * {
-     *   "set_id": int,
-     *   "set_name": string,
-     *   "all_available": bool,
-     *   "items": [
-     *     {
-     *       "equipment_id": int,
-     *       "equipment_name": string,
-     *       "required_quantity": int,
-     *       "available_quantity": int,
-     *       "has_conflict": bool,
-     *       "is_available": bool
-     *     }
-     *   ]
-     * }
+     *                      {
+     *                      "set_id": int,
+     *                      "set_name": string,
+     *                      "all_available": bool,
+     *                      "items": [
+     *                      {
+     *                      "equipment_id": int,
+     *                      "equipment_name": string,
+     *                      "required_quantity": int,
+     *                      "available_quantity": int,
+     *                      "has_conflict": bool,
+     *                      "is_available": bool
+     *                      }
+     *                      ]
+     *                      }
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If equipment set not found
      */
@@ -189,21 +187,20 @@ class PhaseEquipmentApiController extends Controller
      * This method is primarily used during the return/checkin process to verify location
      * requirements and management type.
      *
-     * @param Phase $phase The phase associated with the equipment
-     * @param PhaseEquipment $phaseEquipment The phase equipment record to retrieve info for
-     *
+     * @param  Phase  $phase  The phase associated with the equipment
+     * @param  PhaseEquipment  $phaseEquipment  The phase equipment record to retrieve info for
      * @return JsonResponse Returns JSON object with equipment details:
-     * {
-     *   "success": bool,
-     *   "equipment": {
-     *     "id": int,
-     *     "name": string,
-     *     "company_number": string,
-     *     "location_id": int,
-     *     "management_type": string,
-     *     "location_name": string|null
-     *   }
-     * }
+     *                      {
+     *                      "success": bool,
+     *                      "equipment": {
+     *                      "id": int,
+     *                      "name": string,
+     *                      "company_number": string,
+     *                      "location_id": int,
+     *                      "management_type": string,
+     *                      "location_name": string|null
+     *                      }
+     *                      }
      *
      * On error returns:
      * {
@@ -244,27 +241,26 @@ class PhaseEquipmentApiController extends Controller
      * Each equipment item includes location information to determine if location selection
      * is required during the return process.
      *
-     * @param Phase $phase The phase for which to retrieve checked out equipment
-     *
+     * @param  Phase  $phase  The phase for which to retrieve checked out equipment
      * @return JsonResponse Returns JSON object with checked out equipment list:
-     * {
-     *   "success": bool,
-     *   "equipments": [
-     *     {
-     *       "id": int,
-     *       "phase_id": int,
-     *       "quantity": int,
-     *       "equipment": {
-     *         "id": int,
-     *         "name": string,
-     *         "company_number": string,
-     *         "location_id": int,
-     *         "management_type": string,
-     *         "location_name": string|null
-     *       }
-     *     }
-     *   ]
-     * }
+     *                      {
+     *                      "success": bool,
+     *                      "equipments": [
+     *                      {
+     *                      "id": int,
+     *                      "phase_id": int,
+     *                      "quantity": int,
+     *                      "equipment": {
+     *                      "id": int,
+     *                      "name": string,
+     *                      "company_number": string,
+     *                      "location_id": int,
+     *                      "management_type": string,
+     *                      "location_name": string|null
+     *                      }
+     *                      }
+     *                      ]
+     *                      }
      *
      * On error returns:
      * {

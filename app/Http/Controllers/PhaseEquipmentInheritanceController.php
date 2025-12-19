@@ -52,7 +52,6 @@ class PhaseEquipmentInheritanceController extends Controller
             ->orderBy('start_date')
             ->get();
 
-
         $result = [
             'source_phase' => [
                 'id' => $sourcePhase->id,

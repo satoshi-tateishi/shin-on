@@ -105,7 +105,6 @@ class ScheduleController extends Controller
                 $endDate
             );
 
-
             // 日付範囲を生成
             $dateRange = $this->generateDateRange($startDate, $endDate);
 
@@ -220,7 +219,6 @@ class ScheduleController extends Controller
                     $equipmentRepairs
                 );
 
-
                 $dailyStatus[$date] = $status;
             }
 
@@ -280,14 +278,14 @@ class ScheduleController extends Controller
         }
 
         // 該当するphase_equipmentがある場合、優先順位で選択
-        if (!empty($applicablePhaseEquipments)) {
+        if (! empty($applicablePhaseEquipments)) {
             // ステータス優先順位: checked_out > reserved > checked_in
             // 同じ優先度の場合は最新のupdated_at
             $selectedEquipment = collect($applicablePhaseEquipments)
                 ->sortBy([
                     function ($pe) {
                         // ステータス優先順位（数値が小さいほど優先）
-                        return match($pe->status) {
+                        return match ($pe->status) {
                             'checked_out' => 1,
                             'reserved' => 2,
                             'checked_in' => 3,
@@ -297,7 +295,7 @@ class ScheduleController extends Controller
                     function ($pe) {
                         // 同じ優先度の場合は最新を優先（負の値で降順）
                         return -$pe->updated_at->timestamp;
-                    }
+                    },
                 ])
                 ->first();
 
@@ -336,23 +334,26 @@ class ScheduleController extends Controller
                 // 予約済みの場合：フェーズ期間内で表示
                 $phaseStart = Carbon::parse($phaseEquipment->phase->start_date);
                 $phaseEnd = Carbon::parse($phaseEquipment->phase->end_date);
+
                 return $phaseStart->lte($date) && $phaseEnd->gte($date);
 
             case 'checked_out':
                 // 出庫中の場合：checkout_date以降で表示
-                if (!$phaseEquipment->checkout_date) {
+                if (! $phaseEquipment->checkout_date) {
                     return false;
                 }
                 $checkoutDate = Carbon::parse($phaseEquipment->checkout_date);
+
                 return $checkoutDate->lte($date);
 
             case 'checked_in':
                 // 返却済みの場合：checkout_date から checkin_date までの期間で表示
-                if (!$phaseEquipment->checkout_date || !$phaseEquipment->checkin_date) {
+                if (! $phaseEquipment->checkout_date || ! $phaseEquipment->checkin_date) {
                     return false;
                 }
                 $checkoutDate = Carbon::parse($phaseEquipment->checkout_date);
                 $checkinDate = Carbon::parse($phaseEquipment->checkin_date);
+
                 return $checkoutDate->lte($date) && $checkinDate->gte($date);
 
             case 'cancelled':
@@ -494,5 +495,4 @@ class ScheduleController extends Controller
             'performances' => $performances,
         ]);
     }
-
 }

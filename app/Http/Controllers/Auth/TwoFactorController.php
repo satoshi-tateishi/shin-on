@@ -19,15 +19,17 @@ class TwoFactorController extends Controller
     public function show(): View|RedirectResponse
     {
         \Log::info('TwoFactorController::show() called');
-        \Log::info('Session data: ' . json_encode(session()->all()));
+        \Log::info('Session data: '.json_encode(session()->all()));
 
         // 2FA未認証の場合のみアクセス可能
         if (! session()->has('two_factor:user_id')) {
             \Log::warning('No two_factor:user_id in session, redirecting to login');
+
             return redirect()->route('login');
         }
 
         \Log::info('Showing two-factor-challenge view');
+
         return view('auth.two-factor-challenge');
     }
 

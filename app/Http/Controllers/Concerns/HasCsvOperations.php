@@ -108,7 +108,7 @@ trait HasCsvOperations
 
         // ヘッダーを読み込み
         $headers = fgetcsv($tempFile);
-        if (!$headers) {
+        if (! $headers) {
             fclose($tempFile);
             throw new \Exception('CSVヘッダーが読み込めません');
         }
@@ -119,11 +119,11 @@ trait HasCsvOperations
         $lineNumber = 1; // ヘッダー行の次から開始
 
         // データ行を読み込み
-        while (($data = fgetcsv($tempFile)) !== FALSE) {
+        while (($data = fgetcsv($tempFile)) !== false) {
             $lineNumber++;
 
             // 空行をスキップ
-            if (count(array_filter($data, fn($value) => !empty(trim($value)))) === 0) {
+            if (count(array_filter($data, fn ($value) => ! empty(trim($value)))) === 0) {
                 continue;
             }
 

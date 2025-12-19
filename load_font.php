@@ -1,4 +1,5 @@
 <?php
+
 require_once 'vendor/autoload.php';
 
 // DOMPDFのフォント設定
@@ -8,7 +9,7 @@ $fontCache = storage_path('fonts');
 // IPAゴシックフォントのパスを設定
 $fontPath = '/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf';
 
-if (!file_exists($fontPath)) {
+if (! file_exists($fontPath)) {
     echo "Font file not found: $fontPath\n";
     exit(1);
 }
@@ -18,7 +19,7 @@ if (!file_exists($fontPath)) {
     'family' => 'ipagothic',
     'style' => 'normal',
     'weight' => 'normal',
-    'src' => $fontPath
+    'src' => $fontPath,
 ]);
 
 echo "Font loaded successfully\n";

@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\ImageService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
-use App\Services\ImageService;
 
 class PerformanceAttachment extends Model
 {
@@ -39,7 +39,7 @@ class PerformanceAttachment extends Model
      */
     public function getThumbnailUrlAttribute(): ?string
     {
-        if (!$this->isImage() || !$this->thumbnail_path) {
+        if (! $this->isImage() || ! $this->thumbnail_path) {
             return null;
         }
 
@@ -61,11 +61,12 @@ class PerformanceAttachment extends Model
     {
         $bytes = $this->file_size;
         if ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 1) . 'MB';
+            return number_format($bytes / 1048576, 1).'MB';
         } elseif ($bytes >= 1024) {
-            return number_format($bytes / 1024, 1) . 'KB';
+            return number_format($bytes / 1024, 1).'KB';
         }
-        return $bytes . 'B';
+
+        return $bytes.'B';
     }
 
     /**
@@ -73,7 +74,7 @@ class PerformanceAttachment extends Model
      */
     public function generateThumbnail(): bool
     {
-        if (!$this->isImage()) {
+        if (! $this->isImage()) {
             return false;
         }
 
@@ -82,6 +83,7 @@ class PerformanceAttachment extends Model
 
         if ($imageService->generateThumbnail($this->file_path, $thumbnailPath)) {
             $this->update(['thumbnail_path' => $thumbnailPath]);
+
             return true;
         }
 

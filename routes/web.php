@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Auth\LineWorksController;
 use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DropboxAuthController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryTransferController;
@@ -13,13 +15,11 @@ use App\Http\Controllers\Master\LocationController;
 use App\Http\Controllers\Master\PositionController;
 use App\Http\Controllers\Master\ProductionController;
 use App\Http\Controllers\Master\UserController;
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\PhaseController;
-use App\Http\Controllers\PhaseEquipmentController;
 use App\Http\Controllers\PhaseEquipmentApiController;
 use App\Http\Controllers\PhaseEquipmentCheckoutController;
+use App\Http\Controllers\PhaseEquipmentController;
 use App\Http\Controllers\PhaseEquipmentInheritanceController;
 use App\Http\Controllers\RepairRecordController;
 use Illuminate\Support\Facades\Route;
@@ -313,46 +313,46 @@ Route::get('/login', function () {
 // テスト用API（認証なし）- ローカル・テスト環境のみ
 if (app()->environment('local', 'testing')) {
     Route::prefix('test-api')->group(function () {
-    Route::get('schedule/simple', function () {
-        return response()->json([
-            'status' => 'ok',
-            'equipment_count' => \App\Models\Equipment::count(),
-            'phase_count' => \App\Models\Phase::count(),
-            'phase_equipment_count' => \App\Models\PhaseEquipment::count(),
-        ]);
-    });
+        Route::get('schedule/simple', function () {
+            return response()->json([
+                'status' => 'ok',
+                'equipment_count' => \App\Models\Equipment::count(),
+                'phase_count' => \App\Models\Phase::count(),
+                'phase_equipment_count' => \App\Models\PhaseEquipment::count(),
+            ]);
+        });
 
-    // テスト用機材使用状況API（認証なし）
-    Route::get('equipment/{equipment}/usage', [InventoryController::class, 'getEquipmentUsageTest']);
+        // テスト用機材使用状況API（認証なし）
+        Route::get('equipment/{equipment}/usage', [InventoryController::class, 'getEquipmentUsageTest']);
 
-    // 超シンプルテスト（UUIDハッシュID対応）
-    Route::get('simple-test/{id}', function ($id) {
-        // IDの最初の8文字を使って番号生成
-        $shortId = substr($id, 0, 8);
-        $numericId = abs(crc32($shortId)) % 1000; // 0-999の数値に変換
+        // 超シンプルテスト（UUIDハッシュID対応）
+        Route::get('simple-test/{id}', function ($id) {
+            // IDの最初の8文字を使って番号生成
+            $shortId = substr($id, 0, 8);
+            $numericId = abs(crc32($shortId)) % 1000; // 0-999の数値に変換
 
-        return response()->json([
-            'success' => true,
-            'message' => 'シンプルテスト成功',
-            'data' => [
-                'equipment' => [
-                    'id' => $id,
-                    'name' => 'テスト機材 #'.$numericId,
-                    'company_number' => 'TEST'.str_pad($numericId, 3, '0', STR_PAD_LEFT),
-                    'subcategory' => 'テストカテゴリ',
-                    'location' => 'テスト倉庫',
-                ],
-                'usage_info' => [
-                    [
-                        'type' => 'available',
-                        'status' => '利用可能',
-                        'details' => 'テスト倉庫保管',
+            return response()->json([
+                'success' => true,
+                'message' => 'シンプルテスト成功',
+                'data' => [
+                    'equipment' => [
+                        'id' => $id,
+                        'name' => 'テスト機材 #'.$numericId,
                         'company_number' => 'TEST'.str_pad($numericId, 3, '0', STR_PAD_LEFT),
+                        'subcategory' => 'テストカテゴリ',
+                        'location' => 'テスト倉庫',
                     ],
+                    'usage_info' => [
+                        [
+                            'type' => 'available',
+                            'status' => '利用可能',
+                            'details' => 'テスト倉庫保管',
+                            'company_number' => 'TEST'.str_pad($numericId, 3, '0', STR_PAD_LEFT),
+                        ],
+                    ],
+                    'as_of_date' => now()->format('Y-m-d'),
                 ],
-                'as_of_date' => now()->format('Y-m-d'),
-            ],
-        ]);
+            ]);
+        });
     });
-});
 } // end if (local/testing environment)

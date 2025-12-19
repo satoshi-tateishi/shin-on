@@ -366,7 +366,7 @@ class BackupService
                     // Dropboxアップロード成功後、ローカルファイルを削除
                     if (File::exists($result['path'])) {
                         File::delete($result['path']);
-                        Log::info("Deleted local backup file after successful upload", [
+                        Log::info('Deleted local backup file after successful upload', [
                             'local_path' => $result['path'],
                         ]);
                     }
@@ -484,6 +484,7 @@ class BackupService
                 'backup_path' => $backupPath,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -502,6 +503,7 @@ class BackupService
         if (str_contains($filename, 'test_') && str_ends_with($filename, '.txt')) {
             return 'test';
         }
+
         return 'unknown';
     }
 
@@ -513,6 +515,7 @@ class BackupService
         if (preg_match('/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})$/', $backupName, $matches)) {
             return sprintf('%s-%s-%s %s:%s:%s', $matches[1], $matches[2], $matches[3], $matches[4], $matches[5], $matches[6]);
         }
+
         return null;
     }
 
@@ -554,7 +557,7 @@ class BackupService
             foreach ($contents['entries'] as $entry) {
                 if ($entry['.tag'] === 'file') {
                     $filename = basename($entry['name']);
-                    $localPath = $downloadDir . '/' . $filename;
+                    $localPath = $downloadDir.'/'.$filename;
 
                     // Dropboxからファイルをダウンロード
                     $fileContent = $this->dropboxService->downloadFile($entry['path_display']);
@@ -624,7 +627,7 @@ class BackupService
                         // Dropboxアップロード成功後、ローカルファイルを削除
                         if (File::exists($preRestoreBackup)) {
                             File::delete($preRestoreBackup);
-                            Log::info("Deleted local pre-restore backup file after successful upload", [
+                            Log::info('Deleted local pre-restore backup file after successful upload', [
                                 'local_path' => $preRestoreBackup,
                             ]);
                         }
@@ -709,6 +712,7 @@ class BackupService
                         Log::debug('Skipping statement for system table', [
                             'statement' => substr($statement, 0, 100),
                         ]);
+
                         continue;
                     }
 
@@ -745,7 +749,7 @@ class BackupService
             foreach ($skipTables as $table) {
                 // バッククォート付きとなしの両方をチェック
                 if (str_contains($statement, "`{$table}`") ||
-                    preg_match('/INSERT\s+INTO\s+' . preg_quote($table, '/') . '\s/i', $statement)) {
+                    preg_match('/INSERT\s+INTO\s+'.preg_quote($table, '/').'\s/i', $statement)) {
                     return true;
                 }
             }
@@ -767,11 +771,12 @@ class BackupService
             'personal_access_tokens', // API認証トークン
         ];
 
-        $tables = $pdo->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
+        $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach ($tables as $table) {
             if (in_array($table, $skipTables)) {
                 Log::debug("Skipping system table: {$table}");
+
                 continue;
             }
             $pdo->exec("TRUNCATE TABLE `{$table}`");
@@ -847,6 +852,7 @@ class BackupService
             // mysqldump警告行をスキップ
             if (str_starts_with($line, 'mysqldump:')) {
                 Log::debug('Skipping mysqldump warning line', ['line' => substr($line, 0, 100)]);
+
                 continue;
             }
             $filteredLines[] = $line;
@@ -875,13 +881,14 @@ class BackupService
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
-                $targetPath = $extractPath . '/' . $filename;
+                $targetPath = $extractPath.'/'.$filename;
 
                 // ディレクトリの場合はスキップ
                 if (str_ends_with($filename, '/')) {
                     if (! File::exists($targetPath)) {
                         File::makeDirectory($targetPath, 0755, true);
                     }
+
                     continue;
                 }
 

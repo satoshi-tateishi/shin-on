@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\Log;
 class EnvEncryptionService
 {
     private const CIPHER = 'AES-256-CBC';
+
     private const PBKDF2_ITERATIONS = 10000;
+
     private const PBKDF2_HASH_ALGO = 'sha256';
+
     private const KEY_LENGTH = 32;
+
     private const VERSION = 'v2';
 
     /**
@@ -61,7 +65,7 @@ class EnvEncryptionService
                     'app_name' => config('app.name'),
                     'environment' => app()->environment(),
                     'php_version' => PHP_VERSION,
-                ]
+                ],
             ];
 
             Log::info('Environment file encrypted successfully', [
@@ -86,14 +90,14 @@ class EnvEncryptionService
     {
         try {
             // バージョンチェック
-            if (!isset($package['version']) || $package['version'] !== self::VERSION) {
-                throw new Exception('Unsupported encryption version: ' . ($package['version'] ?? 'unknown'));
+            if (! isset($package['version']) || $package['version'] !== self::VERSION) {
+                throw new Exception('Unsupported encryption version: '.($package['version'] ?? 'unknown'));
             }
 
             // 必要な要素の存在確認
             $required = ['salt', 'iv', 'hmac', 'data'];
             foreach ($required as $field) {
-                if (!isset($package[$field])) {
+                if (! isset($package[$field])) {
                     throw new Exception("Missing required field: {$field}");
                 }
             }
@@ -120,7 +124,7 @@ class EnvEncryptionService
 
             // HMAC検証
             $calculated_hmac = hash_hmac('sha256', $ciphertext, $key, true);
-            if (!hash_equals($hmac, $calculated_hmac)) {
+            if (! hash_equals($hmac, $calculated_hmac)) {
                 throw new Exception('Authentication failed - data may be corrupted or password incorrect');
             }
 
@@ -168,19 +172,19 @@ class EnvEncryptionService
             $errors[] = 'パスワードは128文字以下である必要があります';
         }
 
-        if (!preg_match('/[A-Z]/', $password)) {
+        if (! preg_match('/[A-Z]/', $password)) {
             $errors[] = '大文字を含める必要があります';
         }
 
-        if (!preg_match('/[a-z]/', $password)) {
+        if (! preg_match('/[a-z]/', $password)) {
             $errors[] = '小文字を含める必要があります';
         }
 
-        if (!preg_match('/[0-9]/', $password)) {
+        if (! preg_match('/[0-9]/', $password)) {
             $errors[] = '数字を含める必要があります';
         }
 
-        if (!preg_match('/[@$!%*?&#]/', $password)) {
+        if (! preg_match('/[@$!%*?&#]/', $password)) {
             $errors[] = '特殊文字(@$!%*?&#)を含める必要があります';
         }
 
@@ -211,24 +215,46 @@ class EnvEncryptionService
         $length = strlen($password);
 
         // 長さによる基本スコア
-        if ($length >= 12) $score += 25;
-        if ($length >= 16) $score += 10;
-        if ($length >= 20) $score += 10;
+        if ($length >= 12) {
+            $score += 25;
+        }
+        if ($length >= 16) {
+            $score += 10;
+        }
+        if ($length >= 20) {
+            $score += 10;
+        }
 
         // 文字種による加点
-        if (preg_match('/[a-z]/', $password)) $score += 10;
-        if (preg_match('/[A-Z]/', $password)) $score += 10;
-        if (preg_match('/[0-9]/', $password)) $score += 10;
-        if (preg_match('/[@$!%*?&#]/', $password)) $score += 15;
+        if (preg_match('/[a-z]/', $password)) {
+            $score += 10;
+        }
+        if (preg_match('/[A-Z]/', $password)) {
+            $score += 10;
+        }
+        if (preg_match('/[0-9]/', $password)) {
+            $score += 10;
+        }
+        if (preg_match('/[@$!%*?&#]/', $password)) {
+            $score += 15;
+        }
 
         // 多様性による加点
         $unique_chars = count(array_unique(str_split($password)));
-        if ($unique_chars >= 8) $score += 10;
-        if ($unique_chars >= 12) $score += 5;
+        if ($unique_chars >= 8) {
+            $score += 10;
+        }
+        if ($unique_chars >= 12) {
+            $score += 5;
+        }
 
         // 減点要素
-        if (preg_match('/(.)\1{2,}/', $password)) $score -= 10; // 3文字以上の連続
-        if (preg_match('/(123|abc|qwe)/i', $password)) $score -= 15;
+        if (preg_match('/(.)\1{2,}/', $password)) {
+            $score -= 10;
+        } // 3文字以上の連続
+        if (preg_match('/(123|abc|qwe)/i', $password)) {
+            $score -= 15;
+        }
 
         return max(0, min(100, $score));
     }
@@ -242,7 +268,7 @@ class EnvEncryptionService
             // 基本構造チェック
             $required = ['version', 'salt', 'iv', 'hmac', 'data'];
             foreach ($required as $field) {
-                if (!isset($package[$field])) {
+                if (! isset($package[$field])) {
                     return false;
                 }
             }
@@ -256,9 +282,15 @@ class EnvEncryptionService
             }
 
             // 長さチェック
-            if (strlen(base64_decode($package['salt'])) !== 16) return false;
-            if (strlen(base64_decode($package['iv'])) !== 16) return false;
-            if (strlen(base64_decode($package['hmac'])) !== 32) return false;
+            if (strlen(base64_decode($package['salt'])) !== 16) {
+                return false;
+            }
+            if (strlen(base64_decode($package['iv'])) !== 16) {
+                return false;
+            }
+            if (strlen(base64_decode($package['hmac'])) !== 32) {
+                return false;
+            }
 
             return true;
 

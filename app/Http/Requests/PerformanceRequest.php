@@ -22,7 +22,7 @@ class PerformanceRequest extends FormRequest
             'short_name' => 'nullable|string|max:50',
             'performance_type' => [
                 'required',
-                Rule::in($performanceTypes)
+                Rule::in($performanceTypes),
             ],
             'director' => 'nullable|string|max:255',
             'note' => 'nullable|string',

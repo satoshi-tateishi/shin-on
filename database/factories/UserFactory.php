@@ -27,8 +27,6 @@ class UserFactory extends Factory
             'furigana' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'lineworks_id' => null,
-            'lineworks_token' => null,
-            'lineworks_refresh_token' => null,
             'icon' => null,
             'mobile_phone' => fake()->phoneNumber(),
             'is_active' => true,

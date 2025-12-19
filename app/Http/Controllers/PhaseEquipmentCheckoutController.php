@@ -33,9 +33,9 @@ class PhaseEquipmentCheckoutController extends Controller
      * It validates the request data, updates the phase equipment status,
      * and creates an equipment movement record for tracking.
      *
-     * @param Request $request The HTTP request containing checkout data
-     * @param Phase $phase The phase the equipment belongs to
-     * @param PhaseEquipment $phaseEquipment The equipment to checkout
+     * @param  Request  $request  The HTTP request containing checkout data
+     * @param  Phase  $phase  The phase the equipment belongs to
+     * @param  PhaseEquipment  $phaseEquipment  The equipment to checkout
      * @return RedirectResponse Redirect back with success or error message
      */
     public function checkout(Request $request, Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
@@ -62,7 +62,6 @@ class PhaseEquipmentCheckoutController extends Controller
                 'checkout_user_id' => auth()->id(),
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
-
 
             // EquipmentMovement レコードを作成
             EquipmentMovement::createCheckout(
@@ -97,9 +96,9 @@ class PhaseEquipmentCheckoutController extends Controller
      * It includes special handling for equipment requiring location selection
      * (location_id 92-94) and updates the equipment's physical location.
      *
-     * @param Request $request The HTTP request containing checkin data
-     * @param Phase $phase The phase the equipment belongs to
-     * @param PhaseEquipment $phaseEquipment The equipment to checkin
+     * @param  Request  $request  The HTTP request containing checkin data
+     * @param  Phase  $phase  The phase the equipment belongs to
+     * @param  PhaseEquipment  $phaseEquipment  The equipment to checkin
      * @return RedirectResponse Redirect back with success or error message
      */
     public function checkin(Request $request, Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
@@ -146,7 +145,6 @@ class PhaseEquipmentCheckoutController extends Controller
                 'note' => $validated['note'] ?? $phaseEquipment->note,
             ]);
 
-
             // location_id=92-94の機材の場合、機材の場所を更新
             $toLocationId = $validated['to_location_id'] ?? null;
             if ($requiresLocationSelection && $toLocationId) {
@@ -192,7 +190,7 @@ class PhaseEquipmentCheckoutController extends Controller
      * either in reserved or checked_in status. It processes all eligible
      * equipment within the phase simultaneously.
      *
-     * @param Phase $phase The phase containing equipment to checkout
+     * @param  Phase  $phase  The phase containing equipment to checkout
      * @return RedirectResponse Redirect back with success or error message
      */
     public function bulkCheckout(Phase $phase): RedirectResponse
@@ -247,7 +245,7 @@ class PhaseEquipmentCheckoutController extends Controller
      * This method performs a bulk checkout operation specifically on equipment
      * that is in reserved status only. It excludes checked_in equipment.
      *
-     * @param Phase $phase The phase containing reserved equipment to checkout
+     * @param  Phase  $phase  The phase containing reserved equipment to checkout
      * @return RedirectResponse Redirect back with success or error message
      */
     public function bulkCheckoutReserved(Phase $phase): RedirectResponse
@@ -302,7 +300,7 @@ class PhaseEquipmentCheckoutController extends Controller
      * This method performs a bulk checkout operation specifically on equipment
      * that is in checked_in status only. It excludes reserved equipment.
      *
-     * @param Phase $phase The phase containing checked-in equipment to checkout
+     * @param  Phase  $phase  The phase containing checked-in equipment to checkout
      * @return RedirectResponse Redirect back with success or error message
      */
     public function bulkCheckoutCheckedIn(Phase $phase): RedirectResponse
@@ -358,8 +356,8 @@ class PhaseEquipmentCheckoutController extends Controller
      * currently checked out. It supports both full bulk checkin and selective
      * checkin based on equipment IDs provided via JSON request.
      *
-     * @param Phase $phase The phase containing checked-out equipment to checkin
-     * @param Request $request The HTTP request, may contain equipment_ids for selective checkin
+     * @param  Phase  $phase  The phase containing checked-out equipment to checkin
+     * @param  Request  $request  The HTTP request, may contain equipment_ids for selective checkin
      * @return RedirectResponse|JsonResponse Redirect back or JSON response based on request type
      */
     public function bulkCheckin(Phase $phase, Request $request)
@@ -398,7 +396,6 @@ class PhaseEquipmentCheckoutController extends Controller
                     'checkin_date' => $today,
                     'checkin_user_id' => auth()->id(),
                 ]);
-
 
                 EquipmentMovement::createCheckin(
                     $phaseEquipment->equipment_id,

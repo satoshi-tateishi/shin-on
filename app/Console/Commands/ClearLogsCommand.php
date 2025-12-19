@@ -46,7 +46,7 @@ class ClearLogsCommand extends Command
         $clearedFiles = [];
 
         foreach ($logFiles as $logFile) {
-            $filePath = $logPath . '/' . $logFile;
+            $filePath = $logPath.'/'.$logFile;
 
             if (File::exists($filePath)) {
                 $fileSize = File::size($filePath);
@@ -54,12 +54,12 @@ class ClearLogsCommand extends Command
                 $fileModified = File::lastModified($filePath);
 
                 if ($fileModified < $cutoffTime->timestamp) {
-                    if (!$force && !$this->confirm("Delete {$logFile} (" . $this->formatBytes($fileSize) . ")?")) {
+                    if (! $force && ! $this->confirm("Delete {$logFile} (".$this->formatBytes($fileSize).')?')) {
                         continue;
                     }
 
                     File::delete($filePath);
-                    $clearedFiles[] = $logFile . ' (' . $this->formatBytes($fileSize) . ')';
+                    $clearedFiles[] = $logFile.' ('.$this->formatBytes($fileSize).')';
                     $this->line("🗑️  Deleted: {$logFile}");
                 } else {
                     $totalSizeAfter += $fileSize;
@@ -69,15 +69,15 @@ class ClearLogsCommand extends Command
         }
 
         if (empty($clearedFiles)) {
-            $this->info("✅ No log files need to be cleared.");
+            $this->info('✅ No log files need to be cleared.');
         } else {
             $this->newLine();
-            $this->info("✅ Log cleanup completed!");
-            $this->table(['Cleared Files'], array_map(fn($file) => [$file], $clearedFiles));
+            $this->info('✅ Log cleanup completed!');
+            $this->table(['Cleared Files'], array_map(fn ($file) => [$file], $clearedFiles));
 
             $savedSpace = $totalSizeBefore - $totalSizeAfter;
             if ($savedSpace > 0) {
-                $this->info("💾 Freed up: " . $this->formatBytes($savedSpace));
+                $this->info('💾 Freed up: '.$this->formatBytes($savedSpace));
             }
         }
 
@@ -86,12 +86,12 @@ class ClearLogsCommand extends Command
 
     private function formatBytes($bytes, $precision = 2)
     {
-        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

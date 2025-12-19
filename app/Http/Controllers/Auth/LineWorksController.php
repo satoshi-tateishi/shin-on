@@ -183,7 +183,8 @@ class LineWorksController extends Controller
                 \Log::info("Session set - two_factor:user_id: {$user->id}");
 
                 // 2FA入力画面にリダイレクト
-                \Log::info("Redirecting to two-factor.show");
+                \Log::info('Redirecting to two-factor.show');
+
                 return redirect()->route('two-factor.show')
                     ->with('status', '認証コードをLINE WORKSに送信しました。');
             } catch (\Exception $e) {

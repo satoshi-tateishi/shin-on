@@ -58,15 +58,15 @@ class PerformanceService
 
     private function applyFilters(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
-            $query->where('performances.title', 'like', '%' . $filters['search'] . '%');
+        if (! empty($filters['search'])) {
+            $query->where('performances.title', 'like', '%'.$filters['search'].'%');
         }
 
-        if (!empty($filters['performance_type'])) {
+        if (! empty($filters['performance_type'])) {
             $query->where('performances.performance_type', $filters['performance_type']);
         }
 
-        if (!empty($filters['phase_status'])) {
+        if (! empty($filters['phase_status'])) {
             $today = now()->toDateString();
 
             if ($filters['phase_status'] === 'completed') {
@@ -112,9 +112,9 @@ class PerformanceService
         $performance->staff()->delete();
 
         // 通常のスタッフを追加
-        if (!empty($data['staff'])) {
+        if (! empty($data['staff'])) {
             foreach ($data['staff'] as $staffData) {
-                if (!empty($staffData['user_id']) && !empty($staffData['position_id'])) {
+                if (! empty($staffData['user_id']) && ! empty($staffData['position_id'])) {
                     PerformanceStaff::create([
                         'performance_id' => $performance->id,
                         'user_id' => $staffData['user_id'],
@@ -125,9 +125,9 @@ class PerformanceService
         }
 
         // サウンドデザイナーを追加
-        if (!empty($data['sound_designers'])) {
+        if (! empty($data['sound_designers'])) {
             foreach ($data['sound_designers'] as $designerId) {
-                if (!empty($designerId)) {
+                if (! empty($designerId)) {
                     PerformanceStaff::create([
                         'performance_id' => $performance->id,
                         'user_id' => $designerId,
@@ -143,9 +143,9 @@ class PerformanceService
      */
     private function handleFileUploads(Performance $performance, array $data): void
     {
-        Log::info('ファイルアップロード処理開始', ['performance_id' => $performance->id, 'has_attachments' => !empty($data['attachments'])]);
+        Log::info('ファイルアップロード処理開始', ['performance_id' => $performance->id, 'has_attachments' => ! empty($data['attachments'])]);
 
-        if (!empty($data['attachments'])) {
+        if (! empty($data['attachments'])) {
             Log::info('添付ファイル数', ['count' => count($data['attachments'])]);
 
             foreach ($data['attachments'] as $index => $file) {
@@ -153,14 +153,14 @@ class PerformanceService
 
                 if ($file && $file->isValid()) {
                     // ファイルを保存
-                    $filename = time() . '_' . $file->getClientOriginalName();
-                    $path = $file->storeAs('performances/' . $performance->id, $filename, 'public');
+                    $filename = time().'_'.$file->getClientOriginalName();
+                    $path = $file->storeAs('performances/'.$performance->id, $filename, 'public');
 
                     Log::info('ファイル保存完了', [
                         'filename' => $filename,
                         'path' => $path,
                         'size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType()
+                        'mime_type' => $file->getMimeType(),
                     ]);
 
                     // データベースに記録
@@ -189,7 +189,7 @@ class PerformanceService
      */
     private function handleFileDeletions(Performance $performance, array $data): void
     {
-        if (!empty($data['delete_attachments'])) {
+        if (! empty($data['delete_attachments'])) {
             $deleteIds = $data['delete_attachments'];
             $attachments = $performance->attachments()->whereIn('id', $deleteIds)->get();
 

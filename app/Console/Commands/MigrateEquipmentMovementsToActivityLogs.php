@@ -31,6 +31,7 @@ class MigrateEquipmentMovementsToActivityLogs extends Command
 
         if ($movements->isEmpty()) {
             $this->info('No movements to migrate.');
+
             return Command::SUCCESS;
         }
 
@@ -49,6 +50,7 @@ class MigrateEquipmentMovementsToActivityLogs extends Command
                 if (! $action) {
                     $skippedCount++;
                     $bar->advance();
+
                     continue;
                 }
 
@@ -69,6 +71,7 @@ class MigrateEquipmentMovementsToActivityLogs extends Command
                     if ($exists) {
                         $skippedCount++;
                         $bar->advance();
+
                         continue;
                     }
 
@@ -96,10 +99,10 @@ class MigrateEquipmentMovementsToActivityLogs extends Command
         $bar->finish();
         $this->newLine(2);
 
-        $this->info("Migration completed!");
+        $this->info('Migration completed!');
         $this->info("- Migrated: {$migratedCount}");
         $this->info("- Skipped: {$skippedCount}");
-        $this->info("- Errors: " . count($errors));
+        $this->info('- Errors: '.count($errors));
 
         if (! empty($errors)) {
             $this->newLine();

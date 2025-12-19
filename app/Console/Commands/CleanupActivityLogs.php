@@ -37,7 +37,7 @@ class CleanupActivityLogs extends Command
         $count = $query->count();
 
         if ($count === 0) {
-            $this->info("削除対象のアクティビティログはありません。");
+            $this->info('削除対象のアクティビティログはありません。');
 
             return Command::SUCCESS;
         }

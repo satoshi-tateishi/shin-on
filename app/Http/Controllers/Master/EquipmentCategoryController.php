@@ -201,9 +201,10 @@ class EquipmentCategoryController extends Controller
     protected function getUniqueIdentifier(array $recordData): array
     {
         // IDがある場合はIDで特定、なければnameで特定
-        if (!empty($recordData['id'])) {
+        if (! empty($recordData['id'])) {
             return ['id' => $recordData['id']];
         }
+
         return ['name' => $recordData['name']];
     }
 

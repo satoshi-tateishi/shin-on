@@ -35,10 +35,7 @@ class TwoFactorLog extends Model
     /**
      * ログを記録する静的メソッド
      *
-     * @param  int|null  $userId
      * @param  string  $action  アクション (sent, verified, failed, locked, resent)
-     * @param  string|null  $ipAddress
-     * @param  string|null  $userAgent
      */
     public static function log(
         ?int $userId,

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\PhaseEquipmentRequest;
 use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentMovement;
@@ -52,7 +51,7 @@ class PhaseEquipmentController extends Controller
      * Displays the form for creating new phase equipment assignments. Loads all necessary
      * data including equipment categories, subcategories, and equipment sets for selection.
      *
-     * @param Phase $phase The phase to add equipment to
+     * @param  Phase  $phase  The phase to add equipment to
      * @return View The create form view with category and equipment set data
      */
     public function create(Phase $phase): View
@@ -86,8 +85,8 @@ class PhaseEquipmentController extends Controller
      * Validates equipment availability, handles conflict checking for individual equipment,
      * and manages quantity constraints for quantity-managed equipment.
      *
-     * @param Request $request The HTTP request containing equipment data
-     * @param Phase $phase The phase to assign equipment to
+     * @param  Request  $request  The HTTP request containing equipment data
+     * @param  Phase  $phase  The phase to assign equipment to
      * @return RedirectResponse Redirect response with success or error messages
      */
     public function store(Request $request, Phase $phase): RedirectResponse
@@ -179,8 +178,8 @@ class PhaseEquipmentController extends Controller
      * Shows detailed information about a specific phase equipment assignment including
      * equipment details, movement history, and other usage records for the same equipment.
      *
-     * @param Phase $phase The phase containing the equipment
-     * @param PhaseEquipment $phaseEquipment The specific phase equipment record
+     * @param  Phase  $phase  The phase containing the equipment
+     * @param  PhaseEquipment  $phaseEquipment  The specific phase equipment record
      * @return View The detail view with equipment information and related data
      */
     public function show(Phase $phase, PhaseEquipment $phaseEquipment): View
@@ -217,8 +216,8 @@ class PhaseEquipmentController extends Controller
      * Displays the edit form for a phase equipment assignment. Calculates available
      * quantities for quantity-managed equipment and identifies potential conflicts.
      *
-     * @param Phase $phase The phase containing the equipment
-     * @param PhaseEquipment $phaseEquipment The phase equipment record to edit
+     * @param  Phase  $phase  The phase containing the equipment
+     * @param  PhaseEquipment  $phaseEquipment  The phase equipment record to edit
      * @return View The edit form view with current data and availability information
      */
     public function edit(Phase $phase, PhaseEquipment $phaseEquipment): View
@@ -283,9 +282,9 @@ class PhaseEquipmentController extends Controller
      * Updates a phase equipment record with new quantity and note values.
      * Validates quantity constraints for quantity-managed equipment.
      *
-     * @param Request $request The HTTP request containing update data
-     * @param Phase $phase The phase containing the equipment
-     * @param PhaseEquipment $phaseEquipment The phase equipment record to update
+     * @param  Request  $request  The HTTP request containing update data
+     * @param  Phase  $phase  The phase containing the equipment
+     * @param  PhaseEquipment  $phaseEquipment  The phase equipment record to update
      * @return RedirectResponse Redirect response with success or error messages
      */
     public function update(Request $request, Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
@@ -327,8 +326,8 @@ class PhaseEquipmentController extends Controller
      * assignment from the phase. If the equipment is currently checked out
      * or checked in, resets the equipment status to available.
      *
-     * @param Phase $phase The phase containing the equipment
-     * @param PhaseEquipment $phaseEquipment The phase equipment record to delete
+     * @param  Phase  $phase  The phase containing the equipment
+     * @param  PhaseEquipment  $phaseEquipment  The phase equipment record to delete
      * @return RedirectResponse Redirect response with success message
      */
     public function destroy(Phase $phase, PhaseEquipment $phaseEquipment): RedirectResponse
@@ -371,8 +370,8 @@ class PhaseEquipmentController extends Controller
      * Validates each equipment item individually and creates records in a transaction.
      * Handles both individual and quantity-managed equipment with appropriate validation.
      *
-     * @param Request $request The HTTP request containing bulk equipment data
-     * @param Phase $phase The phase to assign equipment to
+     * @param  Request  $request  The HTTP request containing bulk equipment data
+     * @param  Phase  $phase  The phase to assign equipment to
      * @return RedirectResponse Redirect response with results summary
      */
     private function storeBulkEquipment(Request $request, Phase $phase): RedirectResponse
