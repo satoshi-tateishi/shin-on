@@ -75,7 +75,7 @@ class LocationTest extends TestCase
      */
     public function test_capacity_status_critical(): void
     {
-        $location = new Location();
+        $location = new Location;
 
         $reflection = new \ReflectionClass($location);
         $method = $reflection->getMethod('getCapacityStatus');
@@ -90,7 +90,7 @@ class LocationTest extends TestCase
      */
     public function test_capacity_status_warning(): void
     {
-        $location = new Location();
+        $location = new Location;
 
         $reflection = new \ReflectionClass($location);
         $method = $reflection->getMethod('getCapacityStatus');
@@ -105,7 +105,7 @@ class LocationTest extends TestCase
      */
     public function test_capacity_status_normal(): void
     {
-        $location = new Location();
+        $location = new Location;
 
         $reflection = new \ReflectionClass($location);
         $method = $reflection->getMethod('getCapacityStatus');
@@ -120,7 +120,7 @@ class LocationTest extends TestCase
      */
     public function test_capacity_status_low(): void
     {
-        $location = new Location();
+        $location = new Location;
 
         $reflection = new \ReflectionClass($location);
         $method = $reflection->getMethod('getCapacityStatus');
