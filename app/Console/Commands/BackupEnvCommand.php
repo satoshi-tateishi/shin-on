@@ -154,7 +154,7 @@ class BackupEnvCommand extends Command
 
             Log::error('Environment backup failed via CLI', [
                 'error' => $e->getMessage(),
-                'encrypted' => $useEncryption ?? false,
+                'encrypted' => $useEncryption,
             ]);
 
             // 一時ファイルのクリーンアップ

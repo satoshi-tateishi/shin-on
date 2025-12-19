@@ -207,7 +207,7 @@ class Performance extends Model
         $endDate = $this->phases->max('end_date');
 
         if ($startDate && $endDate) {
-            return \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1;
+            return (int) \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1;
         }
 
         return null;

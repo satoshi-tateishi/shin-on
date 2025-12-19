@@ -7,7 +7,6 @@ use App\Models\TwoFactorLog;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\LineWorksBotService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
@@ -16,8 +15,10 @@ class LineWorksController extends Controller
 {
     /**
      * Redirect the user to the LINE WORKS authentication page.
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function redirect(): RedirectResponse
+    public function redirect()
     {
         return Socialite::driver('lineworks')->redirect();
     }
@@ -262,7 +263,7 @@ class LineWorksController extends Controller
     /**
      * Log the user out.
      */
-    public function logout(): RedirectResponse
+    public function logout(): \Illuminate\Http\RedirectResponse
     {
         Auth::logout();
 

@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property Carbon $start_date
+ * @property Carbon $end_date
+ */
 class Phase extends Model
 {
     use HasFactory;
@@ -119,7 +124,7 @@ class Phase extends Model
      */
     public function getDurationDaysAttribute(): int
     {
-        return $this->start_date->diffInDays($this->end_date) + 1;
+        return (int) $this->start_date->diffInDays($this->end_date) + 1;
     }
 
     /**

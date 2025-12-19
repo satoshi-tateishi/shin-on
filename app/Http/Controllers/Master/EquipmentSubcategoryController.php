@@ -8,6 +8,7 @@ use App\Http\Controllers\Concerns\HasSortableRecords;
 use App\Http\Controllers\Controller;
 use App\Models\EquipmentCategory;
 use App\Models\EquipmentSubcategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

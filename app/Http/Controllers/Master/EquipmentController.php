@@ -14,6 +14,7 @@ use App\Models\EquipmentSubcategory;
 use App\Models\Location;
 use App\Services\LineWorksBotService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

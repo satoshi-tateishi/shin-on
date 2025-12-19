@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
+ */
 class RepairRecord extends Model
 {
     use HasFactory;
@@ -128,7 +133,7 @@ class RepairRecord extends Model
             return null;
         }
 
-        return $this->started_at->diffInDays($this->completed_at);
+        return (int) $this->started_at->diffInDays($this->completed_at);
     }
 
     /**
