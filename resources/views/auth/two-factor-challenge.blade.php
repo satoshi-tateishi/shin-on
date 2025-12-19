@@ -32,23 +32,60 @@
         <form method="POST" action="{{ route('two-factor.verify') }}" class="max-w-md mx-auto">
             @csrf
 
-            <div class="mb-6" x-data="{ code: '', formatCode() { this.code = this.code.replace(/[^0-9]/g, ''); } }">
-                <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">認証コード</label>
-                <input
-                    type="text"
-                    id="code"
-                    name="code"
-                    x-model="code"
-                    x-on:input="formatCode"
-                    maxlength="6"
-                    pattern="[0-9]{6}"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    class="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="000000"
-                    required
-                    autofocus
-                >
+            <div class="mb-6" x-data="{
+                digits: ['', '', '', '', '', ''],
+                getInput(index) {
+                    return this.$root.querySelectorAll('input[data-digit]')[index];
+                },
+                focusNext(index) {
+                    if (this.digits[index] && index < 5) {
+                        this.getInput(index + 1)?.focus();
+                    }
+                },
+                focusPrev(index, event) {
+                    if (event.key === 'Backspace' && !this.digits[index] && index > 0) {
+                        this.getInput(index - 1)?.focus();
+                    }
+                },
+                handlePaste(event) {
+                    event.preventDefault();
+                    let paste = (event.clipboardData || window.clipboardData).getData('text');
+                    let digits = paste.replace(/[^0-9]/g, '').substring(0, 6).split('');
+                    digits.forEach((char, i) => {
+                        this.digits[i] = char;
+                    });
+                    let nextIndex = Math.min(digits.length, 5);
+                    this.getInput(nextIndex)?.focus();
+                },
+                handleInput(index, event) {
+                    let value = event.target.value.replace(/[^0-9]/g, '');
+                    this.digits[index] = value.substring(0, 1);
+                    if (value) {
+                        this.focusNext(index);
+                    }
+                },
+                getCode() {
+                    return this.digits.join('');
+                }
+            }">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">認証コード</label>
+                <div class="flex justify-center items-center gap-2">
+                    <!-- 1桁目 -->
+                    <input type="text" data-digit="0" x-model="digits[0]" x-on:input="handleInput(0, $event)" x-on:paste="handlePaste($event)" x-on:keydown="focusPrev(0, $event)" x-on:focus="$event.target.select()" maxlength="6" inputmode="numeric" autocomplete="one-time-code" class="w-12 h-14 text-center text-2xl font-mono border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" autofocus required>
+                    <!-- 2桁目 -->
+                    <input type="text" data-digit="1" x-model="digits[1]" x-on:input="handleInput(1, $event)" x-on:paste="handlePaste($event)" x-on:keydown="focusPrev(1, $event)" x-on:focus="$event.target.select()" maxlength="6" inputmode="numeric" autocomplete="off" class="w-12 h-14 text-center text-2xl font-mono border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                    <!-- 3桁目 -->
+                    <input type="text" data-digit="2" x-model="digits[2]" x-on:input="handleInput(2, $event)" x-on:paste="handlePaste($event)" x-on:keydown="focusPrev(2, $event)" x-on:focus="$event.target.select()" maxlength="6" inputmode="numeric" autocomplete="off" class="w-12 h-14 text-center text-2xl font-mono border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                    <!-- 区切り -->
+                    <span class="mx-1 text-gray-400 text-2xl">-</span>
+                    <!-- 4桁目 -->
+                    <input type="text" data-digit="3" x-model="digits[3]" x-on:input="handleInput(3, $event)" x-on:paste="handlePaste($event)" x-on:keydown="focusPrev(3, $event)" x-on:focus="$event.target.select()" maxlength="6" inputmode="numeric" autocomplete="off" class="w-12 h-14 text-center text-2xl font-mono border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                    <!-- 5桁目 -->
+                    <input type="text" data-digit="4" x-model="digits[4]" x-on:input="handleInput(4, $event)" x-on:paste="handlePaste($event)" x-on:keydown="focusPrev(4, $event)" x-on:focus="$event.target.select()" maxlength="6" inputmode="numeric" autocomplete="off" class="w-12 h-14 text-center text-2xl font-mono border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                    <!-- 6桁目 -->
+                    <input type="text" data-digit="5" x-model="digits[5]" x-on:input="handleInput(5, $event)" x-on:paste="handlePaste($event)" x-on:keydown="focusPrev(5, $event)" x-on:focus="$event.target.select()" maxlength="6" inputmode="numeric" autocomplete="off" class="w-12 h-14 text-center text-2xl font-mono border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <input type="hidden" name="code" x-bind:value="getCode()">
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">有効期限: 10分</p>
             </div>
 
