@@ -96,18 +96,18 @@ class EquipmentAnalyticsService
      */
     public function checkInventoryAlerts(Equipment $equipment, ?Carbon $asOfDate = null): array
     {
-        $asOfDate = $asOfDate ?? now();
-        $inventory = $equipment->getInventoryAsOf($asOfDate);
         $alerts = [];
 
-        // 在庫不足チェック（最小在庫数設定があれば）
-        $minStockLevel = $equipment->min_stock_level ?? 1;
-        if ($inventory['available_quantity'] < $minStockLevel) {
-            $alerts[] = [
-                'type' => 'low_stock',
-                'message' => "在庫不足: {$inventory['available_quantity']}個 (最小: {$minStockLevel}個)",
-                'severity' => 'warning',
-            ];
+        // 在庫不足チェック（数量管理機材の場合）
+        if ($equipment->management_type === 'quantity') {
+            $minStockLevel = 1;
+            if ($equipment->quantity < $minStockLevel) {
+                $alerts[] = [
+                    'type' => 'low_stock',
+                    'message' => "在庫不足: {$equipment->quantity}個 (最小: {$minStockLevel}個)",
+                    'severity' => 'warning',
+                ];
+            }
         }
 
         // 長期未使用チェック（90日以上未使用）
@@ -117,7 +117,7 @@ class EquipmentAnalyticsService
             ->first();
 
         if (! $lastUsage || $lastUsage->moved_at->lt(now()->subDays(90))) {
-            $days = $lastUsage ? $lastUsage->moved_at->diffInDays(now()) : '不明';
+            $days = $lastUsage ? (int) $lastUsage->moved_at->diffInDays(now()) : '不明';
             $alerts[] = [
                 'type' => 'unused',
                 'message' => "長期未使用: {$days}日間未使用",
@@ -196,7 +196,7 @@ class EquipmentAnalyticsService
         $query = $equipment->repairRecords()->with('reportedBy');
 
         if ($startDate && $endDate) {
-            $query->reportedBetween($startDate, $endDate);
+            $query->whereBetween('reported_at', [$startDate, $endDate]);
         }
 
         return $query->orderBy('reported_at', 'desc')->get();
@@ -210,7 +210,7 @@ class EquipmentAnalyticsService
         $query = $equipment->repairRecords()->whereNotNull('repair_cost');
 
         if ($startDate && $endDate) {
-            $query->reportedBetween($startDate, $endDate);
+            $query->whereBetween('reported_at', [$startDate, $endDate]);
         }
 
         return $query->sum('repair_cost') ?? 0.0;

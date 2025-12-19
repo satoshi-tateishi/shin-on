@@ -107,6 +107,6 @@ class EquipmentSet extends Model
      */
     public function getRequiredItemsAttribute(): int
     {
-        return $this->equipmentItems()->required()->count();
+        return $this->equipmentItems()->where('is_required', true)->count();
     }
 }

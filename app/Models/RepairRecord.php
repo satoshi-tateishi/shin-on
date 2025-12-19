@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property Carbon|null $started_at
  * @property Carbon|null $completed_at
+ * @property-read Equipment|null $equipment
  */
 class RepairRecord extends Model
 {

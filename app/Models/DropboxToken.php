@@ -5,6 +5,10 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property Carbon|null $access_token_expires_at
+ * @property Carbon|null $last_refreshed_at
+ */
 class DropboxToken extends Model
 {
     protected $fillable = [

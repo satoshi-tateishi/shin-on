@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
+/**
+ * @property-read Location|null $nowLocation
+ * @property-read Location|null $location
+ */
 class Equipment extends Model
 {
     use HasFactory;
@@ -353,32 +357,6 @@ class Equipment extends Model
     public function hasFutureReservations(): bool
     {
         return $this->getFutureReservations()->isNotEmpty();
-    }
-
-    /**
-     * 在庫スナップショットとの関連
-     */
-    public function inventorySnapshots(): HasMany
-    {
-        return $this->hasMany(InventorySnapshot::class);
-    }
-
-    /**
-     * 指定日時点での在庫状況を取得
-     */
-    public function getInventoryAsOf(\Carbon\Carbon $asOfDate): array
-    {
-        return InventorySnapshot::calculateInventoryAsOf($this->id, $asOfDate);
-    }
-
-    /**
-     * 指定日時点での利用可能数量を取得
-     */
-    public function getAvailableQuantityAsOf(\Carbon\Carbon $asOfDate): int
-    {
-        $inventory = $this->getInventoryAsOf($asOfDate);
-
-        return $inventory['available_quantity'] ?? 0;
     }
 
     /**

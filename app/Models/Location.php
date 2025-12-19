@@ -127,44 +127,6 @@ class Location extends Model
     }
 
     /**
-     * 在庫スナップショットとの関連
-     */
-    public function inventorySnapshots(): HasMany
-    {
-        return $this->hasMany(InventorySnapshot::class);
-    }
-
-    /**
-     * 指定日時点での在庫一覧を取得
-     */
-    public function getInventoryAsOf(\Carbon\Carbon $asOfDate): \Illuminate\Support\Collection
-    {
-        return InventorySnapshot::getSnapshotsByDate($asOfDate, ['location_id' => $this->id]);
-    }
-
-    /**
-     * 指定日時点での在庫統計を取得
-     */
-    public function getInventoryStatsAsOf(\Carbon\Carbon $asOfDate): array
-    {
-        $snapshots = $this->getInventoryAsOf($asOfDate);
-
-        return [
-            'total_items' => $snapshots->count(),
-            'total_quantity' => $snapshots->sum('quantity'),
-            'categories' => $snapshots->groupBy('equipment.subcategory.category.name')->map(function ($group) {
-                return [
-                    'count' => $group->count(),
-                    'quantity' => $group->sum('quantity'),
-                ];
-            })->toArray(),
-            'status_distribution' => $snapshots->groupBy('status_color')->map(function ($group) {
-                return $group->count();
-            })->toArray(),
-        ];
-    }
-
-    /**
      * 倉庫容量管理関連メソッド
      * 注意: equipments リレーションを事前にeager loadすることを推奨
      */
@@ -219,7 +181,7 @@ class Location extends Model
                 ->orWhere('to_location_id', $this->id);
         })
             ->whereBetween('moved_at', [$startDate, $endDate])
-            ->with(['equipment', 'fromLocation', 'toLocation', 'user'])
+            ->with(['equipment', 'fromLocation', 'toLocation', 'movedBy'])
             ->orderBy('moved_at', 'desc')
             ->get();
     }
