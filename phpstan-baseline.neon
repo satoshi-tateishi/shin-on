@@ -1,0 +1,181 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Variable \$useEncryption on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Console/Commands/BackupEnvCommand.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\LineWorksController\:\:redirect\(\) should return Illuminate\\Http\\RedirectResponse but returns Symfony\\Component\\HttpFoundation\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Auth/LineWorksController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Http/Controllers/DropboxAuthController.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/InventoryTransferController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Master\\EquipmentController\:\:getEquipmentsBySubcategory\(\) has invalid return type App\\Http\\Controllers\\Master\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Master/EquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Master\\EquipmentController\:\:getEquipmentsBySubcategory\(\) should return App\\Http\\Controllers\\Master\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/Master/EquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Master\\EquipmentSubcategoryController\:\:getSubcategoriesByCategory\(\) has invalid return type App\\Http\\Controllers\\Master\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Master/EquipmentSubcategoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Master\\EquipmentSubcategoryController\:\:getSubcategoriesByCategory\(\) should return App\\Http\\Controllers\\Master\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/Master/EquipmentSubcategoryController.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/PhaseController.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Http/Controllers/PhaseEquipmentInheritanceController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:findAlternatives\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/RepairRecordController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getFutureReservations\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Http/Controllers/RepairRecordController.php
+
+		-
+			message: '#^Cannot call method diffForHumans\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/ActivityLog.php
+
+		-
+			message: '#^Call to static method calculateInventoryAsOf\(\) on an unknown class App\\Models\\InventorySnapshot\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Equipment.php
+
+		-
+			message: '#^Class App\\Models\\InventorySnapshot not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Equipment.php
+
+		-
+			message: '#^Method App\\Models\\Equipment\:\:getActualLocationAttribute\(\) should return App\\Models\\Location\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Equipment.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\HasMany\:\:required\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/EquipmentSet.php
+
+		-
+			message: '#^Call to static method getSnapshotsByDate\(\) on an unknown class App\\Models\\InventorySnapshot\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Location.php
+
+		-
+			message: '#^Class App\\Models\\InventorySnapshot not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Location.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\EquipmentMovement model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/Location.php
+
+		-
+			message: '#^Method App\\Models\\Performance\:\:getDurationDaysAttribute\(\) should return int\|null but returns float\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Performance.php
+
+		-
+			message: '#^Cannot call method diffInDays\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Phase.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Models/Phase.php
+
+		-
+			message: '#^Cannot call method diffInDays\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/RepairRecord.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\TwoFactorLog\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/TwoFactorLog.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/ActivityLogService.php
+
+		-
+			message: '#^Cannot call method diffInSeconds\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/DropboxService.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/DropboxService.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/DropboxService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\HasMany\:\:reportedBetween\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Services/EquipmentAnalyticsService.php

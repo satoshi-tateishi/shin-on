@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app/
+
+    # レベル 3 から開始（段階的に上げていく）
+    level: 3
+
+    # エラーを無視するパターン
+    ignoreErrors:
+        # 動的プロパティ関連
+        - '#Access to an undefined property#'
