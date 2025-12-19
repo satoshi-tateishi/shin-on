@@ -1,5 +1,46 @@
 # 作業ログ
 
+## 2025年12月
+
+### 12/19 - CI/CD・テストカバレッジ向上
+
+#### ハードコード倉庫ID解消
+- `is_main_warehouse` フラグを locations テーブルに追加
+- 8箇所のハードコード [92,93,94] を `Location::getMainWarehouseIds()` に置換
+- 管理画面（場所マスタ）にチェックボックス追加
+- LocationFactory に `mainWarehouse()` ステート追加
+
+#### Feature テスト追加（38件）
+| ファイル | テスト数 | 内容 |
+|----------|---------|------|
+| ActivityLogTest | 11 | 監査ログ一覧・フィルタ・認可 |
+| LocationTest | 15 | 場所マスタ CRUD・is_main_warehouse |
+| PhaseEquipmentCheckoutTest | 12 | 出庫・返却・一括処理・主要倉庫判定 |
+
+#### 新規ファクトリ
+- ActivityLogFactory
+- PhaseEquipmentFactory
+
+**テスト総数: 133 → 171（+38）**
+
+---
+
+## 次回作業候補
+
+### テスト Phase 3（複雑なビジネスロジック）
+1. **ScheduleTest** - スケジュール表示・日付計算・ステータス判定
+2. **InventoryTest** - 在庫一覧・可用数計算・PDF エクスポート
+
+### テスト Phase 4（マスタデータ）
+3. EquipmentCategoryTest / SubcategoryTest
+4. UserTest / PositionTest
+
+### テスト Phase 5（管理・認証）
+5. Admin/BackupController - バックアップ機能
+6. Auth/LineWorksController - SSO連携
+
+---
+
 ## 2025年9月
 
 ### 9/28 - 機材継承機能・ドキュメント更新
@@ -63,4 +104,4 @@
 
 ---
 
-**最終更新**: 2025年9月28日
+**最終更新**: 2025年12月19日
