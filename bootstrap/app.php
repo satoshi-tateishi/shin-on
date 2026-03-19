@@ -17,10 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // セキュリティヘッダーミドルウェアをグローバルに適用
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
+        // portal_jwt クッキーは Portal が署名済みのため暗号化しない
+        $middleware->encryptCookies(except: [
+            'portal_jwt',
+        ]);
+
         // カスタムミドルウェアのエイリアス登録
         $middleware->alias([
+            'portal.auth'        => \App\Http\Middleware\PortalJwtAuthenticate::class,
             'performance.access' => \App\Http\Middleware\CheckPerformanceAccess::class,
-            'role' => \App\Http\Middleware\CheckRole::class,
+            'role'               => \App\Http\Middleware\CheckRole::class,
         ]);
     })
     ->withSchedule(function ($schedule) {

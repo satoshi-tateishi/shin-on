@@ -1,8 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\Auth\LineWorksController;
-use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Auth\PortalJwtController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DropboxAuthController;
 use App\Http\Controllers\InventoryController;
@@ -25,33 +24,15 @@ use App\Http\Controllers\RepairRecordController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect('/dashboard');
-    }
-
-    return redirect('/login');
-});
-
-// LINE WORKS OAuth認証ルート
-Route::prefix('auth/lineworks')->group(function () {
-    Route::get('redirect', [LineWorksController::class, 'redirect'])->name('lineworks.redirect');
-    Route::get('callback', [LineWorksController::class, 'callback'])->name('lineworks.callback');
-    Route::post('process-id-token', [LineWorksController::class, 'processIdToken'])->name('lineworks.process-id-token');
-});
-
-// 2FA（二段階認証）ルート
-Route::prefix('two-factor')->name('two-factor.')->group(function () {
-    Route::get('challenge', [TwoFactorController::class, 'show'])->name('show');
-    Route::post('verify', [TwoFactorController::class, 'verify'])->name('verify');
-    Route::post('resend', [TwoFactorController::class, 'resend'])->name('resend');
+    return redirect('/dashboard');
 });
 
 // 認証が必要なルート
-Route::middleware('auth')->group(function () {
+Route::middleware('portal.auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
-    Route::post('/logout', [LineWorksController::class, 'logout'])->name('logout');
+    Route::post('/logout', [PortalJwtController::class, 'logout'])->name('logout');
 
     // 管理者機能ルート
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -305,10 +286,10 @@ Route::middleware('auth')->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
 });
 
-// 未認証ユーザー向けのログインページ
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login')->middleware('guest');
+// ログインページ → Portal にリダイレクト
+Route::get('/login', [PortalJwtController::class, 'login'])
+    ->name('login')
+    ->middleware('guest');
 
 // テスト用API（認証なし）- ローカル・テスト環境のみ
 if (app()->environment('local', 'testing')) {
