@@ -39,7 +39,6 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
     <div class="min-h-screen">
