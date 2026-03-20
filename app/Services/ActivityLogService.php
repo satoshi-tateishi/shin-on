@@ -29,6 +29,8 @@ class ActivityLogService
      */
     public function logEquipmentCheckout(PhaseEquipment $phaseEquipment, Phase $phase, int $quantity): ActivityLog
     {
+        $phaseEquipment->loadMissing('equipment');
+        $phase->loadMissing('performance');
         $equipment = $phaseEquipment->equipment;
         $performance = $phase->performance;
 
@@ -52,6 +54,8 @@ class ActivityLogService
      */
     public function logEquipmentCheckin(PhaseEquipment $phaseEquipment, Phase $phase, int $quantity): ActivityLog
     {
+        $phaseEquipment->loadMissing('equipment');
+        $phase->loadMissing('performance');
         $equipment = $phaseEquipment->equipment;
         $performance = $phase->performance;
 
@@ -155,6 +159,7 @@ class ActivityLogService
      */
     public function logPhaseCreate(Phase $phase): ActivityLog
     {
+        $phase->loadMissing('performance');
         $performance = $phase->performance;
 
         return $this->log(
@@ -175,6 +180,7 @@ class ActivityLogService
      */
     public function logPhaseUpdate(Phase $phase, array $changes = []): ActivityLog
     {
+        $phase->loadMissing('performance');
         $performance = $phase->performance;
 
         return $this->log(
@@ -198,6 +204,8 @@ class ActivityLogService
      */
     public function logInheritanceExecute(Phase $sourcePhase, Phase $targetPhase, int $inheritedCount): ActivityLog
     {
+        $sourcePhase->loadMissing('performance');
+        $targetPhase->loadMissing('performance');
         $sourcePerformance = $sourcePhase->performance;
         $targetPerformance = $targetPhase->performance;
 

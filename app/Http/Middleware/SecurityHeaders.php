@@ -22,8 +22,8 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
         // Alpine.js・Bladeのインラインスクリプト/スタイルを許容する基本CSP
-        // unsafe-eval: Alpine.js v3がnpm経由でバンドルされる際の式評価に必要
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';");
+        // @alpinejs/csp を使用しているため unsafe-eval は不要
+        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';");
 
         // HTTPS環境でのみSecure Cookieを設定
         if ($request->isSecure()) {

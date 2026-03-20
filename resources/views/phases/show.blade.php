@@ -91,6 +91,13 @@
 @endsection
 
 @section('content')
+<script>
+window.__phaseShowConfig = @json([
+    'pdfUrl'       => route('phases.export-pdf', $phase),
+    'lineWorksUrl' => route('phases.send-lineworks', $phase),
+    'pdfFilename'  => 'phase_' . $phase->id . '_' . now()->format('Ymd') . '.pdf',
+]);
+</script>
 <div class="p-3 sm:p-6 space-y-4 sm:space-y-6"
      x-data="phaseShowPage()"
      @keydown.escape.window="showLineWorksModal = false; showDeleteModal = false"
@@ -405,90 +412,5 @@
     </div>
 </div><!-- Alpine.js x-data scope end -->
 
-@push('scripts')
-<script>
-function phaseShowPage() {
-    return {
-        showLineWorksModal: false,
-        showDeleteModal: false,
-        deleteConfirmation: '',
-        pdfLoading: false,
-        pdfMessage: '',
-        flashSuccess: '',
-        init() {
-            // sessionStorageからフラッシュメッセージを取得
-            const msg = sessionStorage.getItem('flashSuccess');
-            if (msg) {
-                this.flashSuccess = msg;
-                sessionStorage.removeItem('flashSuccess');
-            }
-        },
-        get canDelete() {
-            return this.deleteConfirmation.toLowerCase() === 'delete';
-        },
-        async downloadPdf() {
-            this.pdfLoading = true;
-            this.pdfMessage = 'フェーズPDFを生成中...';
-            try {
-                const response = await fetch('{{ route('phases.export-pdf', $phase) }}');
-                if (!response.ok) {
-                    throw new Error('PDF生成に失敗しました');
-                }
-                const blob = await response.blob();
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'phase_{{ $phase->id }}_{{ now()->format("Ymd") }}.pdf';
-                if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?([^;\s]+)/i);
-                    if (filenameMatch) {
-                        filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
-                    }
-                }
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-            } catch (error) {
-                console.error('PDF download error:', error);
-                alert('PDFのダウンロードに失敗しました。');
-            } finally {
-                this.pdfLoading = false;
-            }
-        },
-        async sendToLineWorks() {
-            this.showLineWorksModal = false;
-            this.pdfLoading = true;
-            this.pdfMessage = 'LINE WORKSに送信中...';
-            try {
-                const response = await fetch('{{ route('phases.send-lineworks', $phase) }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await response.json();
-                this.pdfLoading = false;
-                if (data.success) {
-                    // 成功メッセージを表示してからリロード
-                    sessionStorage.setItem('flashSuccess', data.message);
-                    window.location.reload();
-                } else {
-                    alert(data.message || 'LINE WORKSへの送信に失敗しました。');
-                }
-            } catch (error) {
-                console.error('LINE WORKS send error:', error);
-                alert('LINE WORKSへの送信に失敗しました。');
-                this.pdfLoading = false;
-            }
-        }
-    }
-}
-</script>
-@endpush
 
 @endsection

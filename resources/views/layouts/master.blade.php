@@ -231,33 +231,6 @@
         </div>
     </div>
 
-    <!-- Dark Mode Alpine.js Component -->
-    <script>
-        function darkMode() {
-            return {
-                isDark: localStorage.getItem('darkMode') === 'true' ||
-                        (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches),
-                init() {
-                    // Watch for system preference changes
-                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                        if (!localStorage.getItem('darkMode')) {
-                            this.isDark = e.matches;
-                            this.applyTheme();
-                        }
-                    });
-                },
-                toggle() {
-                    this.isDark = !this.isDark;
-                    localStorage.setItem('darkMode', this.isDark);
-                    this.applyTheme();
-                },
-                applyTheme() {
-                    document.documentElement.classList.toggle('dark', this.isDark);
-                }
-            }
-        }
-    </script>
-
     @stack('scripts')
 </body>
 </html>

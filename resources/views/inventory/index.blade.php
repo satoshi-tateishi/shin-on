@@ -25,6 +25,12 @@
 @endpush
 
 @section('content')
+    <script>
+    window.__inventoryConfig = @json([
+        'locationStats' => $locationStats ?? [],
+        'exportPdfUrl'  => route('inventory.export-pdf'),
+    ]);
+    </script>
     {{-- 在庫管理画面: is_inventory_visible=1の倉庫のみを対象にした機材在庫表示 --}}
     <div x-data="inventoryDashboard()" x-init="init()" class="p-3 sm:p-6">
 
@@ -251,148 +257,3 @@
     </div>
 @endsection
 
-@push('scripts')
-    <script>
-        function inventoryDashboard() {
-            return {
-                loading: false,
-                pdfLoading: false,
-                pdfMessage: '',
-                error: null,
-                asOfDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
-                inventoryData: [],
-                categories: [],
-                locations: [],
-                filters: {
-                    category_id: '',
-                    location_id: 92, // デフォルトはすみだ倉庫
-                    search: ''
-                },
-                showDetailModal: false,
-                selectedItem: null,
-
-                openDetailModal(item) {
-                    this.selectedItem = item;
-                    this.showDetailModal = true;
-                },
-
-                closeDetailModal() {
-                    this.showDetailModal = false;
-                    this.selectedItem = null;
-                },
-
-                async downloadPdf(allLocations) {
-                    this.pdfLoading = true;
-                    this.pdfMessage = allLocations ? '全倉庫の在庫データを処理中...' : '在庫データを処理中...';
-
-                    try {
-                        let url = `{{ route('inventory.export-pdf') }}?as_of_date=${this.asOfDate}`;
-                        if (allLocations) {
-                            url += '&all_locations=1';
-                        } else {
-                            url += `&location_id=${this.filters.location_id}`;
-                        }
-
-                        const response = await fetch(url);
-
-                        if (!response.ok) {
-                            throw new Error('PDF生成に失敗しました');
-                        }
-
-                        // Content-Dispositionヘッダーからファイル名を取得
-                        const contentDisposition = response.headers.get('Content-Disposition');
-                        let filename = allLocations ? '在庫一覧_全倉庫.pdf' : '在庫一覧.pdf';
-                        if (contentDisposition) {
-                            const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
-                            if (filenameMatch) {
-                                filename = decodeURIComponent(filenameMatch[1]);
-                            }
-                        }
-
-                        // Blobを作成してダウンロード
-                        const blob = await response.blob();
-                        const downloadUrl = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = downloadUrl;
-                        a.download = filename;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(downloadUrl);
-                        document.body.removeChild(a);
-
-                    } catch (error) {
-                        console.error('PDF download error:', error);
-                        alert('PDF出力に失敗しました: ' + error.message);
-                    } finally {
-                        this.pdfLoading = false;
-                        this.pdfMessage = '';
-                    }
-                },
-
-                async init() {
-                    try {
-                        await this.loadMasterData();
-                        await this.loadInventoryData();
-                    } catch (error) {
-                        console.error('Initialization error:', error);
-                        this.error = 'システムの初期化中にエラーが発生しました: ' + error.message;
-                    }
-                },
-
-                async loadMasterData() {
-                    try {
-                        // カテゴリ一覧取得
-                        const categoryResponse = await fetch('/api/schedule/categories');
-                        if (categoryResponse.ok) {
-                            const categoryData = await categoryResponse.json();
-                            this.categories = categoryData.categories || [];
-                        }
-
-                        // 倉庫一覧取得（倉庫のみに限定）
-                        this.locations = @json($locationStats ?? []);
-                    } catch (error) {
-                        console.error('Master data loading error:', error);
-                    }
-                },
-
-                async loadInventoryData() {
-                    this.loading = true;
-                    this.error = null;
-
-                    try {
-                        const params = new URLSearchParams({
-                            as_of_date: this.asOfDate,
-                            ...Object.fromEntries(
-                                Object.entries(this.filters).filter(([key, value]) => value !== '')
-                            )
-                        });
-
-                        console.log('🔍 API Request URL:', `/inventory/api/inventory?${params}`);
-                        console.log('🔍 Request params:', params.toString());
-                        const response = await fetch(`/inventory/api/inventory?${params}`);
-                        console.log('🔍 Response status:', response.status);
-                        const data = await response.json();
-                        console.log('🔍 Response data:', data);
-
-                        if (data.success) {
-                            this.inventoryData = data.data || [];
-                            console.log('✅ Data assigned to inventoryData:', this.inventoryData);
-                            if (this.inventoryData.length > 0) {
-                                console.log('✅ First item detailed:', this.inventoryData[0]);
-                                console.log('✅ Equipment object:', this.inventoryData[0].equipment);
-                            }
-                        } else {
-                            throw new Error(data.error || '在庫データの取得に失敗しました');
-                        }
-                    } catch (error) {
-                        console.error('Error loading inventory data:', error);
-                        this.error = error.message;
-                        this.inventoryData = [];
-                    } finally {
-                        this.loading = false;
-                    }
-                }
-            }
-        }
-    </script>
-@endpush

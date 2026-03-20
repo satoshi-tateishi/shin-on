@@ -53,12 +53,22 @@ class ActivityLogController extends Controller
             $statsQuery->where('user_id', $userId);
         }
 
+        $statsResult = (clone $statsQuery)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN action LIKE 'equipment.%' THEN 1 ELSE 0 END) as equipment,
+                SUM(CASE WHEN action LIKE 'performance.%' THEN 1 ELSE 0 END) as performance,
+                SUM(CASE WHEN action LIKE 'phase.%' THEN 1 ELSE 0 END) as phase_count,
+                SUM(CASE WHEN action = 'user.login' THEN 1 ELSE 0 END) as login
+            ")
+            ->first();
+
         $stats = [
-            'total' => (clone $statsQuery)->count(),
-            'equipment' => (clone $statsQuery)->where('action', 'like', 'equipment.%')->count(),
-            'performance' => (clone $statsQuery)->where('action', 'like', 'performance.%')->count(),
-            'phase' => (clone $statsQuery)->where('action', 'like', 'phase.%')->count(),
-            'login' => (clone $statsQuery)->where('action', 'user.login')->count(),
+            'total' => (int) ($statsResult->total ?? 0),
+            'equipment' => (int) ($statsResult->equipment ?? 0),
+            'performance' => (int) ($statsResult->performance ?? 0),
+            'phase' => (int) ($statsResult->phase_count ?? 0),
+            'login' => (int) ($statsResult->login ?? 0),
         ];
 
         // ユーザー一覧（アクティビティがあるユーザーのみ）

@@ -39,11 +39,20 @@ class PhaseEquipmentService
 
     public function calculateEquipmentStats(Phase $phase): array
     {
+        $result = PhaseEquipment::forPhase($phase->id)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'reserved' THEN 1 ELSE 0 END) as reserved,
+                SUM(CASE WHEN status = 'checked_out' THEN 1 ELSE 0 END) as checked_out,
+                SUM(CASE WHEN status = 'checked_in' THEN 1 ELSE 0 END) as checked_in
+            ")
+            ->first();
+
         return [
-            'total' => PhaseEquipment::forPhase($phase->id)->count(),
-            'reserved' => PhaseEquipment::forPhase($phase->id)->reserved()->count(),
-            'checked_out' => PhaseEquipment::forPhase($phase->id)->checkedOut()->count(),
-            'checked_in' => PhaseEquipment::forPhase($phase->id)->checkedIn()->count(),
+            'total' => (int) ($result->total ?? 0),
+            'reserved' => (int) ($result->reserved ?? 0),
+            'checked_out' => (int) ($result->checked_out ?? 0),
+            'checked_in' => (int) ($result->checked_in ?? 0),
         ];
     }
 

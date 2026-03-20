@@ -365,13 +365,5 @@
 
     <!-- 機材マスタ専用JavaScript -->
     <script src="{{ asset('js/master/equipment-index.js') }}"></script>
-
-    <script>
-    function equipmentIndexPage() {
-        return {
-            showLineWorksModal: false
-        }
-    }
-    </script>
 </div><!-- Alpine.js x-data scope end -->
 @endsection
