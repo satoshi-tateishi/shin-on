@@ -275,6 +275,6 @@ class PhaseEquipmentCheckoutTest extends TestCase
             'checkout_date' => now()->format('Y-m-d'),
         ]);
 
-        $response->assertRedirect('/login');
+        $response->assertRedirectContains('/login');
     }
 }

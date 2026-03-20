@@ -9,10 +9,22 @@ class TrustProxies extends Middleware
 {
     /**
      * The trusted proxies for this application.
+     * TRUSTED_PROXIES 環境変数でカンマ区切りIPリストを指定（例: 192.168.1.1,10.0.0.1）
+     * '*' はすべてのプロキシを信頼（開発環境のみ）
      *
      * @var array<int,string>|string|null
      */
-    protected $proxies = '*';
+    protected $proxies = null;
+
+    public function __construct()
+    {
+        $trusted = env('TRUSTED_PROXIES', null);
+        if ($trusted === '*') {
+            $this->proxies = '*';
+        } elseif ($trusted) {
+            $this->proxies = array_map('trim', explode(',', $trusted));
+        }
+    }
 
     /**
      * The headers that should be used to detect proxies.

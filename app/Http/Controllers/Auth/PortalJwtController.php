@@ -14,7 +14,8 @@ class PortalJwtController extends Controller
     {
         $loginUrl = config('portal_jwt.login_url');
         $next = urlencode($request->query('next', url('/dashboard')));
-        return redirect($loginUrl . '?next=' . $next);
+
+        return redirect($loginUrl.'?next='.$next);
     }
 
     /**

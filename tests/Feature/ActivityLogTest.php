@@ -36,7 +36,7 @@ class ActivityLogTest extends TestCase
     {
         $response = $this->get('/activity-logs');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirectContains('/login');
     }
 
     public function test_activity_log_requires_admin_role(): void

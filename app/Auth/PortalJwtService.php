@@ -24,24 +24,24 @@ class PortalJwtService
         try {
             $payload = JWT::decode($token, $keys);
         } catch (\Exception $e) {
-            throw new PortalJwtException('JWT validation failed: ' . $e->getMessage());
+            throw new PortalJwtException('JWT validation failed: '.$e->getMessage());
         }
 
         // iss (Issuer) 検証
         $expectedIss = config('portal_jwt.issuer');
         if (($payload->iss ?? '') !== $expectedIss) {
-            throw new PortalJwtException('Invalid issuer: ' . ($payload->iss ?? '(none)'));
+            throw new PortalJwtException('Invalid issuer: '.($payload->iss ?? '(none)'));
         }
 
         // aud (Audience) 検証
         $expectedAud = config('portal_jwt.audience');
         $aud = isset($payload->aud) ? (array) $payload->aud : [];
-        if (!in_array($expectedAud, $aud)) {
+        if (! in_array($expectedAud, $aud)) {
             throw new PortalJwtException('Invalid audience');
         }
 
         // is_active フラグ検証（Portal 側の無効化に対応）
-        if (isset($payload->is_active) && !$payload->is_active) {
+        if (isset($payload->is_active) && ! $payload->is_active) {
             throw new PortalJwtException('User account is inactive');
         }
 
@@ -56,9 +56,9 @@ class PortalJwtService
     public function findOrCreateUser(\stdClass $payload): User
     {
         $portalUuid = $payload->sub ?? null;
-        $email      = $payload->email ?? null;
+        $email = $payload->email ?? null;
 
-        if (!$portalUuid || !$email) {
+        if (! $portalUuid || ! $email) {
             throw new PortalJwtException('JWT missing required claims (sub, email)');
         }
 
@@ -66,7 +66,7 @@ class PortalJwtService
         $user = User::where('external_auth_id', $portalUuid)->first();
 
         // 2. email で検索して external_auth_id を付与（既存ユーザーの初回移行）
-        if (!$user) {
+        if (! $user) {
             $user = User::where('email', $email)->first();
             if ($user) {
                 $user->external_auth_id = $portalUuid;
@@ -75,19 +75,19 @@ class PortalJwtService
         }
 
         // 3. 新規ユーザー作成（デフォルト role: viewer）
-        if (!$user) {
+        if (! $user) {
             $familyName = $payload->family_name ?? '';
-            $givenName  = $payload->given_name ?? '';
-            $name = trim($familyName . ' ' . $givenName) ?: ($payload->name ?? $email);
+            $givenName = $payload->given_name ?? '';
+            $name = trim($familyName.' '.$givenName) ?: ($payload->name ?? $email);
 
             $user = User::create([
-                'name'             => $name,
-                'email'            => $email,
+                'name' => $name,
+                'email' => $email,
                 'external_auth_id' => $portalUuid,
-                'role'             => 'viewer',
-                'affiliation'      => 'employee',
-                'is_active'        => true,
-                'password'         => Hash::make(Str::random(32)),
+                'role' => 'viewer',
+                'affiliation' => 'employee',
+                'is_active' => true,
+                'password' => Hash::make(Str::random(32)),
             ]);
         }
 
@@ -98,6 +98,7 @@ class PortalJwtService
      * Portal の JWKS から公開鍵を取得する（キャッシュ付き）。
      *
      * @return array<string, \Firebase\JWT\Key>
+     *
      * @throws PortalJwtException
      */
     protected function getPublicKeys(): array
@@ -111,9 +112,10 @@ class PortalJwtService
             $jwksUrl = config('portal_jwt.jwks_url');
             try {
                 $response = Http::timeout(5)->get($jwksUrl);
+
                 return $response->json();
             } catch (\Exception $e) {
-                throw new PortalJwtException('Failed to fetch JWKS: ' . $e->getMessage());
+                throw new PortalJwtException('Failed to fetch JWKS: '.$e->getMessage());
             }
         });
 

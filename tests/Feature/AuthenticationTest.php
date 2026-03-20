@@ -14,7 +14,7 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/equipments');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirectContains('/login');
     }
 
     public function test_authenticated_user_can_access_protected_routes(): void

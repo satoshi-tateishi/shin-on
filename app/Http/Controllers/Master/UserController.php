@@ -394,8 +394,8 @@ class UserController extends Controller
             mkdir($uploadPath, 0755, true);
         }
 
-        // Generate unique filename
-        $extension = $iconFile->getClientOriginalExtension();
+        // Generate unique filename（MIMEタイプから拡張子を決定）
+        $extension = $iconFile->extension();
         $filename = uniqid('user_icon_').'.'.$extension;
 
         // Move the uploaded file

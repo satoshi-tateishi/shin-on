@@ -24,9 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // カスタムミドルウェアのエイリアス登録
         $middleware->alias([
-            'portal.auth'        => \App\Http\Middleware\PortalJwtAuthenticate::class,
+            'portal.auth' => \App\Http\Middleware\PortalJwtAuthenticate::class,
             'performance.access' => \App\Http\Middleware\CheckPerformanceAccess::class,
-            'role'               => \App\Http\Middleware\CheckRole::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
         ]);
     })
     ->withSchedule(function ($schedule) {

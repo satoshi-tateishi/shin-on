@@ -30,7 +30,7 @@ Route::get('/', function () {
 // 認証が必要なルート
 Route::middleware('portal.auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index')->middleware('role:admin');
 
     Route::post('/logout', [PortalJwtController::class, 'logout'])->name('logout');
 
@@ -45,7 +45,7 @@ Route::middleware('portal.auth')->group(function () {
         });
 
         // バックアップ管理（管理者権限のみ）
-        Route::prefix('backup')->name('backup.')->group(function () {
+        Route::prefix('backup')->name('backup.')->middleware('role:admin')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('index');
             Route::post('run', [\App\Http\Controllers\Admin\BackupController::class, 'runBackup'])->name('run');
             Route::get('list', [\App\Http\Controllers\Admin\BackupController::class, 'listBackups'])->name('list');
@@ -68,11 +68,11 @@ Route::middleware('portal.auth')->group(function () {
         });
 
         // Role権限設定（管理者のみ）
-        Route::get('role-permissions', [\App\Http\Controllers\Admin\RolePermissionController::class, 'index'])->name('role-permissions.index');
+        Route::get('role-permissions', [\App\Http\Controllers\Admin\RolePermissionController::class, 'index'])->name('role-permissions.index')->middleware('role:admin');
     });
 
     // Dropbox OAuth認証ルート（管理者権限のみ）
-    Route::middleware(['auth'])->prefix('auth/dropbox')->name('dropbox.')->group(function () {
+    Route::middleware(['role:admin'])->prefix('auth/dropbox')->name('dropbox.')->group(function () {
         Route::get('redirect', [DropboxAuthController::class, 'redirect'])->name('redirect');
         Route::get('callback', [DropboxAuthController::class, 'callback'])->name('callback');
     });

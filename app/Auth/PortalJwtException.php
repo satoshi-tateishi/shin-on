@@ -2,6 +2,4 @@
 
 namespace App\Auth;
 
-class PortalJwtException extends \Exception
-{
-}
+class PortalJwtException extends \Exception {}

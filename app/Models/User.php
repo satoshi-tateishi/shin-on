@@ -135,5 +135,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(RepairRecord::class, 'reported_by');
     }
-
 }
