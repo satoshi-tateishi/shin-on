@@ -14,6 +14,9 @@ return [
     // 未認証ユーザーのリダイレクト先
     'login_url' => env('PORTAL_LOGIN_URL', 'https://portal.shin-on1981.com/login/'),
 
+    // Portal ホーム URL（PORTAL_LOGIN_URL から /login/ を除去して導出）
+    'portal_url' => rtrim(str_replace('/login/', '', env('PORTAL_LOGIN_URL', 'https://portal.shin-on1981.com/login/')), '/'),
+
     // ログアウト後のリダイレクト先
     'logout_url' => env('PORTAL_LOGOUT_URL', 'https://portal.shin-on1981.com/logout/'),
 
