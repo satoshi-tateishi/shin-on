@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, analyse, test]  # lint, analyse, test が成功した場合のみ実行
     # 特定のリポジトリでのみ実行
-    if: github.repository == 'satoshi-tateishi/shin-on'
+    if: github.repository == 'satoshi-tateishi/shin-on_db'
 
     steps:
       - name: Checkout code
