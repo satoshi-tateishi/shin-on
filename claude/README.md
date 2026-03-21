@@ -41,7 +41,8 @@
 ### 運用
 - [operations/backup-system.md](operations/backup-system.md) - バックアップ
 - [operations/log-maintenance.md](operations/log-maintenance.md) - ログ管理
-- [docs/GitHub_Actions_Deploy_Specification.md](docs/GitHub_Actions_Deploy_Specification.md) - デプロイ
+- [docs/Deployment_Guide.md](docs/Deployment_Guide.md) - デプロイメントガイド（アーキテクチャ・初回デプロイ・トラブルシューティング）
+- [docs/GitHub_Actions_Deploy_Specification.md](docs/GitHub_Actions_Deploy_Specification.md) - GitHub Actions 自動デプロイ仕様
 
 ### 仕様書
 - [docs/Equipment_Management_System_Requirements_v2.md](docs/Equipment_Management_System_Requirements_v2.md) - 要件定義

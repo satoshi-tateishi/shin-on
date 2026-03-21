@@ -31,7 +31,37 @@ class InventoryTransferController extends Controller
      */
     public function transferIndex(): View
     {
-        return view('equipment-transfer.index');
+        $defaultWarehouseId = Location::where('is_main_warehouse', true)->first()?->id;
+        $apiConfig = $this->buildApiConfig();
+        $constants = ['SUMIDA_WAREHOUSE_ID' => $defaultWarehouseId];
+
+        return view('equipment-transfer.index', compact('apiConfig', 'constants'));
+    }
+
+    /**
+     * 返却先選択画面表示
+     *
+     * @return View 返却先選択画面のビュー
+     */
+    public function returnSelectIndex(): View
+    {
+        $defaultWarehouseId = Location::where('is_main_warehouse', true)->first()?->id;
+        $apiConfig = $this->buildApiConfig();
+        $constants = ['SUMIDA_WAREHOUSE_ID' => $defaultWarehouseId];
+
+        return view('equipment-transfer.return-select', compact('apiConfig', 'constants'));
+    }
+
+    private function buildApiConfig(): array
+    {
+        return [
+            'warehouses'   => route('inventory.api.warehouses'),
+            'categories'   => route('equipment-transfer.api.categories'),
+            'equipment'    => route('equipment-transfer.api.equipment'),
+            'transfer'     => route('equipment-transfer.api.transfer'),
+            'bulkTransfer' => route('equipment-transfer.api.bulk-transfer'),
+            'bulkReturn'   => route('equipment-transfer.api.bulk-return'),
+        ];
     }
 
     /**

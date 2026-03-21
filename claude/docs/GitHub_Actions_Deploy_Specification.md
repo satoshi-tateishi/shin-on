@@ -26,8 +26,18 @@ on:
 ### 実行条件
 
 ```yaml
-if: github.repository == 'satoshi-tateishi/shin-on'
+if: github.repository == 'satoshi-tateishi/shin-on_db'
 ```
+
+---
+
+## CI パイプライン（デプロイ前に全て成功が必要）
+
+| ジョブ | 内容 |
+|--------|------|
+| `lint` | Laravel Pint によるコードスタイルチェック |
+| `analyse` | PHPStan による静的解析 |
+| `test` | PHPUnit（MySQL 8.0 サービスコンテナ使用） |
 
 ---
 
@@ -38,11 +48,12 @@ if: github.repository == 'satoshi-tateishi/shin-on'
 | 1 | コード取得 | `git fetch && git reset --hard origin/release` |
 | 2 | Dockerビルド | `docker compose build app` |
 | 3 | コンテナ再起動 | `docker compose up -d app` |
-| 4 | Composer | `composer install --no-dev --optimize-autoloader` |
-| 5 | NPM | `npm ci && npm run build` |
+| 4 | Composer | `composer install --no-dev --optimize-autoloader`（コンテナ内） |
+| 5 | NPM | `rm -f public/hot && npm ci && npm run build`（ホスト側） |
 | 6 | マイグレーション | `php artisan migrate --force` |
 | 7 | キャッシュクリア | `config:clear`, `cache:clear`, `route:clear`, `view:clear` |
 | 8 | キャッシュ最適化 | `config:cache`, `route:cache`, `view:cache` |
+| 9 | OPcacheリセット | `docker compose restart app` |
 
 ---
 
@@ -85,7 +96,8 @@ git push origin release  # ← 自動デプロイ開始
 ```bash
 # 本番サーバーで直接実行
 cd /var/www/shin-on
-git pull origin release
+GIT_SSH_COMMAND='ssh -i ~/.ssh/id_ed25519_deploy_shinon -o StrictHostKeyChecking=no' git fetch origin
+git reset --hard origin/release
 docker compose -f docker-compose.production.yml restart app
 ```
 
@@ -136,11 +148,11 @@ git log -1 --oneline
 
 | 対策 | 説明 |
 |------|------|
-| リポジトリ制限 | `satoshi-tateishi/shin-on`のみ実行 |
+| リポジトリ制限 | `satoshi-tateishi/shin-on_db`のみ実行 |
 | SSH鍵認証 | パスワード認証なし |
 | Secrets暗号化 | GitHub側で暗号化保存 |
 | 非公開ポート | SSH: 56834 |
 
 ---
 
-**最終更新**: 2025年12月5日
+**最終更新**: 2026年3月21日

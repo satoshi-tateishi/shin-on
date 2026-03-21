@@ -14,6 +14,13 @@
     </style>
 @endpush
 
+@push('scripts')
+    <script>
+        window.API_CONFIG = @json($apiConfig);
+        window.CONSTANTS = @json($constants);
+    </script>
+@endpush
+
 @section('header')
     <div>
         <h1 class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">倉庫間移動</h1>

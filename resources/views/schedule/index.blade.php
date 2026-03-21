@@ -306,8 +306,8 @@
 
                     <!-- ページネーション情報 -->
                     <div x-show="pagination" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        <span x-text="pagination?.from || 0"></span>-<span x-text="pagination?.to || 0"></span>
-                        / <span x-text="pagination?.total || 0"></span>件
+                        <span x-text="pagination.from || 0"></span>-<span x-text="pagination.to || 0"></span>
+                        / <span x-text="pagination.total || 0"></span>件
                     </div>
                 </div>
             </div>
@@ -372,7 +372,7 @@
                                     </td>
 
                                     <!-- 日別ステータス -->
-                                    <template x-for="(date, dateIndex) in dateRange" :key="`${equipment.equipment_id}-${date}`">
+                                    <template x-for="(date, dateIndex) in dateRange" :key="equipment.equipment_id + '-' + date">
                                         <td x-show="!isSpanMiddle(equipment, dateIndex)"
                                             class="border border-gray-300 dark:border-gray-600 p-0 text-center relative"
                                             :class="isSpanStart(equipment, dateIndex) ? 'span-cell' : ''"
@@ -380,7 +380,7 @@
 
                                             <!-- スパンセルの場合 -->
                                             <template x-if="isSpanStart(equipment, dateIndex)">
-                                                <div :class="getStatusClass(equipment.daily_status[date]?.status)"
+                                                <div :class="getStatusClass(getDateStatus(equipment, date))"
                                                      class="w-full h-5 span-content flex relative"
                                                      style="overflow: visible;">
                                                     <!-- スパンテキスト（中央表示） -->
@@ -389,12 +389,12 @@
                                                     </div>
 
                                                     <!-- 日付ごとのクリック可能領域 -->
-                                                    <template x-for="(spanDate, spanOffset) in getSpanDates(equipment, dateIndex)" :key="`span-${equipment.equipment_id}-${spanDate}`">
+                                                    <template x-for="(spanDate, spanOffset) in getSpanDates(equipment, dateIndex)" :key="'span-' + equipment.equipment_id + '-' + spanDate">
                                                         <div @click="openMemoModal(equipment.equipment_id, spanDate, equipment.equipment_name)"
                                                              :class="getCellCustomClass(equipment.equipment_id, spanDate)"
                                                              class="clickable-cell relative z-10"
-                                                             :style="`width: 40px; min-width: 40px; ${getCellCustomStyle(equipment.equipment_id, spanDate)}`"
-                                                             :title="`${spanDate} - クリックしてメモ入力`">
+                                                             :style="getSpanCellStyle(equipment.equipment_id, spanDate)"
+                                                             :title="spanDate + ' - クリックしてメモ入力'">
                                                             <!-- メモ表示 -->
                                                             <span x-show="getCellMemo(equipment.equipment_id, spanDate)"
                                                                   class="cell-memo"
@@ -407,10 +407,10 @@
                                             <!-- 通常セルの場合 -->
                                             <template x-if="!isSpanStart(equipment, dateIndex)">
                                                 <div @click="openMemoModal(equipment.equipment_id, date, equipment.equipment_name)"
-                                                     :class="[getStatusClass(equipment.daily_status[date]?.status), getCellCustomClass(equipment.equipment_id, date)]"
+                                                     :class="[getStatusClass(getDateStatus(equipment, date)), getCellCustomClass(equipment.equipment_id, date)]"
                                                      class="w-full h-5 clickable-cell relative"
                                                      :style="getCellCustomStyle(equipment.equipment_id, date)"
-                                                     :title="getStatusTooltip(equipment.daily_status[date])">
+                                                     :title="getStatusTooltip(getDailyStatusObj(equipment, date))">
                                                     <!-- メモ表示 -->
                                                     <span x-show="getCellMemo(equipment.equipment_id, date)"
                                                           class="cell-memo"
@@ -499,7 +499,7 @@
                                     type="button"
                                     @click="currentCell.customColor = color.value"
                                     class="w-full h-7 sm:h-8 border-2 rounded"
-                                    :style="`background-color: ${color.value}`"
+                                    :style="{ 'background-color': color.value }"
                                     :class="currentCell.customColor === color.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'"
                                     :title="color.name">
                                 </button>

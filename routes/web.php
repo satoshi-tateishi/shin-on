@@ -262,9 +262,7 @@ Route::middleware('portal.auth')->group(function () {
     // 倉庫間移動専用画面（viewer権限除外）
     Route::prefix('equipment-transfer')->name('equipment-transfer.')->middleware('role:admin,editor,general')->group(function () {
         Route::get('/', [InventoryTransferController::class, 'transferIndex'])->name('index');
-        Route::get('/return-select', function () {
-            return view('equipment-transfer.return-select');
-        })->name('return-select');
+        Route::get('/return-select', [InventoryTransferController::class, 'returnSelectIndex'])->name('return-select');
         Route::get('api/equipment', [InventoryTransferController::class, 'getTransferableEquipment'])->name('api.equipment');
         Route::get('api/equipment-for-return', [InventoryTransferController::class, 'getEquipmentForReturn'])->name('api.equipment-for-return');
         Route::get('api/categories', [InventoryTransferController::class, 'getTransferableCategories'])->name('api.categories');

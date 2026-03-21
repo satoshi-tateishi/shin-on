@@ -36,15 +36,17 @@
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/satoshi-tateishi/shin-on.git
-cd shin-on
+git clone https://github.com/satoshi-tateishi/shin-on_db.git
+cd shin-on_db
 
 # 環境変数ファイルを作成
 cp .env.example .env
 
-# Composerパッケージをインストール
+# Composerパッケージをインストール（Sail起動前に必要）
+composer install
+
+# コンテナを起動
 ./vendor/bin/sail up -d
-./vendor/bin/sail composer install
 
 # アプリケーションキーを生成
 ./vendor/bin/sail artisan key:generate
@@ -54,13 +56,13 @@ cp .env.example .env
 
 # NPMパッケージをインストール＆ビルド
 ./vendor/bin/sail npm install
-./vendor/bin/sail npm run dev
+./vendor/bin/sail npm run build
 ```
 
 ### 開発サーバー起動
 
 ```bash
-./vendor/bin/sail up -d && ./vendor/bin/sail npm run dev
+./vendor/bin/sail up -d && ./vendor/bin/sail npm run start
 ```
 
 開発環境: http://localhost:8081
@@ -70,10 +72,13 @@ cp .env.example .env
 ### アーキテクチャ
 
 ```
-Internet --> Apache (SSL終端, port 443)
-                |
-                +-- db.shin-on1981.com --> localhost:8084 --> Docker (shin-on)
+Internet
+  ↓ HTTPS (443)
+shin-on_portal / gateway-apache（Apacheコンテナ）
+  └─ db.shin-on1981.com → http://shin-on_app:8080/（shin-on-internal ネットワーク経由）
 ```
+
+SSL証明書・リバースプロキシは `shin-on_portal` が一元管理。
 
 ### デプロイ方法
 
@@ -89,12 +94,12 @@ git push origin release
 
 **手動デプロイ:**
 
-詳細は [DEPLOYMENT.md](DEPLOYMENT.md) を参照してください。
+詳細は [claude/docs/Deployment_Guide.md](claude/docs/Deployment_Guide.md) を参照してください。
 
 ## ディレクトリ構成
 
 ```
-shin-on/
+shin-on_db/
 ├── app/
 │   ├── Console/Commands/     # Artisanコマンド（バックアップ等）
 │   ├── Http/Controllers/     # コントローラー
@@ -124,7 +129,7 @@ shin-on/
 | `DROPBOX_*` | Dropbox API設定 |
 | `TRUSTED_PROXIES` | リバースプロキシ設定（本番: `*`） |
 
-詳細は `.env.example` および `.env.production.example` を参照。
+詳細は `.env.example` を参照。
 
 ## 運用コマンド
 
@@ -156,16 +161,13 @@ shin-on/
 ### ログ管理
 
 ```bash
-# ログを表示
-./vendor/bin/sail artisan log:tail
-
 # 古いログを削除
 ./vendor/bin/sail artisan logs:clear
 ```
 
 ## ドキュメント
 
-- [DEPLOYMENT.md](DEPLOYMENT.md) - 本番環境デプロイガイド
+- [claude/docs/Deployment_Guide.md](claude/docs/Deployment_Guide.md) - 本番環境デプロイガイド
 - [claude/README.md](claude/README.md) - 開発ドキュメント（AI支援用）
 - [claude/docs/](claude/docs/) - API仕様書・設計書
 
@@ -175,6 +177,4 @@ shin-on/
 
 ---
 
-**最終更新: 2025年11月28日**
-
-2026年2月23日 環境変数を修正
+**最終更新: 2026年3月21日**

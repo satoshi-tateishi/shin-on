@@ -1,7 +1,7 @@
-# CLAUDE.md - shin-on プロジェクト
+# CLAUDE.md - shin-on_db プロジェクト
 
 ## 📢 プロジェクト概要
-新規Laravel 12 + MySQL 8.0 プロジェクト「shin-on」のドキュメント構造です。
+Laravel 12 + MySQL 8.0 プロジェクト「shin-on_db」のドキュメント構造です。
 日本語で応対してください。
 
 ## 🔗 ドキュメント構造
@@ -27,12 +27,15 @@
 - [claude/architecture/laravel-best-practices.md](claude/architecture/laravel-best-practices.md) - Laravel開発標準
 - [claude/architecture/laravel-12.md](claude/architecture/laravel-12.md) - Laravel 12固有機能
 
+#### 🚀 デプロイ・運用
+- [claude/docs/Deployment_Guide.md](claude/docs/Deployment_Guide.md) - デプロイメントガイド（アーキテクチャ・初回デプロイ・トラブルシューティング）
+- [claude/docs/GitHub_Actions_Deploy_Specification.md](claude/docs/GitHub_Actions_Deploy_Specification.md) - GitHub Actions 自動デプロイ仕様 🚀
+
 #### 📋 API仕様書・外部連携
 - [claude/docs/LINE_WORKS_Bot_API_Guide.md](claude/docs/LINE_WORKS_Bot_API_Guide.md) - LINE WORKS Bot API実装ガイド 🤖
 - [claude/docs/LINE_WORKS_SSO_Specification.md](claude/docs/LINE_WORKS_SSO_Specification.md) - LINE WORKS SSO認証仕様 🔐
 - [claude/docs/Dropbox_API_Specification.md](claude/docs/Dropbox_API_Specification.md) - Dropbox OAuth 2.0 & バックアップAPI仕様 ☁️
 - [claude/docs/Activity_Log_Specification.md](claude/docs/Activity_Log_Specification.md) - アクティビティログ機能仕様 📊
-- [claude/docs/GitHub_Actions_Deploy_Specification.md](claude/docs/GitHub_Actions_Deploy_Specification.md) - GitHub Actions デプロイ仕様 🚀
 
 #### 🔐 権限・セキュリティ
 - [claude/docs/Role_Permission_Specification.md](claude/docs/Role_Permission_Specification.md) - Role権限設計仕様書（機能追加時の権限設定ガイド）
@@ -42,7 +45,7 @@
 2. 目的に応じて各カテゴリのファイルを参照
 3. クイックナビゲーションで効率的にアクセス
 
-## ✅ プロジェクト完成状況（2025年12月5日更新）
+## ✅ プロジェクト完成状況（2026年3月21日更新）
 - ✅ Laravel 12 + MySQL 8.0（Docker） - 基盤完成
 - ✅ Tailwind CSS v4.1.13（CSS-first設定、パフォーマンス改善済み）
 - ✅ Laravel-Boost MCP - AI開発支援環境構築済み
@@ -53,6 +56,7 @@
 - ✅ Dropboxバックアップシステム - OAuth 2.0対応、自動アップロード・ログクリーンアップ機能（2025年9月29日追加）
 - ✅ アクティビティログ - 操作履歴記録、ユーザー別フィルタリング、自動クリーンアップ（2025年12月1日追加）
 - ✅ Role権限管理 - 4段階ロール（viewer/general/editor/admin）、権限設定ページ（2025年12月5日追加）
+- ✅ shin-on_portal 統合 - gateway-apache による中央リバースプロキシ・SSL管理（2026年3月21日移行）
 - ✅ ポート設定（HTTP:8081, Vite:5174, MySQL:3307）
 
 ## 🌐 サーバー情報

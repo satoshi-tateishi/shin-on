@@ -339,6 +339,23 @@ Alpine.data('inventoryDashboard', () => ({
         } finally {
             this.loading = false;
         }
+    },
+
+    getEquipmentCategoryPath(item) {
+        const eq = item ? item.equipment : null;
+        if (!eq) return '';
+        const catName = (eq.subcategory && eq.subcategory.category) ? eq.subcategory.category.name : '';
+        const subName = eq.subcategory ? eq.subcategory.name : '';
+        return catName + (subName ? ' > ' + subName : '');
+    },
+
+    getEquipmentName(item) {
+        return (item && item.equipment && item.equipment.name) ? item.equipment.name : '機材名不明';
+    },
+
+    getEquipmentCompanyNumber(item) {
+        if (!item || item.quantity <= 0) return '-';
+        return (item.equipment && item.equipment.company_number) ? item.equipment.company_number : '-';
     }
 }));
 
@@ -751,6 +768,20 @@ Alpine.data('scheduleManager', () => ({
             dates.push(this.dateRange[i]);
         }
         return dates;
+    },
+
+    getDateStatus(equipment, date) {
+        const daily = equipment.daily_status[date];
+        return daily ? daily.status : null;
+    },
+
+    getDailyStatusObj(equipment, date) {
+        return equipment.daily_status[date] || null;
+    },
+
+    getSpanCellStyle(equipmentId, spanDate) {
+        const custom = this.getCellCustomStyle(equipmentId, spanDate);
+        return 'width: 40px; min-width: 40px;' + (custom ? ' ' + custom : '');
     }
 }));
 

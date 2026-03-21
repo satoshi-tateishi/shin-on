@@ -186,8 +186,8 @@
                                 <tr @click="openDetailModal(item)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600">
                                     <!-- カテゴリ・機材名 -->
                                     <td class="px-3 sm:px-4 py-2 sm:py-4">
-                                        <div class="text-xs text-gray-500 dark:text-gray-400" x-text="(item.equipment?.subcategory?.category?.name || '') + (item.equipment?.subcategory?.name ? ' > ' + item.equipment?.subcategory?.name : '')"></div>
-                                        <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white" x-text="item.equipment?.name || '機材名不明'"></div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400" x-text="getEquipmentCategoryPath(item)"></div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white" x-text="getEquipmentName(item)"></div>
                                     </td>
 
                                     <!-- 在庫数量 -->
@@ -230,11 +230,11 @@
                     <div class="space-y-3">
                         <div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">カテゴリ</div>
-                            <div class="text-sm text-gray-900 dark:text-white" x-text="(selectedItem.equipment?.subcategory?.category?.name || '') + (selectedItem.equipment?.subcategory?.name ? ' > ' + selectedItem.equipment?.subcategory?.name : '')"></div>
+                            <div class="text-sm text-gray-900 dark:text-white" x-text="getEquipmentCategoryPath(selectedItem)"></div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">機材名</div>
-                            <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="selectedItem.equipment?.name || '機材名不明'"></div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="getEquipmentName(selectedItem)"></div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">在庫数量</div>
@@ -242,7 +242,7 @@
                         </div>
                         <div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">新音番号</div>
-                            <div class="text-sm text-gray-900 dark:text-white break-words" x-text="(selectedItem.quantity > 0) ? (selectedItem.equipment?.company_number || '-') : '-'"></div>
+                            <div class="text-sm text-gray-900 dark:text-white break-words" x-text="getEquipmentCompanyNumber(selectedItem)"></div>
                         </div>
                     </div>
                 </template>

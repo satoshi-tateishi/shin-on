@@ -14,6 +14,13 @@
     </style>
 @endpush
 
+@push('scripts')
+    <script>
+        window.API_CONFIG = @json($apiConfig);
+        window.CONSTANTS = @json($constants);
+    </script>
+@endpush
+
 @section('header')
     <div class="w-full">
         <p id="performanceTitle" class="text-base sm:text-lg text-gray-600"></p>
