@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: docker/production/Dockerfile
-    container_name: shin-on_app
+    container_name: shin-on_db_app
     restart: unless-stopped
     ports:
       - '${APP_PORT:-8084}:8080'
@@ -56,7 +56,7 @@ services:
   # ==============================================================
   mysql:
     image: 'mysql:8.4'
-    container_name: shin-on_mysql
+    container_name: shin-on_db_mysql
     restart: unless-stopped
     # Not exposed to host - only accessible from app container
     # Uncomment for debugging:
