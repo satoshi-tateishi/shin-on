@@ -30,3 +30,5 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+.mcp.json
+.playwright-mcp/
