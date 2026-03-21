@@ -55,12 +55,12 @@ class InventoryTransferController extends Controller
     private function buildApiConfig(): array
     {
         return [
-            'warehouses'   => route('inventory.api.warehouses'),
-            'categories'   => route('equipment-transfer.api.categories'),
-            'equipment'    => route('equipment-transfer.api.equipment'),
-            'transfer'     => route('equipment-transfer.api.transfer'),
+            'warehouses' => route('inventory.api.warehouses'),
+            'categories' => route('equipment-transfer.api.categories'),
+            'equipment' => route('equipment-transfer.api.equipment'),
+            'transfer' => route('equipment-transfer.api.transfer'),
             'bulkTransfer' => route('equipment-transfer.api.bulk-transfer'),
-            'bulkReturn'   => route('equipment-transfer.api.bulk-return'),
+            'bulkReturn' => route('equipment-transfer.api.bulk-return'),
         ];
     }
 

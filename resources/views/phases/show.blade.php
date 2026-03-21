@@ -91,12 +91,15 @@
 @endsection
 
 @section('content')
+@php
+    $phaseShowConfig = [
+        'pdfUrl'       => route('phases.export-pdf', $phase),
+        'lineWorksUrl' => route('phases.send-lineworks', $phase),
+        'pdfFilename'  => 'phase_' . $phase->id . '_' . now()->format('Ymd') . '.pdf',
+    ];
+@endphp
 <script>
-window.__phaseShowConfig = @json([
-    'pdfUrl'       => route('phases.export-pdf', $phase),
-    'lineWorksUrl' => route('phases.send-lineworks', $phase),
-    'pdfFilename'  => 'phase_' . $phase->id . '_' . now()->format('Ymd') . '.pdf',
-]);
+window.__phaseShowConfig = {!! json_encode($phaseShowConfig) !!};
 </script>
 <div class="p-3 sm:p-6 space-y-4 sm:space-y-6"
      x-data="phaseShowPage()"
