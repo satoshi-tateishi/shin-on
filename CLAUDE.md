@@ -36,6 +36,7 @@ Laravel 12 + MySQL 8.0 プロジェクト「shin-on_db」のドキュメント�
 - [claude/docs/LINE_WORKS_SSO_Specification.md](claude/docs/LINE_WORKS_SSO_Specification.md) - LINE WORKS SSO認証仕様 🔐
 - [claude/docs/Dropbox_API_Specification.md](claude/docs/Dropbox_API_Specification.md) - Dropbox OAuth 2.0 & バックアップAPI仕様 ☁️
 - [claude/docs/Activity_Log_Specification.md](claude/docs/Activity_Log_Specification.md) - アクティビティログ機能仕様 📊
+- [claude/docs/Internal_API_Guide.md](claude/docs/Internal_API_Guide.md) - 内部サービスAPI ガイド（他アプリからのマスターデータ参照） 🔌
 
 #### 🔐 権限・セキュリティ
 - [claude/docs/Role_Permission_Specification.md](claude/docs/Role_Permission_Specification.md) - Role権限設計仕様書（機能追加時の権限設定ガイド）

@@ -50,11 +50,12 @@
 - [docs/Phase_Equipment_Inheritance_Specification.md](docs/Phase_Equipment_Inheritance_Specification.md) - 機材継承
 - [docs/Role_Permission_Specification.md](docs/Role_Permission_Specification.md) - 権限設計
 
-### 外部連携
+### 外部連携・API
 - [docs/LINE_WORKS_SSO_Specification.md](docs/LINE_WORKS_SSO_Specification.md) - LINE WORKS SSO
 - [docs/LINE_WORKS_Bot_API_Guide.md](docs/LINE_WORKS_Bot_API_Guide.md) - LINE WORKS Bot
 - [docs/Dropbox_API_Specification.md](docs/Dropbox_API_Specification.md) - Dropbox API
 - [docs/Activity_Log_Specification.md](docs/Activity_Log_Specification.md) - アクティビティログ
+- [docs/Internal_API_Guide.md](docs/Internal_API_Guide.md) - 内部サービスAPI（他アプリからのマスターデータ参照）
 
 ### 進捗管理
 - [progress/work-log.md](progress/work-log.md) - 作業ログ
