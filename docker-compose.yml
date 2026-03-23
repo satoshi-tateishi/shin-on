@@ -22,6 +22,7 @@ services:
             - '.:/var/www/html'
         networks:
             - sail
+            - shin-on-internal
         depends_on:
             - mysql
     mysql:
@@ -68,6 +69,8 @@ services:
 networks:
     sail:
         driver: bridge
+    shin-on-internal:
+        external: true
 volumes:
     sail-mysql:
         driver: local
