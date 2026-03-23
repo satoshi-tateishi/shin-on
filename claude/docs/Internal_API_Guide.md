@@ -300,6 +300,11 @@ networks:
 接続先ホスト名: `shin-on_db_app`
 
 > `shin-on-internal` ネットワークは shin-on_portal（gateway-apache）が管理しています。参加方法は shin-on_portal の管理者に確認してください。
+>
+> **注意:** `shin-on_db_app` 自体も `shin-on-internal` に参加している必要があります。shin-on_db の `docker-compose.yml` には設定済みですが、未参加の場合は以下で即時接続できます：
+> ```
+> docker network connect shin-on-internal shin-on_db_app
+> ```
 
 ---
 
